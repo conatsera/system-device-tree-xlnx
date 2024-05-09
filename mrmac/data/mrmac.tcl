@@ -523,7 +523,6 @@
                                    set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $sink_periph] "tx_timestamp_tod"]]
                                    set sink_periph [::hsi::get_cells -of_objects $port_pins]
                            }
-                   }
 
            if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"]} {
                    set intf "dout"
@@ -541,7 +540,8 @@
                                 }
                         }
                 }
-           } else {
+                }
+        } else {
         dtg_warning "tx_timestamp_tod_0 connected pins are NULL...please check the design..."
            }
            set rxtod_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "rx_ptp_tstamp_out_0"]]
@@ -553,7 +553,6 @@
                                    set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $rx_periph] "rx_timestamp_tod"]]
                                    set rx_periph [::hsi::get_cells -of_objects $port_pins]
                            }
-                   }
 
            if {[string match -nocase [hsi get_property IP_NAME $rx_periph] "xlconcat"]} {
                    set intf "dout"
@@ -571,6 +570,7 @@
                         }
                 }
         }
+                }
         } else {
                 dtg_warning "rx_timestamp_tod_0 connected pins are NULL...please check the design..."
         }
@@ -755,7 +755,6 @@
                                    set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $tod1_sink_periph] "tx_timestamp_tod"]]
                                    set tod1_sink_periph [::hsi::get_cells -of_objects $port_pins]
                            }
-                   }
 
            if {[string match -nocase [hsi get_property IP_NAME $tod1_sink_periph] "xlconcat"]} {
                    set intf "dout"
@@ -773,6 +772,7 @@
                         }
                         }
            }
+                }
         } else {
                 dtg_warning "tx_timestamp_tod_1 connected pins are NULL...please check the design..."
         }
@@ -785,7 +785,7 @@
                                    set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_periph1] "rx_timestamp_tod"]]
                                    set rx_periph1 [::hsi::get_cells -of_objects $port_pins]
                            }
-                }
+
            if {[string match -nocase [hsi get_property IP_NAME $rx_periph1] "xlconcat"]} {
                    set intf "dout"
                    set inrx1_pin [hsi::get_pins -of_objects $rx_periph1 -filter "NAME==$intf"]
@@ -802,6 +802,7 @@
                         }
                 }
         }
+                }
         } else {
                 dtg_warning "rx_timestamp_tod_1 connected pins are NULL...please check the design..."
         }
@@ -1145,11 +1146,11 @@
            set txtodport2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_2"]]
         if {[llength $txtodport2_pins]} {
                        set tod2_sink_periph [hsi::get_cells -of_objects $txtodport2_pins]
+                       if {[llength $tod2_sink_periph]} {
                    if {[string match -nocase [hsi get_property IP_NAME $tod2_sink_periph] "mrmac_ptp_timestamp_if"]} {
                            set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $tod2_sink_periph] "tx_timestamp_tod"]]
                            set tod2_sink_periph [::hsi::get_cells -of_objects $port_pins]
                    }
-
            if {[string match -nocase [hsi get_property IP_NAME $tod2_sink_periph] "xlconcat"]} {
                    set intf "dout"
                    set in2_pin [hsi::get_pins -of_objects $tod2_sink_periph -filter "NAME==$intf"]
@@ -1166,12 +1167,14 @@
                         }
                    }
            }
+        }
         } else {
                 dtg_warning "tx_timestamp_tod_2 connected pins are NULL...please check the design..."
         }
            set rxtod2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_ptp_tstamp_out_2"]]
         if {[llength $rxtod2_pins]} {
                 set rx_periph2 [hsi::get_cells -of_objects $rxtod2_pins]
+                if {[llength $rx_periph2]} {
                 if {[string match -nocase [hsi get_property IP_NAME $rx_periph2] "mrmac_ptp_timestamp_if"]} {
                            set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_periph2] "rx_timestamp_tod"]]
                            set rx_periph2 [::hsi::get_cells -of_objects $port_pins]
@@ -1193,6 +1196,7 @@
                         }
                 }
         }
+        }
         } else {
                 dtg_warning "rx_timestamp_tod_2 connected pins are NULL...please check the design..."
         }
@@ -1208,7 +1212,6 @@
            if {[llength $gt_pll_per]} {
                    add_prop "$mrmac2_node" "xlnx,gtpll" $gt_pll_per reference $dts_file
            }
-
            add_prop "$mrmac2_node" "xlnx,phcindex" 2 int $dts_file
            add_prop "$mrmac2_node" "xlnx,gtlane" 2 int $dts_file
         set FEC_SLICE2_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE2_CFG_C0 [hsi::get_cells -hier $drv_handle]]
@@ -1510,6 +1513,7 @@
            set txtodport3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_3"]]
         if {[llength $txtodport3_pins]} {
                set tod3_sink_periph [::hsi::get_cells -of_objects $txtodport3_pins]
+               if {[llength $tod3_sink_periph]} {
                    if {[string match -nocase [hsi::get_property IP_NAME $tod3_sink_periph] "mrmac_ptp_timestamp_if"]} {
                            set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $tod3_sink_periph] "tx_timestamp_tod"]]
                            set tod3_sink_periph [::hsi::get_cells -of_objects $port_pins]
@@ -1530,12 +1534,14 @@
                            }
                    }
            }
+        }
         } else {
                 dtg_warning "tx_timestamp_tod_3 connected pins are NULL...please check the design..."
         }
            set rxtod3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_timestamp_tod_3"]]
         if {[llength $rxtod3_pins]} {
            set rx_periph3 [::hsi::get_cells -of_objects $rxtod3_pins]
+           if {[llength $rx_periph3]} {
            if {[string match -nocase [hsi get_property IP_NAME $rx_periph3] "xlconcat"]} {
                    set intf "dout"
                    set inrx3_pin [hsi::get_pins -of_objects $rx_periph3 -filter "NAME==$intf"]
@@ -1551,6 +1557,7 @@
                                 }
                         }
                 }
+        }
         }
         } else {
                 dtg_warning "rx_timestamp_tod_3 connected pins are NULL...please check the design..."
