@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -158,7 +158,7 @@
         }
 
         set ip_name " "
-        if {[string match -nocase $proc_type "ps7_cortexa9"] } {
+        if {[string match -nocase $proc_type "zynq"] } {
                if {[string match -nocase $node "&gem1"]} {
                     set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == processing_system7}]
                     set port0_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $zynq_periph] "ENET1_MDIO_O"]]
@@ -167,7 +167,7 @@
                         set sink_periph [::hsi::get_cells -of_objects $port0_pins]
                     }
                     if {[llength $sink_periph]} {
-                        set ip_name [get_property IP_NAME $sink_periph]
+                        set ip_name [hsi get_property IP_NAME $sink_periph]
                     }
                     if {[llength $ip_name] && [string match -nocase $ip_name "gig_ethernet_pcs_pma"]} {
                         set pin [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "phyaddr"]]
@@ -178,15 +178,15 @@
                             set val [hsi get_property CONFIG.CONST_VAL $periph]
                             set inhex [format %x $val]
                             set_drv_prop $drv_handle phy-handle "phy$inhex" $node reference
-                            set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node]
-                            add_prop "${pcspma_phy_node}" "reg" $val int
+                            set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
+                            add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
                             set phy_type [hsi get_property CONFIG.Standard $sink_periph]
                             set is_sgmii [hsi get_property CONFIG.c_is_sgmii $sink_periph]
                             if {$phy_type == "1000BASEX"} {
-                                 add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int
+                                 add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
                                  add_prop $node "phy-mode" "1000base-x" string $dts_file 1
                             } elseif { $is_sgmii == "true"} {
-                                 add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int
+                                 add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
                                  add_prop $node "phy-mode" "sgmii" string $dts_file 1
                             } else {
                                  dtg_warning "unsupported phytype:$phy_type"
@@ -282,14 +282,14 @@
                                set inhex [format %x $val]
                                set_drv_prop $drv_handle phy-handle "phy$inhex" $node reference
                                set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
-                               add_prop "${pcspma_phy_node}" "reg" $val int $dts_fil
+                               add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
                                set phy_type [hsi get_property CONFIG.Standard $connected_ip]
                                set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
                                if {$phy_type == "1000BASEX"} {
-                                       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_fil
+                                       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x5 int $dts_file
                                        add_prop $node "phy-mode" "1000base-x" string $dts_file 1
                                } elseif { $is_sgmii == "true"} {
-                                       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_fil
+                                       add_prop "${pcspma_phy_node}" "xlnx,phy-type" 0x4 int $dts_file
                                        add_prop $node "phy-mode" "sgmii" string $dts_file 1
                                } else {
                                        dtg_warning "unsupported phytype:$phy_type"
