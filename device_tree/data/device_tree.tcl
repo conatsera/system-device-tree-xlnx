@@ -646,7 +646,7 @@ proc gen_afi_node {} {
 	set dts "pl.dtsi"
 	set family [get_hw_family]
 	if {[llength $pllist] > 0} {
-		set amba_pl_node [create_node -n "amba_pl" -l "amba_pl" -d ${dts} -p root]
+		set amba_pl_node [add_or_get_bus_node [lindex $pllist 0] $dts]
 		if {[is_zynqmp_platform $family]} {
 
 			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
