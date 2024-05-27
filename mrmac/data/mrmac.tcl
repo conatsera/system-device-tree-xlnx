@@ -38,7 +38,7 @@
         dtg_verbose "mem_ranges:$mem_ranges"
             foreach mem_range $mem_ranges {
                    set base_addr [string tolower [hsi get_property BASE_VALUE $mem_range]]
-                   set base [format %x $base_addr]
+                   set base [format %llx $base_addr]
                    set high_addr [string tolower [hsi get_property HIGH_VALUE $mem_range]]
                    set slave_intf [hsi get_property SLAVE_INTERFACE $mem_range]
                dtg_verbose "slave_intf:$slave_intf"
@@ -64,7 +64,7 @@
                            mrmac_generate_reg_property $ptp_3_node $base_addr $high_addr
                    }
                if {[string match -nocase $slave_intf "s_axi"]} {
-                        set mrmac0_highaddr_hex [format 0x%x [expr $base_addr + 0xFFF]]
+                        set mrmac0_highaddr_hex [format 0x%llx [expr $base_addr + 0xFFF]]
                         mrmac_generate_reg_property $node $base_addr $mrmac0_highaddr_hex
                    }
             }
@@ -673,9 +673,9 @@
                     set bus_node "amba_pl: amba_pl"
             }
         set dts_file [set_drv_def_dts $drv_handle]
-        set mrmac1_base [format 0x%x [expr $base_addr + 0x1000]]
-        set mrmac1_base_hex [format %x $mrmac1_base]
-        set mrmac1_highaddr_hex [format 0x%x [expr $mrmac1_base + 0xFFF]]
+        set mrmac1_base [format 0x%llx [expr $base_addr + 0x1000]]
+        set mrmac1_base_hex [format %llx $mrmac1_base]
+        set mrmac1_highaddr_hex [format 0x%llx [expr $mrmac1_base + 0xFFF]]
         set port1 1
         append new_label $drv_handle "_" $port1
         set mrmac1_node [create_node -n "mrmac" -l "$new_label" -u $mrmac1_base_hex -d $dts_file -p $bus_node]
@@ -1075,9 +1075,9 @@
         set GT_CH1_TX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH1_TX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-user-data-width-c1" $GT_CH1_TX_USER_DATA_WIDTH_C1 int $dts_file
 
-        set mrmac2_base [format 0x%x [expr $base_addr + 0x2000]]
-        set mrmac2_base_hex [format %x $mrmac2_base]
-        set mrmac2_highaddr_hex [format 0x%x [expr $mrmac2_base + 0xFFF]]
+        set mrmac2_base [format 0x%llx [expr $base_addr + 0x2000]]
+        set mrmac2_base_hex [format %llx $mrmac2_base]
+        set mrmac2_highaddr_hex [format 0x%llx [expr $mrmac2_base + 0xFFF]]
         set port2 2
         append label2 $drv_handle "_" $port2
         set mrmac2_node [create_node -n "mrmac" -l "$label2" -u $mrmac2_base_hex -d $dts_file -p $bus_node]
@@ -1450,9 +1450,9 @@
         set GT_CH2_TX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH2_TX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-user-data-width-c1" $GT_CH2_TX_USER_DATA_WIDTH_C1 int $dts_file
 
-        set mrmac3_base [format 0x%x [expr $base_addr + 0x3000]]
-        set mrmac3_base_hex [format %x $mrmac3_base]
-        set mrmac3_highaddr_hex [format 0x%x [expr $mrmac3_base + 0xFFF]]
+        set mrmac3_base [format 0x%llx [expr $base_addr + 0x3000]]
+        set mrmac3_base_hex [format %llx $mrmac3_base]
+        set mrmac3_highaddr_hex [format 0x%llx [expr $mrmac3_base + 0xFFF]]
         set port3 3
         append label3 $drv_handle "_" $port3
         set mrmac3_node [create_node -n "mrmac" -l "$label3" -u $mrmac3_base_hex -d $dts_file -p $bus_node]
@@ -1836,7 +1836,7 @@
     }
 
     proc mrmac_generate_reg_property {node base high} {
-        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+        set size [format 0x%llx [expr {${high} - ${base} + 1}]]
 
         set proctype [get_hw_family]
         if {[string match -nocase $proctype "versal"]} {
