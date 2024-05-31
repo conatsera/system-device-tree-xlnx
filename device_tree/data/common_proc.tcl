@@ -126,6 +126,7 @@ global comp_ver_dict
 global comp_str_dict
 global cur_hw_design
 global intr_type_dict
+global cur_hw_iss_data
 
 set node_dict [dict create]
 set nodename_dict [dict create]
@@ -136,6 +137,7 @@ set comp_ver_dict [dict create]
 set comp_str_dict [dict create]
 set cur_hw_design ""
 set intr_type_dict [dict create]
+set cur_hw_iss_data [dict create]
 
 package require Tcl 8.5.14
 package require yaml
@@ -3257,6 +3259,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ffe20000 label psv_r5_0_btcm_global
 			dict set def_ps_mapping ffe90000 label psv_r5_1_atcm_global
 			dict set def_ps_mapping ffeb0000 label psv_r5_1_btcm_global
+			dict set def_ps_mapping fd000000 label cci
 		}
 	} elseif {[is_zynqmp_platform $family]} {
 		dict set def_ps_mapping f9010000 label "gic_a53: interrupt-controller"
@@ -7250,4 +7253,100 @@ proc generate_board_compatible { rt_node } {
 			add_prop root compatible $board string "system-top.dts"
                 }
             }
+}
+
+proc get_smid { iss_name} {
+	proc_called_by
+	global cur_hw_iss_data
+	set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
+	if {[catch {set destn [dict get $cur_hw_iss_data design cells $versal_periph SMIDs]} msg]} {
+		set destn ""
+	}
+	foreach entry $destn {
+		if {[dict exists $entry name]} {
+			if {[dict get $entry name] == $iss_name} {
+				set value [dict get $entry value]
+				return $value
+			}
+		}
+	}
+	return
+}
+
+proc get_iss_drv_name { versal_periph addr} {
+	proc_called_by
+	global cur_hw_iss_data
+
+	if {[catch {set destn [dict get $cur_hw_iss_data design cells $versal_periph destinations]} msg]} {
+		set destn ""
+	}
+	foreach entry $destn {
+		if {[dict exists $entry addr]} {
+			if {[dict get $entry addr] == $addr} {
+				set iss_name [dict get $entry name]
+				return $iss_name
+			}
+		}
+	}
+	return
+}
+
+
+proc generate_smmu_cci_config { iss_name drv_handle} {
+	proc_called_by
+	global cur_hw_iss_data
+	if {[catch {set subsystem_list [dict get $cur_hw_iss_data design subsystems]} msg]} {
+		set subsystem_list ""
+	}
+	foreach subsystem $subsystem_list {
+		if {[catch {set dest_list [dict get $cur_hw_iss_data design subsystems $subsystem access]} msg]} {
+			set dest_list ""
+		}
+		foreach entry $dest_list {
+			if {![catch {set destinations [dict get $entry destinations]}]} {
+				if {$iss_name in $destinations} {
+					if {![catch {set entry_flags [dict get $entry flags]}]} {
+						set node [get_node $drv_handle]
+						foreach flag {requested_coherent requested_secure requested_virtualized} {
+							if {![catch {set is_flag [dict get $entry_flags $flag]}]} {
+								if {[string match -nocase $is_flag "true"]} {
+									switch -- $flag {
+										"requested_coherent" {
+											add_prop $node "dma-coherent" boolean [set_drv_def_dts $drv_handle]
+										}
+										"requested_secure" {
+											add_prop $node "xlnx,is-secure" boolean [set_drv_def_dts $drv_handle]
+										}
+										"requested_virtualized" {
+											set smid [get_smid $iss_name]
+											if {![string_is_empty $smid]} {
+												add_prop $node "iommus" "smmu $smid" reference [set_drv_def_dts $drv_handle]
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+proc gen_domain_data { drv_handle } {
+	proc_called_by
+	global cur_hw_iss_data
+	if {![string_is_empty $cur_hw_iss_data]} {
+		set versal_periph [hsi::get_cells -hier -filter {IP_NAME == versal_cips}]
+		if {![string_is_empty $versal_periph]} {
+			set unit_addr [get_baseaddr ${drv_handle}]
+			set iss_name [get_iss_drv_name $versal_periph $unit_addr]
+		} else {
+			set iss_name ""
+		}
+		if {![string_is_empty $iss_name] && ![string_is_empty $versal_periph]} {
+			generate_smmu_cci_config $iss_name $drv_handle
+		}
+	}
 }

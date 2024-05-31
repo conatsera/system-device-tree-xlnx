@@ -1308,6 +1308,7 @@ proc generate_sdt args {
 	global highaddr_dict
 	global processor_ip_list
 	global linear_spi_list
+	global cur_hw_iss_data
 
 	set linear_spi_list "psu_qspi_linear ps7_qspi_linear"
 
@@ -1369,6 +1370,16 @@ Generates system device tree based on args given in:
 		set xsa_name [file tail $xsa]
 		set xsa_path "$dir/$xsa_name"
 		set cur_hw_design [hsi::open_hw_design "$xsa_path"]
+		set hw_name [hsi get_property NAME [hsi get_hw_designs ]]
+		set iss_file [::hsi::get_hw_files "*.iss"]
+		if {![string_is_empty $iss_file]} {
+			set cur_hw_iss_file "$dir/$iss_file"
+			if {[file exists $cur_hw_iss_file]} {
+				set fp [open $cur_hw_iss_file r]
+				set cur_hw_iss_data [read $fp]
+				set cur_hw_iss_data [::json::json2dict $cur_hw_iss_data]
+			}
+		}
 		file delete -force "$xsa_path"
 	}
 
@@ -1487,6 +1498,7 @@ Generates system device tree based on args given in:
 			gen_clk_property $drv_handle
 			#gen_xppu $drv_handle
 			gen_power_domains $drv_handle
+			gen_domain_data $drv_handle
 		}
 	}
 
