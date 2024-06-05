@@ -53,11 +53,24 @@
         set use_gt_ch4_hdmi [hsi get_property CONFIG.C_Use_GT_CH4_HDMI [hsi::get_cells -hier $drv_handle]]
         
 
+        set Rx_No_Of_Channels [hsi get_property CONFIG.C_Rx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
+	for {set ch 0} {$ch < $Rx_No_Of_Channels} {incr ch} {
+		set rxpinname "vid_phy_rx_axi4s_ch$ch"
+		set channelip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $rxpinname]
+		if {[llength $channelip] && [llength [hsi::get_mem_ranges $channelip]]} {
+			set phy_node [create_node -n "${rxpinname}${channelip}" -l ${drv_handle}rxphy_lane${ch} -p $node -d $dts_file]
+			add_prop "$phy_node" "#phy-cells" 4 int $dts_file 1
+		}
+	}
         set tx_no_of_channels [hsi get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
-        for {set ch 0} {$ch < $tx_no_of_channels} {incr ch} {
-                set phy_node [create_node -n "vphy_lane" -u $ch -l vphy_lane$ch -p $node -d $dts_file]
-                add_prop "$phy_node" "#phy-cells" 4 int $dts_file
-        }
+	for {set ch 0} {$ch < $tx_no_of_channels} {incr ch} {
+		set txpinname "vid_phy_tx_axi4s_ch$ch"
+		set channelip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $txpinname]
+		if {[llength $channelip] && [llength [hsi::get_mem_ranges $channelip]]} {
+			set phy_node [create_node -n "${txpinname}${channelip}" -l ${drv_handle}txphy_lane${ch} -p $node -d $dts_file]
+			add_prop "$phy_node" "#phy-cells" 4 int $dts_file 1
+		}
+	}
 	set rfreq 0
 	set afreq 0
         set transceiver [hsi get_property CONFIG.Transceiver [hsi::get_cells -hier $drv_handle]]
