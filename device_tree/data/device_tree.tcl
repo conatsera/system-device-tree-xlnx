@@ -720,6 +720,63 @@ proc gen_afi_node {} {
 			}
 			add_prop $amba_pl_node "firmware-name" "$hw_name" string $dts 1
 		}
+		if {[string match -nocase $family "zynq"]} {
+			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
+			add_prop $amba_pl_node "firmware-name" "$hw_name.bin" string $dts 1
+			set zynq_periph [hsi::get_cells -hier -filter {IP_NAME == processing_system7}]
+			set avail_param [common::list_property [hsi::get_cells -hier $zynq_periph]]
+			set pl_clk_buf_props "CONFIG.PCW_FPGA_FCLK0_ENABLE CONFIG.PCW_FPGA_FCLK1_ENABLE CONFIG.PCW_FPGA_FCLK2_ENABLE CONFIG.PCW_FPGA_FCLK3_ENABLE"
+			foreach prop ${pl_clk_buf_props} {
+				if {[lsearch -nocase $avail_param $prop] >= 0} {
+					set val [hsi::get_property $prop [hsi::get_cells -hier $zynq_periph]]
+					if {[string match -nocase $val "1"]} {
+						set index [lsearch $pl_clk_buf_props $prop]
+						set clk_num [expr {15 + $index}]
+						set clocking_node [create_node -n "clocking${index}" -l "clocking${index}" -p $amba_pl_node -d $dts]
+						add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
+						add_prop "${clocking_node}" "clocks" "clkc $clk_num" reference $dts 1
+						add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
+						add_prop "${clocking_node}" "#clock-cells" 0 int $dts 1
+						add_prop "${clocking_node}" "assigned-clocks" "clkc $clk_num" reference $dts 1
+						set freq [hsi::get_property CONFIG.PCW_FPGA${index}_PERIPHERAL_FREQMHZ [hsi::get_cells -hier $zynq_periph]]
+						add_prop "${clocking_node}" "assigned-clock-rates" [scan [expr $freq * 1000000] "%d"] int $dts 1
+					}
+				}
+			}
+
+			set pl_afi_buf_props "CONFIG.C_USE_S_AXI_HP0 CONFIG.C_USE_S_AXI_HP1 CONFIG.C_USE_S_AXI_HP2 CONFIG.C_USE_S_AXI_HP3"
+			foreach prop ${pl_afi_buf_props} {
+				if {[lsearch -nocase $avail_param $prop] >= 0} {
+					set val [hsi::get_property $prop [hsi::get_cells -hier $zynq_periph]]
+					if {[string match -nocase $val "1"]} {
+						set index [lsearch $pl_afi_buf_props $prop]
+						set afi [hsi::get_cells -hier -filter "NAME==ps7_afi_${index}"]
+						set afi_param [common::list_property [hsi::get_cells -hier "$afi"]]
+						if {[lsearch -nocase $afi_param "CONFIG.C_S_AXI_BASEADDR"] >= 0} {
+							set base_addr [hsi::get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $afi]]
+						}
+						if {[lsearch -nocase $afi_param "CONFIG.C_S_AXI_HIGHADDR"] >= 0} {
+							set high_addr [hsi::get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $afi]]
+						}
+						set size [format 0x%x [expr {${high_addr} - ${base_addr} + 1}]]
+						set reg "$base_addr $size"
+						regsub -all {^0x} $base_addr {} addr
+						set addr [string tolower $addr]
+						set node [create_node -l "afi${index}" -n "afi${index}" -u $addr -p $amba_pl_node -d "pl.dtsi"]
+						add_prop $node "compatible" "xlnx,afi-fpga" string $dts 1
+						add_prop $node "#address-cells" "1" int $dts 1
+						add_prop $node "#size-cells" "0" int $dts 1
+						add_prop $node "status" "okay" string $dts 1
+						add_prop $node "reg" "$reg" hexlist $dts 1
+						if {[lsearch -nocase $avail_param "CONFIG.C_S_AXI_HP${index}_DATA_WIDTH"] >= 0} {
+							set val [hsi::get_property CONFIG.C_S_AXI_HP${index}_DATA_WIDTH [hsi::get_cells -hier $zynq_periph]]
+							set bus_width [get_axi_datawidth $val]
+							add_prop $node "xlnx,afi-width" "$bus_width" int $dts 1
+						}
+					}
+				}
+			}
+		}
 		set pr_regions [hsi::get_cells -hier -filter BD_TYPE==BLOCK_CONTAINER]
 		foreach rp $pr_regions {
 			set intf_pins [::hsi::get_intf_pins -of_objects $rp]
