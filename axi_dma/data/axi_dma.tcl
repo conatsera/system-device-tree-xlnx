@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -47,6 +47,7 @@
             dtg_warning "$drv_handle connected ip is NULL for the pin M_AXIS_MM2S"
         }
         set is_xxv [axi_dma_get_connected_ip $drv_handle "M_AXIS_MM2S"]
+        add_prop "$node" "#dma-cells" 1 int "pl.dtsi"
 
         if { $axiethernetfound || $is_xxv == 1} {
             set compatstring "xlnx,eth-dma"

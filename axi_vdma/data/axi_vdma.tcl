@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -38,6 +38,7 @@
                 set vdma_count 0
         }
         set dts_file [set_drv_def_dts $drv_handle]
+        add_prop "$node" "#dma-cells" 1 int "pl.dtsi"
 
         # check for C_ENABLE_DEBUG parameters
         # C_ENABLE_DEBUG_INFO_15 - Enable S2MM Frame Count Interrupt bit

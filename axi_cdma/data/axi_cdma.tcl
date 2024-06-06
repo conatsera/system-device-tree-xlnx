@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -52,6 +52,7 @@
         incr cdma_count
         set drvname [get_drivers $drv_handle]
 
+        add_prop "$node" "#dma-cells" 1 int "pl.dtsi"
         set common_file "$path/device_tree/data/config.yaml"
         set mainline_ker [get_user_config $common_file -mainline_kernel]
 

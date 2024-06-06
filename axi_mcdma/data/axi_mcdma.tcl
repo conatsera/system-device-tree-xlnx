@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 #
 # This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
         if { [llength $dma_count] == 0 } {
                 set dma_count 0
         }
+        add_prop "$node" "#dma-cells" 1 int "pl.dtsi"
         set axiethernetfound 0
         set connected_ip [get_connected_stream_ip $mcdma_ip "M_AXIS_MM2S"]
         if { [llength $connected_ip] } {
