@@ -333,6 +333,31 @@
                 add_prop $eth_node "phy-mode" "${linerate}g$phytype" string "pl.dtsi"
             }
         }
+        if {$ip_name == "ethernet_1_10_25g"} {
+            add_prop $node "managed" "in-band-status" string $dts_file
+            set phytype [string tolower [hsi get_property CONFIG.BASE_R_KR $eth_ip]]
+            set linerate [hsi get_property CONFIG.LINE_RATE $eth_ip]
+            if {$phytype == "1000base-x"} {
+                add_prop $node phy-mode "$phytype" string $dts_file
+            } else {
+                add_prop $node phy-mode "${linerate}g$phytype" string $dts_file
+            }
+            if {$core == 0} {
+                pldt set $node compatible "\"xlnx,ethernet-1-10-25g-2.7\""
+            }
+            if { $core!= 0 && [llength $eth_node]} {
+                set compatible [pldt get $node compatible]
+                set compatible [string trimright $compatible "\""]
+                set compatible [string trimleft $compatible "\""]
+                add_prop $eth_node "compatible" $compatible string "pl.dtsi"
+                add_prop $eth_node "managed" "in-band-status" string $dts_file
+                if {$phytype == "1000base-x"} {
+                    add_prop $eth_node "phy-mode" "$phytype" string $dts_file
+                } else {
+                    add_prop $eth_node "phy-mode" "${linerate}g$phytype" string "pl.dtsi"
+                }
+            }
+        }
         if {$ip_name == "usxgmii"} {
             pldt set $node compatible "\"xlnx,xxv-usxgmii-ethernet-1.0\""
             # phy-mode is usxgmii in this case ip_name also same
