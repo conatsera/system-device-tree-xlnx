@@ -54,9 +54,6 @@
                             if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
                                     continue
                             }
-                            if {[string match -nocase [hsi get_property IP_NAME $ip] "axis_register_slice"]} {
-				    continue
-                            }
                             set connectip [get_connect_ip $ip $master_intf $dts_file]
                             if {[llength $connectip]} {
                                     set hdmi_rx_node [create_node -n "endpoint" -l hdmirx_out$drv_handle -p $port_node -d $dts_file]
@@ -71,58 +68,73 @@
             }
     }
 
+	set phy_names ""
+	set phys ""
+	set link_data0 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA0_IN"]
+	if {[llength $link_data0]} {
+		set ip_mem_handles [hsi::get_mem_ranges $link_data0]
+		if {[llength $ip_mem_handles]} {
+			set link_data0_inst $link_data0
+			set link_data0 [hsi::get_property IP_NAME $link_data0]
+			if {[string match -nocase $link_data0 "v_hdmi_phy1"] || [string match -nocase $link_data0 "hdmi_gt_controller"]} {
+				append phy_names " " "hdmi-phy0"
+				append phys  "${link_data0_inst}rxphy_lane0 0 1 1 0>,"
+			}
+		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA0_IN is NULL...check the design"
+	}
 
-    set link_data1 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA1_IN"]
-    if {[llength $link_data1]} {
-        set ip_mem_handles [hsi::get_mem_ranges $link_data1]
-        if {[llength $ip_mem_handles]} {
-                set link_data1 [hsi get_property IP_NAME $link_data1]
-                if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
-                        append phy_names " " "hdmi-phy1"
-                        append phys  "vphy_lane1 0 1 1 0>, "
-                }
-        }
-    } else {
-        dtg_warning "Connected stream of LINK_DATA1_IN is NULL...check the design"
-    }
+	set link_data1 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA1_IN"]
+	if {[llength $link_data1]} {
+		set ip_mem_handles [hsi::get_mem_ranges $link_data1]
+		if {[llength $ip_mem_handles]} {
+			set link_data1_inst $link_data1
+			set link_data1 [hsi::get_property IP_NAME $link_data1]
+			if {[string match -nocase $link_data1 "v_hdmi_phy1"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
+				append phy_names " " "hdmi-phy1"
+				append phys  " <&${link_data1_inst}rxphy_lane1 0 1 1 0>,"
+			}
+		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
+	}
 
-    set link_data2 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA2_IN"]
-    if {[llength $link_data2]} {
-        set ip_mem_handles [hsi::get_mem_ranges $link_data2]
-        if {[llength $ip_mem_handles]} {
-                set link_data2 [hsi get_property IP_NAME $link_data2]
-                if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
-                        append phy_names " " "hdmi-phy2"
-                        append phys " <&vphy_lane2 0 1 1 0>, "
-                }
-        }
-    } else {
-        dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
-    }
-       set link_data3 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA3_IN"]
-    if {[llength $link_data3]} {
-        set ip_mem_handles [hsi::get_mem_ranges $link_data3]
-        if {[llength $ip_mem_handles]} {
-                set link_data3 [hsi get_property IP_NAME $link_data3]
-                if {[string match -nocase $link_data3 "vid_phy_controller"] || [string match -nocase $link_data3 "hdmi_gt_controller"]} {
-                        append phy_names " " "hdmi-phy3"
-                        append phys " <&vphy_lane3 0 1 1 0"
-                }
-        }
-    } else {
-        dtg_warning "Connected stream of LINK_DATA3_IN is NULL...check the design"
-    }
+	set link_data2 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA2_IN"]
+	if {[llength $link_data2]} {
+		set ip_mem_handles [hsi::get_mem_ranges $link_data2]
+		if {[llength $ip_mem_handles]} {
+			set link_data2_inst $link_data2
+			set link_data2 [hsi::get_property IP_NAME $link_data2]
+			if {[string match -nocase $link_data2 "v_hdmi_phy1"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
+				append phy_names " " "hdmi-phy2"
+				append phys " <&${link_data2_inst}rxphy_lane2 0 1 1 0>,"
+			}
+		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
+	}
 
-
-   #Above the logic is return but this section is not required that why removing plus causing a issue. reason is mention in line 123
-   # if {![string match -nocase $phy_names ""]} {
-   #     add_prop "$node" "phy-names" $phy_names stringlist $dts_file
-   # }
-   # if {![string match -nocase $phys ""]} {
-   #below line is casuing the issue: """" ERROR (phandle_references): /amba_pl/v_hdmi_rxss1@a4020000: Reference to non-existent node or label "vphy_lane1" """""
-   #     add_prop "$node" "phys" $phys reference $dts_file 1
-   # }
-    set edid_ram_size [hsi get_property CONFIG.C_EDID_RAM_SIZE [hsi::get_cells -hier $drv_handle]]
+	set link_data3 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA3_IN"]
+	if {[llength $link_data3]} {
+		set ip_mem_handles [hsi::get_mem_ranges $link_data3]
+		if {[llength $ip_mem_handles]} {
+			set link_data3_inst $link_data3
+			set link_data3 [hsi::get_property IP_NAME $link_data3]
+			if {[string match -nocase $link_data3 "v_hdmi_phy1"] || [string match -nocase $link_data3 "hdmi_gt_controller"]} {
+				append phy_names " " "hdmi-phy3"
+				append phys " <&${link_data3_inst}rxphy_lane3 0 1 1 0"
+			}
+		} else {
+			dtg_warning "Connected stream of LINK_DATA3_IN is NULL...check the design"
+		}
+	}
+	if {![string match -nocase $phy_names ""]} {
+		add_prop "$node" "phy-names" $phy_names stringlist $dts_file 1
+	}
+	if {![string match -nocase $phys ""]} {
+		add_prop "$node" "phys" $phys reference $dts_file 1
+	}
     set include_hdcp_1_4 [hsi get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
     if {[string match -nocase $include_hdcp_1_4 "true"]} {
         add_prop "${node}" "xlnx,include-hdcp-1-4" "" boolean $dts_file
@@ -161,6 +173,27 @@
 		If this is incorrect, the peripheral $drv_handle will be non-functional"
 	}
         add_prop "${node}" "xlnx,axi-lite-freq-hz" $freq hexint $dts_file 1
+
+	set vid_clk_freq [hsi get_property CONFIG.C_VID_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,vid-clk-freq-khz" $vid_clk_freq hexint $dts_file 1
+	set frl_clk_freq [hsi get_property CONFIG.C_FRL_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,frl-clk-freq-khz" $frl_clk_freq hexint $dts_file 1
+	set max_frl_rate [hsi get_property CONFIG.C_MAX_FRL_RATE [hsi get_cells -hier $drv_handle]]
+	set inhex [format %x $max_frl_rate]
+	append frlrate "/bits/ 8 <0x$inhex>"
+	add_prop "${node}" "xlnx,max-frl-rate" $frlrate noformating $dts_file 1
+	set edid_ram_size [hsi get_property CONFIG.C_EDID_RAM_SIZE [hsi::get_cells -hier $drv_handle]]
+	set inhex [format %x $edid_ram_size]
+	append ramsize "/bits/ 16 <0x$inhex>"
+	add_prop "${node}" "xlnx,edid-ram-size" $ramsize noformating $dts_file 1
+	set in_ppc [hsi get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
+	set inhex [format %x $in_ppc]
+	append input_pixels_per_clock "/bits/ 8 <0x$inhex>"
+	add_prop "${node}" "xlnx,input-pixels-per-clock" $input_pixels_per_clock noformating $dts_file 1
+	set max_bpc [hsi get_property CONFIG.C_MAX_BITS_PER_COMPONENT [hsi::get_cells -hier $drv_handle]]
+	set inhex [format %x $max_bpc]
+	append max_bits_per_pixel "/bits/ 8 <0x$inhex>"
+	add_prop "${node}" "xlnx,max-bits-per-component" $max_bits_per_pixel noformating $dts_file 1
 
 }
 
