@@ -32,10 +32,11 @@
         if {[llength $link_data0]} {
                 set ip_mem_handles [hsi::get_mem_ranges $link_data0]
                 if {[llength $ip_mem_handles]} {
+			set link_data0_inst $link_data0
                         set link_data0 [hsi get_property IP_NAME $link_data0]
-                        if {[string match -nocase $link_data0 "vid_phy_controller"] || [string match -nocase $link_data0 "hdmi_gt_controller"]} {
+                        if {[string match -nocase $link_data0 "v_hdmi_phy1"] || [string match -nocase $link_data0 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy0"
-                                append phys  "vphy_lane0 0 1 1 1>,"
+                                append phys  "${link_data0_inst}txphy_lane0 0 1 1 1>,"
                         }
                 }
         } else {
@@ -45,10 +46,11 @@
         if {[llength $link_data1]} {
                 set ip_mem_handles [hsi::get_mem_ranges $link_data1]
                 if {[llength $ip_mem_handles]} {
+			set link_data1_inst $link_data1
                         set link_data1 [hsi get_property IP_NAME $link_data1]
-                        if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
+                        if {[string match -nocase $link_data1 "v_hdmi_phy1"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy1"
-                                append phys  " <&vphy_lane1 0 1 1 1>,"
+                                append phys  " <&${link_data1_inst}txphy_lane1 0 1 1 1>,"
                         }
                 }
         } else {
@@ -58,10 +60,25 @@
         if {[llength $link_data2]} {
                 set ip_mem_handles [hsi::get_mem_ranges $link_data2]
                 if {[llength $ip_mem_handles]} {
+			set link_data2_inst $link_data2
                         set link_data2 [hsi get_property IP_NAME $link_data2]
-                        if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
+                        if {[string match -nocase $link_data2 "v_hdmi_phy1"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy2"
-                                append phys " <&vphy_lane2 0 1 1 1"
+                                append phys " <&${link_data2_inst}txphy_lane2 0 1 1 1>,"
+                        }
+                }
+        } else {
+                dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
+        }
+        set link_data3 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA3_OUT"]
+        if {[llength $link_data3]} {
+                set ip_mem_handles [hsi::get_mem_ranges $link_data3]
+                if {[llength $ip_mem_handles]} {
+			set link_data3_inst $link_data3
+                        set link_data3 [hsi get_property IP_NAME $link_data3]
+                        if {[string match -nocase $link_data3 "v_hdmi_phy1"] || [string match -nocase $link_data3 "hdmi_gt_controller"]} {
+                                append phy_names " " "hdmi-phy3"
+                                append phys " <&${link_data3_inst}txphy_lane2 0 1 1 1"
                         }
                 }
         } else {
@@ -69,13 +86,13 @@
         }
 	#Above the logic is return but this section is not required that why removing plus causing a issue. reason is mention in line 74
 
-	#if {![string match -nocase $phy_names ""]} {
-	#	add_prop "$node" "phy-names" $phy_names stringlist $dts_file
-	#}
-	#if {![string match -nocase $phys ""]} {
+	if {![string match -nocase $phy_names ""]} {
+		add_prop "$node" "phy-names" $phy_names stringlist $dts_file
+	}
+	if {![string match -nocase $phys ""]} {
 	#below line is casuing the issue: """" ERROR (phandle_references): /amba_pl/v_hdmi_txss1@a4020000: Reference to non-existent node or label "vphy_lane1" """""
-	#	add_prop "$node" "phys" $phys reference $dts_file
-	#}
+		add_prop "$node" "phys" $phys reference $dts_file
+	}
 
         set include_hdcp_1_4 [hsi get_property CONFIG.C_INCLUDE_HDCP_1_4 [hsi::get_cells -hier $drv_handle]]
         if {[string match -nocase $include_hdcp_1_4 "true"]} {
@@ -127,10 +144,82 @@
 		If this is incorrect, the peripheral $drv_handle will be non-functional"
 	}
        add_prop "${node}" "xlnx,axi-lite-freq-hz" $freq hexint $dts_file 1
+	set ports_node [create_node -n "ports" -l hdmitx_ports$drv_handle -p $node -d $dts_file]
+	add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
+	add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
+	set hdmi_port_node [create_node -n "port" -l encoder_hdmi_port$drv_handle -u 0 -p $ports_node -d $dts_file]
+	add_prop "$hdmi_port_node" "reg" 0 int $dts_file 1
+	set hdmitx_in_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "VIDEO_IN"]
+	if {![llength $hdmitx_in_ip]} {
+		dtg_warning "$drv_handle pin VIDEO_IN is not connected...check your design"
+	}
+	set inip ""
+	set axis_sw_nm ""
+	foreach inip $hdmitx_in_ip {
+		if {[llength $inip]} {
+			set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $hdmitx_in_ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+			set ip_mem_handles [hsi::get_mem_ranges $inip]
+			if {[llength $ip_mem_handles]} {
+				set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
+				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+					gen_frmbuf_rd_node $inip $drv_handle $hdmi_port_node $dts_file
+				}
+			} else {
+				if {[string match -nocase [hsi::get_property IP_NAME $inip] "system_ila"]} {
+					continue
+				}
+				# Check if slice is connected to axis_switch(NM)
+				if {[string match -nocase [hsi::get_property IP_NAME $inip] "axis_register_slice"]} {
+					set intf "S_AXIS"
+					set streamin_ip [get_connected_stream_ip [hsi::get_cells -hier $inip] $intf]
+					if {[llength $streamin_ip]} {
+						set ip_mem_handles [hsi::get_mem_ranges $streamin_ip]
+					}
+					if {![llength $ip_mem_handles] && [string match -nocase [hsi::get_property IP_NAME $streamin_ip] "axis_switch"]} {
+						set inip "$streamin_ip"
+						set axis_sw_nm "1"
+					}
+				}
+				if {![llength $axis_sw_nm]} {
+					set inip [get_in_connect_ip $inip $master_intf]
+				}
+				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+					gen_frmbuf_rd_node $inip $drv_handle $hdmi_port_node $dts_file
+				}
+			}
+		}
+	}
 
+	set vid_clk_freq [hsi get_property CONFIG.C_VID_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,vid-clk-freq-khz" $vid_clk_freq hexint $dts_file 1
+	set frl_clk_freq [hsi get_property CONFIG.C_FRL_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,frl-clk-freq-khz" $frl_clk_freq hexint $dts_file 1
 
     }
 
+proc gen_frmbuf_rd_node {ip drv_handle hdmi_port_node dts_file} {
+	set frmbuf_rd_node [create_node -n "endpoint" -l encoder$drv_handle -p $hdmi_port_node -d $dts_file]
+	add_prop "$frmbuf_rd_node" "remote-endpoint" $ip$drv_handle reference $dts_file 1
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	set dt_overlay [get_user_config $common_file -dt_overlay]
+	if {$dt_overlay} {
+		set bus_node "amba"
+	} else {
+		set bus_node "amba_pl: amba_pl"
+	}
+	set pl_display [create_node -n "drm-pl-disp-drv$drv_handle" -l "v_pl_disp$drv_handle" -p $bus_node -d $dts_file]
+	add_prop $pl_display "compatible" "xlnx,pl-disp" string $dts_file 1
+	add_prop $pl_display "dmas" "$ip 0" reference $dts_file 1
+	add_prop $pl_display "dma-names" "dma0" string $dts_file 1
+#	add_prop "${pl_display}" "/* Fill the field xlnx,vformat based on user requirement */" "" comment
+	add_prop $pl_display "xlnx,vformat" "YUYV" string $dts_file 1
+	set pl_display_port_node [create_node -n "port" -l pl_display_port$drv_handle -u 0 -p $pl_display -d $dts_file]
+	add_prop "$pl_display_port_node" "reg" 0 int $dts_file 1
+	set pl_disp_crtc_node [create_node -n "endpoint" -l $ip$drv_handle -p $pl_display_port_node -d $dts_file]
+	add_prop "$pl_disp_crtc_node" "remote-endpoint" encoder$drv_handle reference $dts_file 1
+}
 proc hdmi_txss_add_hier_instances {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
