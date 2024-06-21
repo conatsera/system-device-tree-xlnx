@@ -155,6 +155,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "mipi_dphy" "mipi_dphy"
 	dict set ::sdtgen::namespacelist "mipi_rx_phy" "mipi_rx_phy"
 	dict set ::sdtgen::namespacelist "mipi_tx_phy" "mipi_tx_phy"
+	dict set ::sdtgen::namespacelist "v_demosaic" "demosaic"
+	dict set ::sdtgen::namespacelist "v_gamma_lut" "gamma_lut"
 	dict set ::sdtgen::namespacelist "i2s_receiver" "i2s_receiver"
 	dict set ::sdtgen::namespacelist "i2s_transmitter" "i2s_transmitter"
 	dict set ::sdtgen::namespacelist "ps7_i2c" "iicps"
