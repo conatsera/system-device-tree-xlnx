@@ -36,60 +36,123 @@
         set dsi_datatype [hsi get_property CONFIG.DSI_DATATYPE [hsi::get_cells -hier $drv_handle]]
 	set pixel [pixel_format $dsi_datatype]
         add_prop "$node" "xlnx,dsi-datatype" $pixel hexint $dts_file 1
+	if {[string match -nocase $dsi_datatype "RGB888"]} {
+		add_prop "$node" "xlnx,dsi-data-type" 0 int $dts_file 1
+	} elseif {[string match -nocase $dsi_datatype "RGB666_L"]} {
+		add_prop "$node" "xlnx,dsi-data-type" 1 int $dts_file 1
+	} elseif {[string match -nocase $dsi_datatype "RGB666_P"]} {
+		add_prop "$node" "xlnx,dsi-data-type" 2 int $dts_file 1
+	} elseif {[string match -nocase $dsi_datatype "RGB565"]} {
+		add_prop "$node" "xlnx,dsi-data-type" 3 int $dts_file 1
+	}
 
 	set highaddr [hsi get_property CONFIG.C_HIGHADDR  [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,highaddr" $highaddr hexint $dts_file 1
+
+	set panel_node [create_node -n "simple_panel" -l simple_panel$drv_handle -u 0 -p $node -d $dts_file]
+#	add_prop "${panel_node}" "/* User needs to add the panel node based on their requirement */" "" comment $dts_file 1
+	add_prop "$panel_node" "reg" 0 int $dts_file 1
+	add_prop "$panel_node" "compatible" "auo,b101uan01" string $dts_file 1
+
+        set dsitx_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS"]
+        if {![llength $dsitx_inip]} {
+            dtg_warning "$drv_handle pin S_AXIS is not connected ..check your design"
+        }
+
+        set port_node [create_node -n "port" -l encoder_dsi_port$drv_handle -u 0 -p $node -d $dts_file]
+        add_prop "$port_node" "reg" 0 int $dts_file
+        set inip ""
+        foreach inip $dsitx_inip {
+            if {[llength $inip]} {
+                set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $inip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+                set ip_mem_handles [hsi::get_mem_ranges $inip]
+                if {[llength $ip_mem_handles]} {
+                    set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
+                    if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+                        gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+                    }
+                } else {
+                    if {[string match -nocase [hsi get_property IP_NAME $inip] "system_ila"]} {
+                        continue
+                    }
+                    set inip [get_in_connect_ip $inip $master_intf]
+                    if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+                        gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+                    }
+                }
+            }
+        }
+
+        if {[llength $inip]} {
+            set dsitx_in_end ""
+            set dsitx_remo_in_end ""
+            if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
+                set dsitx_in_end [dict get $end_mappings $inip]
+                dtg_verbose "dsitx_in_end:$dsitx_in_end"
+            }
+            if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
+                set dsitx_remo_in_end [dict get $remo_mappings $inip]
+                dtg_verbose "dsitx_remo_in_end:$dsitx_remo_in_end"
+            }
+            if {[llength $dsitx_remo_in_end]} {
+                set dsitx_node [create_node -n "endpoint" -l $dsitx_remo_in_end -p $port_node -d $dts_file]
+            }
+            if {[llength $dsitx_in_end]} {
+                add_prop "$dsitx_node" "remote-endpoint" $dsitx_in_end reference $dts_file
+            }
+        }
 
 	dsitx_add_hier_instances $drv_handle
 
     }
 
-proc dsitx_add_hier_instances {drv_handle} {
-	set node [get_node $drv_handle]
-	set subsystem_base_addr [get_baseaddr $drv_handle]
-	set dts_file [set_drv_def_dts $drv_handle]
-	hsi::current_hw_instance $drv_handle
+    proc dsitx_add_hier_instances {drv_handle} {
+        set node [get_node $drv_handle]
+        set subsystem_base_addr [get_baseaddr $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        hsi::current_hw_instance $drv_handle
 
-	#Example :
-	#hsi::get_cells -hier -filter {IP_NAME==mipi_dsi2_tx_ctrl}
-	#dsitx_0_tx
-	#
+        #Example :
+        #hsi::get_cells -hier -filter {IP_NAME==mipi_dsi2_tx_ctrl}
+        #dsitx_0_tx
+        #
 
-	set ip_subcores [dict create]
-	dict set ip_subcores "mipi_dsi_tx_ctrl" "dsi-tx"
-	dict set ip_subcores "mipi_dphy" "dphy"
+        set ip_subcores [dict create]
+        dict set ip_subcores "mipi_dsi_tx_ctrl" "dsi-tx"
+        dict set ip_subcores "mipi_dphy" "dphy"
 
-	foreach ip [dict keys $ip_subcores] {
-		set ip_handle [hsi::get_cells -hier -filter "IP_NAME==$ip"]
-		set ip_prefix [dict get $ip_subcores $ip]
-		if {![string_is_empty $ip_handle]} {
-			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
-			add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
-		} else {
-			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
-		}
-	}
-
-	hsi::current_hw_instance
-}
-proc pixel_format {pxl_format} {
-	set pixel_format ""
-            switch $pxl_format {
-                   "RGB565" {
-                           set pixel_format 0x0E
-                   }
-                   "RGB666_P" {
-                           set pixel_format 0x1E
-                   }
-                   "RGB666_L" {
-                           set pixel_format 0x2E
-                   }
-                   "RGB888" {
-                           set pixel_format 0x3E
-                   }
-                   "Compressed" {
-                           set pixel_format 0x0B
-                   }
+        foreach ip [dict keys $ip_subcores] {
+            set ip_handle [hsi::get_cells -hier -filter "IP_NAME==$ip"]
+            set ip_prefix [dict get $ip_subcores $ip]
+            if {![string_is_empty $ip_handle]} {
+                add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
+                add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
+            } else {
+                add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
             }
+        }
+
+        hsi::current_hw_instance
+    }
+
+    proc pixel_format {pxl_format} {
+        set pixel_format ""
+        switch $pxl_format {
+            "RGB565" {
+                set pixel_format 0x0E
+            }
+            "RGB666_P" {
+                set pixel_format 0x1E
+            }
+            "RGB666_L" {
+                set pixel_format 0x2E
+            }
+            "RGB888" {
+                set pixel_format 0x3E
+            }
+            "Compressed" {
+                set pixel_format 0x0B
+            }
+        }
 	return $pixel_format
-}
+    }
