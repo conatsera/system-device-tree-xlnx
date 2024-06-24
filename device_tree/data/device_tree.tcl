@@ -2233,11 +2233,10 @@ proc gen_cpu_cluster {} {
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}]
 	if {[llength $microblaze_proc] > 0} {
 		set root_cell_size 1
-		set plnode [create_node -l "amba_pl" -n "amba_pl" -d ${default_dts} -p root]
 		foreach proc $microblaze_proc {
 			set count [get_microblaze_nr $proc]
 			set proc_name [hsi get_property IP_NAME $proc]
-			set cpu_node [create_node -l "cpus_${proc_name}_${count}" -n "cpus_${proc_name}" -u $count -d ${default_dts} -p $plnode]
+			set cpu_node [create_node -l "cpus_${proc_name}_${count}" -n "cpus_${proc_name}" -u $count -d ${default_dts} -p root]
 			set cell_size [dict get $mb_dict_64_bit $proc]
 			if { $root_cell_size < $cell_size } {
 				set root_cell_size $cell_size

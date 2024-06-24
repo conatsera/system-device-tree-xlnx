@@ -5009,7 +5009,7 @@ proc gen_mb_interrupt_property {cpu_handle {intr_port_name ""}} {
 	set bus_name [detect_bus_name $cpu_handle]
 	set count [get_microblaze_nr $cpu_handle]
 	set proc_name  [get_ip_property $cpu_handle IP_NAME]
-	set rt_node [create_node -n "cpus_${proc_name}" -l "cpus_${proc_name}_${count}" -u $count -d "pl.dtsi" -p $bus_name]
+	set rt_node [create_node -n "cpus_${proc_name}" -l "cpus_${proc_name}_${count}" -u $count -d "pl.dtsi" -p root]
 	set cpu_node [create_node -n "cpu" -l "$cpu_handle" -u $count -d "pl.dtsi" -p $rt_node]
 
 	if {[is_pl_ip $intc]} {

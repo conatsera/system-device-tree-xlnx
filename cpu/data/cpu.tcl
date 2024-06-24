@@ -33,10 +33,9 @@
         }
         # is_64_bit_mb must be set before calling add_or_get_bus_node proc to set the
         # correct address-cells and size-cells in amba_pl node
-        set bus_name [add_or_get_bus_node $drv_handle "pl.dtsi"]
         set nr [get_microblaze_nr $drv_handle]
         set ip_name [get_ip_property $drv_handle IP_NAME]
-        set node [create_node -n "cpus_${ip_name}" -l "cpus_${ip_name}_${nr}" -u $nr -d "pl.dtsi" -p $bus_name]
+        set node [create_node -n "cpus_${ip_name}" -l "cpus_${ip_name}_${nr}" -u $nr -d "pl.dtsi" -p root]
         add_prop $node "compatible" "cpus,cluster" string "pl.dtsi"
         add_prop $node "#cpu-mask-cells" 1 int "pl.dtsi"
         add_prop $node #address-cells 1 int "pl.dtsi"
