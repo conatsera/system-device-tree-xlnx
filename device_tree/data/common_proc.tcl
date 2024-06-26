@@ -5830,7 +5830,11 @@ proc ip2drv_prop {ip_name prop_name_list} {
 				set type "hexint"
 			}
 		} elseif {[string is integer -strict $prop]} {
-			set type "int"
+			if {[regexp -nocase {([a-f])} $prop]} {
+			   set type "hexint"
+			} else {
+			   set type "int"
+			}
 		} elseif {[string is boolean -strict $prop]} {
 			set type "boolean"
 		} elseif {[string is wordchar -strict $prop]} {
