@@ -1552,7 +1552,6 @@ Generates system device tree based on args given in:
 			gen_peripheral_nodes $drv_handle "create_node_only"
 			gen_reg_property $drv_handle
 			gen_compatible_property $drv_handle
-			gen_ctrl_compatible $drv_handle
 			gen_drv_prop_from_ip $drv_handle
 			gen_interrupt_property $drv_handle
 			gen_clk_property $drv_handle
@@ -2479,63 +2478,6 @@ proc update_alias {} {
 		set value [lindex [split [get_node [lindex $design_coresight 0]] ": "] 0]
 		set alias_node [create_node -n "aliases" -p root -d "system-top.dts"]
 		add_prop $alias_node $conf_name $value aliasref $default_dts
-	}
-}
-
-proc gen_ctrl_compatible {drv_handle} {
-	global is_versal_net_platform
-	set node [get_node $drv_handle]
-	set dts [set_drv_def_dts $drv_handle]
-	set baseaddr [get_baseaddr $drv_handle noprefix]
-	set baseaddr "0x${baseaddr}"
-	set family [get_hw_family]
-        dict set pslist 0xf1020000 "xlnx,pmc-gpio-1.0"
-	dict set pslist 0xf0280000 "xlnx,iomodule-3.1"
-	dict set pslist 0xf11c0000 "xlnx,zynqmp-csudma-1.0"
-	dict set pslist 0xf11d0000 "xlnx,zynqmp-csudma-1.0"
-	dict set pslist 0xf1270000 "xlnx,versal-sysmon"
-	dict set pslist 0xff990000 "xlnx,xppu"
-	dict set pslist 0xf1310000 "xlnx,xppu"
-	dict set pslist 0xf1300000 "xlnx,xppu"
-	dict set pslist 0xf1000000 "cdns,i2c-r1p14 cdns,i2c-r1p10"
-	dict set pslist 0xfd390000 "xlnx,xmpu"
-	dict set pslist 0xf12f0000 "xlnx,xmpu"
-	dict set pslist 0xff980000 "xlnx,xmpu"
-	dict set pslist 0xf6080000 "xlnx,xmpu"
-	dict set pslist 0xf6220000 "xlnx,xmpu"
-	dict set pslist 0xf6390000 "xlnx,xmpu"
-	dict set pslist 0xf6500000 "xlnx,xmpu"
-	if {[string match -nocase $family "versal"]} {
-		# What to do for Versal Net
-		if { !$is_versal_net_platform } {
-			set ctrl_addr_list "0xF11E0000 0xFF9C0000 0xF11F0000 0xF12D0000 0xF12E4000
-					0xF12E6000 0xF12E8000 0xF12EA000 0xF12EC000 0xF12D2000
-					0xF12D4000 0xF12D6000 0xF12D8000 0xF12DA000 0xF12DC000
-					0xF12DE000 0xF12E0000 0xF12E2000 0xF12EE000 0xF12B0000
-					0xFD1A0000 0xFF5E0000 0xF1260000 0xF1200000 0xF1250000
-					0xF1240000 0xFD360000 0xFD380000 0xFD700000 0xFD390000
-					0xFD610000 0xFD690000 0xFE5F0000 0xFFC9F000 0xFCB40000
-					0xFD370000 0xFE600000 0xF1330000 0xFF130000 0xFF140000
-					0xFF9B0000 0xFE400000 0xFE000000 0xFF0A0000 0xFF080000
-					0xFF410000 0xFF510000 0xFF990000 0xFF980000 0xF1160000
-					0xF11C0000 0xF11D0000 0xF1110000 0xF1020000 0xF1000000
-					0xF1080000 0xF1070000 0xF1060000 0xF0040000 0xF1320000
-					0xF1100000 0xF1270000 0xF11A0000 0xF12F0000 0xF1310000
-					0xF1300000 0xF0081000 0xF0082000 0xF0100000 0xF0280000
-					0xF0310000 0xF0282000 0xF0281000 0xF0284000 0xF0283000
-					0xF0300000 0xFFC90000 0xFFC80000 0xFFC88000 0xFFCF0000
-					0xFFCB0000 0xFFCA0000 0xFFCD0000 0xFFCC0000 0xFFCE0000
-					0xF0050000 0xF1210000 0xF1220000 0xF1230000 0xFD390000
-					0xF12F0000 0xFF980000 0xF6080000 0xF6220000 0xF6390000
-					0xF6500000"
-			if {[lsearch -nocase $ctrl_addr_list $baseaddr] >= 0} {
-				if {[catch {set tmp [dict get $pslist $baseaddr]} msg]} {
-					pcwdt append $node compatible "\ \, \"xlnx,ctrlregs\""
-				} else {
-					add_prop $node compatible "$tmp xlnx,ctrlregs" stringlist $dts
-				}
-			}
-		}
 	}
 }
 
