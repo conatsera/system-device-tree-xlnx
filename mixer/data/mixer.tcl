@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -38,37 +38,69 @@
                 add_prop "$node" "xlnx,enable-csc-coefficient-register" boolean $dts_file
         }
 
-        set mixer_port_node [create_node -n "port" -l crtc_mixer_port$drv_handle -u 0 -p $node -d $dts_file]
-        add_prop "$mixer_port_node" "reg" 0 int $dts_file
         set mix_outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
         if {![llength $mix_outip]} {
                 dtg_warning "$drv_handle pin m_axis_video is not connected ...check your design"
         }
+
+        set mixer_port_node [create_node -n "port" -l crtc_mixer_port$drv_handle -u 0 -p $node -d $dts_file]
+        add_prop "$mixer_port_node" "reg" 0 int $dts_file
+
+
         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $mix_outip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-        foreach outip $mix_outip {
-        if {[llength $outip] != 0} {
+	foreach outip $mix_outip {
+            if {[llength $outip] != 0} {
+                if {![string match -nocase [hsi::get_property IP_NAME $outip] "v_frmbuf_wr"]} {
+                    set mixer_port_node [create_node -n "port" -l crtc_mixer_port$drv_handle -u 0 -p $node -d $dts_file]
+                    add_prop "$mixer_port_node" "reg" 0 int $dts_file
+                    set mixer_crtc [create_node -n "endpoint" -l mixer_crtc$drv_handle -p $mixer_port_node -d $dts_file]
+                } else {
+                    set ports_node [create_node -n "ports" -l crtc_mixer_ports$drv_handle -p $node -d $dts_file]
+                    add_prop "$ports_node" "#address-cells" 1 int $dts_file
+                    add_prop "$ports_node" "#size-cells" 0 int $dts_file
+                    set mixer_port0 [create_node -n "port" -l crtc_mixer_port$drv_handle -u 0 -p $ports_node -d $dts_file]
+                    add_prop "$mixer_port0" "reg" 0 int $dts_file
+                    set mixer0_endpoint [create_node -n "endpoint" -l mixer_crtc$drv_handle -p $mixer_port0 -d $dts_file]
+                    set mixer_port1 [create_node -n "port" -l crtc_mixer_port1$drv_handle -u 1 -p $ports_node -d $dts_file]
+                    add_prop "$mixer_port1" "reg" 1 int $dts_file
+                    set mixer1_endpoint [create_node -n "endpoint" -l mixer_out$drv_handle -p $mixer_port1 -d $dts_file]
+                }
+
                 set ip_mem_handles [hsi::get_mem_ranges $outip]
                 if {[llength $ip_mem_handles]} {
-                        set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
-                        set mixer_crtc [create_node -n "endpoint" -l mixer_crtc$drv_handle -p $mixer_port_node -d $dts_file]
-                        gen_endpoint $drv_handle "mixer_crtc$drv_handle"
-#                        add_prop "$mixer_crtc" "remote-endpoint" $outip$drv_handle reference $dts_file
-#                        gen_remoteendpoint $drv_handle "$outip$drv_handle"
+                    gen_endpoint $drv_handle "mixer_crtc$drv_handle"
+                    if {[string match -nocase [hsi::get_property IP_NAME $outip] "v_dp_txss1"]} {
+                        add_prop "$mixer_crtc" "remote-endpoint" "dptx_out$outip" reference $dts_file
+                        gen_remoteendpoint $drv_handle "dptx_out$outip"
+                    } elseif {[string match -nocase [hsi::get_property IP_NAME $outip] "v_frmbuf_wr"]} {
+                        set mix_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
+                        if {[llength $mix_inip]} {
+                            add_prop "$mixer0_endpoint" "remote-endpoint" "sca_out$mix_inip" reference $dts_file
+                        }
+                        add_prop "$mixer1_endpoint" "remote-endpoint" "v_frmbuf_wr$outip" reference $dts_file
+                    } else {
+                        add_prop "$mixer_crtc" "remote-endpoint" $outip$drv_handle reference $dts_file
+                        gen_remoteendpoint $drv_handle "$outip$drv_handle"
+                    }
                 } else {
-                        if {[string match -nocase [hsi get_property IP_NAME $outip] "system_ila"]} {
-                                continue
+                    if {[string match -nocase [hsi::get_property IP_NAME $outip] "system_ila"]} {
+                        continue
+                    }
+                    set connectip [get_connect_ip $outip $master_intf $dts_file]
+                    if {[llength $connectip]} {
+                        gen_endpoint $drv_handle "mixer_crtc$drv_handle"
+                        if {[string match -nocase [hsi::get_property IP_NAME $outip] "v_dp_txss1"]} {
+                            add_prop "$mixer_crtc" "remote-endpoint" "dptx_out$outip" reference $dts_file
+                            gen_remoteendpoint $drv_handle "dptx_out$outip"
+                        } else {
+                            add_prop "$mixer_crtc" "remote-endpoint" $connectip$drv_handle reference $dts_file
+                            gen_remoteendpoint $drv_handle "$connectip$drv_handle"
                         }
-                        set connectip [get_connect_ip $outip $master_intf $dts_file]
-                        if {[llength $connectip]} {
-                                set mixer_crtc [create_node -n "endpoint" -l mixer_crtc$drv_handle -p $mixer_port_node -d $dts_file]
-                                gen_endpoint $drv_handle "mixer_crtc$drv_handle"
-                         #       add_prop "$mixer_crtc" "remote-endpoint" $connectip$drv_handle reference $dts_file
-                         #       gen_remoteendpoint $drv_handle "$connectip$drv_handle"
-                        }
+                    }
                 }
-        } else {
+            } else {
                 dtg_warning "$drv_handle pin m_axis_video is not connected ...check your design"
-        }
+            }
         }
         for {set layer 0} {$layer < $num_layers} {incr layer} {
                         switch $layer {
@@ -609,6 +641,7 @@
         set logo_height [hsi get_property CONFIG.MAX_LOGO_ROWS [hsi::get_cells -hier $drv_handle]]
         add_prop "$mixer_node1" "xlnx,logo-height" $logo_height int $dts_file
 #        mixer_add_handles $drv_handle
+	mixer_gen_gpio_reset $drv_handle $node $dts_file
     }
 
     proc mixer_gen_video_format {num node drv_handle max_data_width dts_file} {
@@ -727,4 +760,41 @@
         
     }
 
+    proc mixer_gen_gpio_reset {drv_handle node dts_file} {
+        set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "ap_rst_n"]]
+        foreach pin $pins {
+            set sink_periph [hsi::get_cells -of_objects $pin]
+            if {[llength $sink_periph]} {
+                set sink_ip [hsi::get_property IP_NAME $sink_periph]
+                if {[string match -nocase $sink_ip "xlslice"]} {
+                    set gpio [hsi::get_property CONFIG.DIN_FROM $sink_periph]
+                    set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
+                    foreach pin $pins {
+                        set periph [hsi::get_cells -of_objects $pin]
+                        if {[llength $periph]} {
+                            set ip [hsi::get_property IP_NAME $periph]
+                            if { $ip in { "versal_cips" "ps_wizard" }} {
+                                # As versal has only one bank0 for MIOs
+                                set gpio [expr $gpio + 26]
+                                add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
+                                break
+                            }
+                            if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
+                                set gpio [expr $gpio + 78]
+                                add_prop "$node" "reset-gpios" "gpio $gpio 1" reference $dts_file
+                                break
+                            }
+                            if {[string match -nocase $ip "axi_gpio"]} {
+                                add_prop "$node" "reset-gpios" "$periph $gpio 1" reference $dts_file
+                            }
+                        } else {
+                            dtg_warning "$drv_handle:peripheral is NULL for the $pin $periph"
+                        }
+                    }
+                }
+            } else {
+                dtg_warning "$drv_handle:peripheral is NULL for the $pin $sink_periph"
+            }
+        }
+    }
 
