@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -89,17 +89,17 @@ proc vproc_ss_generate {drv_handle} {
             if {[string match -nocase [hsi::get_property IP_NAME $scaoutip] "axis_broadcaster"]} {
                 set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
                 gen_endpoint $drv_handle "sca_out$drv_handle"
-                add_prop "$sca_node" "remote-endpoint" $scaoutip$drv_handle reference
+                add_prop "$sca_node" "remote-endpoint" $scaoutip$drv_handle reference $dts_file
                 gen_remoteendpoint $drv_handle "$scaoutip$drv_handle"
                 }
-            }
+        }
 
         foreach outip $scaoutip {
             if {[llength $outip]} {
                 if {[string match -nocase [hsi::get_property IP_NAME $outip] "system_ila"]} {
                     continue
                 }
-            set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $outip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+            set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $outip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
             set ip_mem_handles [hsi::get_mem_ranges $outip]
             if {[llength $ip_mem_handles]} {
                 set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
@@ -116,7 +116,7 @@ proc vproc_ss_generate {drv_handle} {
                     vpss_gen_sca_frm_buf_node $outip $drv_handle $dts_file
                 }
                 } else {
-                    set connectip [get_connect_ip $outip $master_intf]
+                    set connectip [get_connect_ip $outip $master_intf $dts_file]
                     if {[llength $connectip]} {
                     set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
                     gen_endpoint $drv_handle "sca_out$drv_handle"
@@ -199,7 +199,7 @@ proc vproc_ss_generate {drv_handle} {
                     if {[string match -nocase [hsi::get_property IP_NAME $ip] "system_ila"]} {
                         continue
                     }
-                    set connectip [get_connect_ip $ip $master_intf]
+                    set connectip [get_connect_ip $ip $master_intf $dts_file]
                     if {[llength $connectip]} {
                         set cscoutnode [create_node -n "endpoint" -l csc_out$drv_handle -p $port1_node -d $dts_file]
                         gen_endpoint $drv_handle "csc_out$drv_handle"
@@ -270,7 +270,8 @@ proc vproc_ss_generate {drv_handle} {
                                   }
                                   if {[regexp -nocase $drv_handle "$sca_remo_in_end" match]} {
                                       if {[llength $sca_remo_in_end]} {
-                                          set sca_node [create_node -n "endpoint" -l $sca_remo_in_end -p $port_node -d $dts_file]
+                                          set
+#endif sca_node [create_node -n "endpoint" -l $sca_remo_in_end -p $port_node -d $dts_file]
                                       }
                                       if {[llength $sca_in_end]} {
                                           add_prop "$sca_node" "remote-endpoint" $sca_in_end reference $dts_file
