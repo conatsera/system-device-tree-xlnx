@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -113,6 +113,44 @@
                 append vid_formats " " "xv15"
         }
         add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
+
+        multiscaler_gen_gpio_reset $drv_handle $node $dts_file
     }
 
-
+    proc multiscaler_gen_gpio_reset {drv_handle node dts_file} {
+        set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "ap_rst_n"]]
+        foreach pin $pins {
+            set sink_periph [hsi::get_cells -of_objects $pin]
+            if {[llength $sink_periph]} {
+                set sink_ip [hsi::get_property IP_NAME $sink_periph]
+                if {[string match -nocase $sink_ip "xlslice"]} {
+                    set gpio [hsi::get_property CONFIG.DIN_FROM $sink_periph]
+                    set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
+                    foreach pin $pins {
+                        set periph [hsi::get_cells -of_objects $pin]
+                        if {[llength $periph]} {
+                            set ip [hsi::get_property IP_NAME $periph]
+                                if { $ip in { "versal_cips" "ps_wizard" }} {
+                                    # As versal has only one bank0 for MIOs
+                                    set gpio [expr $gpio + 26]
+                                    add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
+                                    break
+                                }
+                                if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
+                                    set gpio [expr $gpio + 78]
+                                    add_prop "$node" "reset-gpios" "gpio $gpio 1" reference $dts_file
+                                    break
+                                }
+                                if {[string match -nocase $ip "axi_gpio"]} {
+                                    add_prop "$node" "reset-gpios" "$periph $gpio 1" reference $dts_file
+                                }
+                        } else {
+                            dtg_warning "$drv_handle:peripheral is NULL for the $pin $periph"
+                        }
+                    }
+                }
+            } else {
+                dtg_warning "$drv_handle:peripheral is NULL for the $pin $sink_periph"
+            }
+        }
+    }
