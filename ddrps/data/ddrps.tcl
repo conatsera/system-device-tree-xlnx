@@ -80,15 +80,17 @@
     }
 
     proc ddrps_generate {drv_handle} {
-        global ddr_baseaddr
-        set dts_file "system-top.dts"
         set reg_prop [ddrps_gen_reg_prop $drv_handle]
-        set system_node [create_node -l "${drv_handle}_memory" -n "memory" -u $ddr_baseaddr -p root -d $dts_file]
-        add_prop $system_node reg $reg_prop hexlist $dts_file
-        add_prop $system_node "device_type" "memory" string $dts_file
-        add_prop $system_node "compatible" [gen_compatible_string $drv_handle] string $dts_file
-        add_prop $system_node "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
-        add_prop $system_node "memory_type" "memory" string $dts_file
+        if {![string_is_empty $reg_prop]} {
+            global ddr_baseaddr
+            set dts_file "system-top.dts"
+            set system_node [create_node -l "${drv_handle}_memory" -n "memory" -u $ddr_baseaddr -p root -d $dts_file]
+            add_prop $system_node reg $reg_prop hexlist $dts_file
+            add_prop $system_node "device_type" "memory" string $dts_file
+            add_prop $system_node "compatible" [gen_compatible_string $drv_handle] string $dts_file
+            add_prop $system_node "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
+            add_prop $system_node "memory_type" "memory" string $dts_file
+        }
     }
 
     proc ddrps_get_reg_format {base high name 32_bit_format} {

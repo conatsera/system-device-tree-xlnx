@@ -13,17 +13,17 @@
 #
 
 proc linear_spi_generate {drv_handle} {
-	set baseaddr [get_baseaddr $drv_handle no_prefix]
-	set memory_node [create_node -n "memory" -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
-	add_prop "${memory_node}" "device_type" "memory" string "system-top.dts" 1
-	set mem_compatible_string [gen_compatible_string $drv_handle]
-	if {![string_is_empty $mem_compatible_string]} {
-		add_prop ${memory_node} "compatible" "${mem_compatible_string}-memory" string "system-top.dts"
-	}
 	set reg [gen_reg_property $drv_handle "skip_ps_check" 0]
 	if {![string_is_empty $reg]} {
-		add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
-	}
-	add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
-	add_prop "${memory_node}" "memory_type" "linear_flash" string "system-top.dts"
+	    set baseaddr [get_baseaddr $drv_handle no_prefix]
+	    set memory_node [create_node -n "memory" -l "${drv_handle}_memory" -u $baseaddr -p root -d "system-top.dts"]
+	    add_prop "${memory_node}" "device_type" "memory" string "system-top.dts" 1
+	    set mem_compatible_string [gen_compatible_string $drv_handle]
+	    if {![string_is_empty $mem_compatible_string]} {
+		    add_prop ${memory_node} "compatible" "${mem_compatible_string}-memory" string "system-top.dts"
+        }
+	    add_prop "${memory_node}" "reg" $reg hexlist "system-top.dts" 1
+	    add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
+	    add_prop "${memory_node}" "memory_type" "linear_flash" string "system-top.dts"
+    }
 }
