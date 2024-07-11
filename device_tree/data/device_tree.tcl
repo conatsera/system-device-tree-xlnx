@@ -1652,6 +1652,9 @@ Generates system device tree based on args given in:
 		delete_tree pcwdt root
 		write_dt systemdt root "$dir/system-top.dts"
 		move_match_node_to_top pldt root "misc_clk_*"
+		move_match_node_to_top pldt root "afi*"
+		move_match_node_to_top pldt root "clocking*"
+		move_match_node_to_top pldt root "fpga_PR*"
 		write_dt pldt root "$dir/pl.dtsi"
 		write_dt pcwdt root "$dir/pcw.dtsi"
 		if {$rm_xsa_exist != 0} {
