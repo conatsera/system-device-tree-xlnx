@@ -1845,24 +1845,25 @@ proc proc_mapping {} {
 			dict set mem_proc_key_map "microblaze" "$val"
 			dict set mem_proc_key_map "microblaze_riscv" "$val"
 
-			set mem_map_key [dict get $mem_proc_key_map $iptype]
-			if {$pl_ip} {
-				if { ![dict exists $dup_periph_handle $periph] } {
+			if {![catch {set mem_map_key [dict get $mem_proc_key_map $iptype]} msg]} {
+				if {$pl_ip} {
+					if { ![dict exists $dup_periph_handle $periph] } {
+						set_memmap $temp $mem_map_key $regprop
+					} else {
+						set_memmap [dict get $dup_periph_handle $periph] $mem_map_key $regprop
+					}
+				} elseif {[lsearch $linear_spi_list $ipname] < 0} {
 					set_memmap $temp $mem_map_key $regprop
-				} else {
-					set_memmap [dict get $dup_periph_handle $periph] $mem_map_key $regprop
 				}
-			} elseif {[lsearch $linear_spi_list $ipname] < 0} {
-				set_memmap $temp $mem_map_key $regprop
-			}
 
-			if {[lsearch $linear_spi_list $ipname] >= 0 || $ipname in {"axi_emc"}} {
-				set temp [get_node "${periph}_memory"]
-				if {[llength $temp] > 1} {
-					set temp [lindex [split $temp ":"] 0]
-				}
-				if {![string_is_empty $temp]} {
-					set_memmap $temp $mem_map_key $regprop
+				if {[lsearch $linear_spi_list $ipname] >= 0 || $ipname in {"axi_emc"}} {
+					set temp [get_node "${periph}_memory"]
+					if {[llength $temp] > 1} {
+						set temp [lindex [split $temp ":"] 0]
+					}
+					if {![string_is_empty $temp]} {
+						set_memmap $temp $mem_map_key $regprop
+					}
 				}
 			}
 		}
