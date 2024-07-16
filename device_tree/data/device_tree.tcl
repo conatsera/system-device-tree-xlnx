@@ -2194,64 +2194,42 @@ proc gen_cpu_cluster {} {
 }
 
 proc update_cpu_node {} {
+	# Purpose is to delete the APU nodes. These nodes are defined in platform specific
+	# dtsi files. There are few platforms where general purpose boards have say quad
+	# cores but some of the boards have dual cores only (ZynqMP cg devices). To have
+	# proper cpu listing for linux, the extra cpu nodes from static files have to be
+	# deleted. In order to remove these nodes, all the references corresponding to
+	# these nodes also have to be removed. Removing all the existing references is a
+	# challenge and error prone. Platforms like Versal Net and Versal Gen2 with A78
+	# processors have clusters and the node name is not easy to decode. It would
+	# involve complicated logic to remove cpu nodes along with all its references.
+	# Popular known use case is only for ZYNQMP CG devices and DTG contains
+	# valid logic only for ZynqMP.
+
+	global apu_proc_ip
+	if {$apu_proc_ip != "psu_cortexa53"} {
+		return
+	}
+
 	set default_dts "system-top.dts"
-	set proctype [get_hw_family]
-	global is_versal_net_platform
-    	if {[string match -nocase $proctype "versal"] } {
-    		if { $is_versal_net_platform } {
-    			set current_proc "psx_cortexa78_"
-        		set total_cores 16
-    		} else {
-    			set current_proc "psv_cortexa72_"
-        		set total_cores 2
+	set apu_cores_in_design [hsi::get_cells -hier -filter "IP_NAME == ${apu_proc_ip}"]
+	set len_apu_cores_in_design [llength $apu_cores_in_design]
+
+	if {$len_apu_cores_in_design < 4} {
+		set delete_node_label "cpus-a53@0"
+		set cpu_node [create_node -n $delete_node_label -d "system-top.dts" -p root]
+		for {set i $len_apu_cores_in_design} {$i < 4} {incr i} {
+			add_prop $delete_node_label "/delete-node/ cpu@$i" boolean "system-top.dts"
     		}
-    	} elseif {[is_zynqmp_platform $proctype]} {
-        	set current_proc "psu_cortexa53_"
-        	set total_cores 4
-    	} elseif {[string match -nocase $proctype "zynq"] } {
-        	set current_proc "ps7_cortexa9_"
-        	set total_cores 2
-    	} else {
-        	set current_proc ""
-    	}
-
-    	if {[string compare -nocase $current_proc ""] == 0} {
-        	return
-    	}
-    	if {[string match -nocase $proctype "versal"]} {
-        	set procs [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-        	set pnames ""
-		foreach proc_name $procs {
-              		if {[regexp "psv_cortexa72*" $proc_name match] || [regexp "psx_cortexa78*" $proc_name match]} {
-	             		append pnames " " $proc_name
-              		}
-        	}
-        	set a72cores [llength $pnames]
-        	if {[string match -nocase $a72cores $total_cores]} {
-	     	return
-        	}
-    	}
-    	#getting boot arguments
-    	set proc_instance 0
-    	for {set i 0} {$i < $total_cores} {incr i} {
-        	set proc_name [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] $i]
-        	if {[llength $proc_name] == 0} {
-			set cpu_node [create_node -n "cpus" -d "system-top.dts" -p root]
-			add_prop "cpus" "/delete-node/ cpu@$i" boolean "system-top.dts"
-            		continue
-        	}
-		if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $proc_name]] "microblaze"] ||
-		[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $proc_name]] "microblaze_riscv"]} {
-			return
+		# Update the existing interrupt-affinity property of pmu node that contains apu references.
+		set intr_affinity ""
+		set pmu_node [create_node -n pmu -d "system-top.dts" -p root]
+		for {set i 0} {$i < $len_apu_cores_in_design} {incr i} {
+			append intr_affinity "<&psu_cortexa53_$i>, "
 		}
-        	if {[string match -nocase $proc_name "$current_proc$i"] } {
-            		continue
-        	} else {
-			set cpu_node [create_node -n "cpus" -d $default_dts -p root]
-			add_prop "cpus" "/delete-node/ cpu@$i" boolean "system-top.dts"
-
-        	}
-    	}
+		set intr_affinity [string trimright $intr_affinity ", "]
+		add_prop $pmu_node "interrupt-affinity" $intr_affinity noformating "system-top.dts"
+	}
 }
 
 proc update_alias {} {
