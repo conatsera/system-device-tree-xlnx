@@ -89,6 +89,16 @@
 	set drpclk_freq [format "%X" $rfreq]
         add_prop "${node}" "xlnx,drpclk-freq" $drpclk_freq hexint $dts_file 1
 
+	set speedgrade [hsi get_property CONFIG.C_SPEEDGRADE [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,speedgrade" $speedgrade stringlist $dts_file 1
+
+	set linerate [hsi get_property CONFIG.Tx_Max_GT_Line_Rate [hsi get_cells -hier $drv_handle]]
+	scan $linerate %d tx_gt_linerate
+	add_prop "${node}" "xlnx,tx-max-gt-line-rate" $tx_gt_linerate hexint $dts_file 1
+	set linerate [hsi get_property CONFIG.Rx_Max_GT_Line_Rate [hsi get_cells -hier $drv_handle]]
+	scan $linerate %d rx_gt_linerate
+	add_prop "${node}" "xlnx,rx-max-gt-line-rate" $rx_gt_linerate hexint $dts_file 1
+
         set gt_direction [hsi get_property CONFIG.C_GT_DIRECTION [hsi get_cells -hier $drv_handle]]
         switch $gt_direction {
                         "SIMPLEX_TX" {
@@ -101,8 +111,26 @@
                                 add_prop "${node}" "xlnx,gt-direction" $gt_direction  stringlist $dts_file 1
                         }
         }
+	# Get the number of Rx and Tx channels
+	set Rx_No_Of_Channels [hsi get_property CONFIG.C_Rx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
+	set Tx_No_Of_Channels [hsi get_property CONFIG.C_Tx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
 
+	# Create PHY nodes for both Rx and Tx channels
+	for {set ch 0} {$ch < $Rx_No_Of_Channels} {incr ch} {
+		create_phy_node "rx" $ch $drv_handle $node $dts_file
+	}
 
+	for {set ch 0} {$ch < $Tx_No_Of_Channels} {incr ch} {
+		create_phy_node "tx" $ch $drv_handle $node $dts_file
+	}
     }
 
 
+proc create_phy_node {channel_type ch drv_handle node dts_file} {
+	set pinname "${channel_type}_axi4s_ch$ch"
+	set channelip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $pinname]
+	if {[llength $channelip] && [llength [hsi::get_mem_ranges $channelip]]} {
+		set phy_node [create_node -n "${pinname}${channelip}" -l "${drv_handle}${channel_type}phy_lane${ch}" -p $node -d $dts_file]
+		add_prop "$phy_node" "#phy-cells" 4 int $dts_file 1
+	}
+}
