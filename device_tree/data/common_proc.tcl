@@ -524,6 +524,9 @@ proc get_node args {
 	if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
 		set dev_type "psv_fpd_maincci"
 	}
+	if {[string_is_empty $dev_type] || [string_is_empty $addr]} {
+		return ""
+	}
 	if {[is_ps_ip $handle]} {
 		set ps_mapping [gen_ps_mapping]
 		if {[catch {set tmp [dict get $ps_mapping $addr label]} msg]} {
