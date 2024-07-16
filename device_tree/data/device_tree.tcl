@@ -303,7 +303,9 @@ proc print_usage args {
             -dir              Directory where the dt files will be generated
 	    -include_dts      DTS file to be include into final device tree
             -debug            Enable DTG++ debug
-            -trace            Enable DTG++ traces} 
+            -trace            Enable DTG++ traces
+            -zocl             Create zocl node in device tree. Possible options: enable/disable. Default option: disable
+	}
         return $help_str
 }
 
@@ -336,7 +338,7 @@ proc set_dt_param args {
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
                                 -dir {set env(dir) [Pop args 1]}
                                 -repo {set env(REPO) [Pop args 1]}
-                                -dt_zocl {set env(dir) [Pop args 1]}
+                                -zocl {set env(zocl) [Pop args 1]}
                                 -include_dts {set env(include_dts) [Pop args 1]}
                                 -debug {set env(debug) [Pop args 1]}
                                 -verbose {set env(verbose) [Pop args 1]}
@@ -385,8 +387,10 @@ proc get_dt_param args {
                        if {[catch {set val $env(debug)} msg ]} {
 				set val "disable"
 			}
-               } -dt_zocl {
-                       if {[catch {set val $env(dt_zocl)} msg ]} {}
+               } -zocl {
+                       if {[catch {set val $env(zocl)} msg ]} {
+				set val "disable"
+                       }
                } -include_dts {
                        if {[catch {set val $env(include_dts)} msg ]} {}
                } -help {
@@ -1149,106 +1153,6 @@ proc gen_zynqmp_opp_freq {} {
        }
 }
 
-proc gen_zocl_node {} {
-	global env
-	set path $env(REPO)
-	set common_file "$path/device_tree/data/config.yaml"
-	set zocl [get_user_config $common_file -dt_zocl]
-       set proctype [get_hw_family]
-       if {!$zocl} {
-               return
-       }
-       set ip_count 0
-       foreach ip [get_drivers] {
-            if {[is_pl_ip $ip]} {
-                incr ip_count
-                break
-            }
-       }
-	if {$ip_count == 0} {
-	    dtg_warning "dt_zocl enabled and No PL ip's found in specified design, skip adding zocl node"
-	    return
-	}
-       set dt_overlay [get_user_config $common_file -dt_overlay]
-       if {$dt_overlay} {
-               set bus_node "overlay2"
-       } else {
-               set bus_node "amba_pl"
-       }
-       set default_dts "pl.dtsi"
-       set zocl_node [create_node -n "zyxclmm_drm" -d ${default_dts} -p $bus_node]
-	if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "zynq"]} {
-               add_prop $zocl_node "compatible" "xlnx,zocl" string $default_dts
-       } else {
-               add_prop $zocl_node "compatible" "xlnx,zocl-versal" string $default_dts
-       }
-       set intr_ctrl [hsi::get_cells -hier -filter {IP_NAME == axi_intc}]
-	if {[llength $intr_ctrl]} {
-       set intr_ctrl_len [llength $intr_ctrl]
-       set int0 [lindex $intr_ctrl 0]
-       foreach ip [get_drivers] {
-               if {[string compare -nocase $ip $int0] == 0} {
-                       set target_handle $ip
-               }
-       }
-       set intr_ctrl [pldt get $target_handle interrupt-parent]
-       set intr_ctrl [string trimright $intr_ctrl ">"]
-       set intr_ctrl [string trimleft $intr_ctrl "<"]
-       set intr_ctrl [string trimleft $intr_ctrl "&"]
-
-       set int1 [lindex $intr_ctrl 1]
-       foreach ip [get_drivers] {
-               if {[string compare -nocase $ip $int1] == 0} {
-                       set target_handle $ip
-               }
-       }
-       set intr [pldt get $target_handle interrupt-parent]
-       set intr [string trimright $intr ">"]
-       set intr [string trimleft $intr "<"]
-       set intr [string trimleft $intr "&"]
-       switch $intr_ctrl_len {
-               "1"   {
-                       set ref [lindex $intr_ctrl 0]
-                       append ref " 0 4>, <&[lindex $intr_ctrl 0] 1 4>, <&[lindex $intr_ctrl 0] 2 4>, <&[lindex $intr_ctrl 0] 3 4>, <&[lindex $intr_ctrl 0] 4 4>, <&[lindex $intr_ctrl 0] 5 4>, <&[lindex $intr_ctrl 0] 6 4>, <&[lindex $intr_ctrl 0] 7 4>, <&[lindex $intr_ctrl 0] 8 4>, <&[lindex $intr_ctrl 0] 9 4>,
-<&[lindex $intr_ctrl 0] 10 4>, <&[lindex $intr_ctrl 0] 11 4>, <&[lindex $intr_ctrl 0] 12 4>, <&[lindex $intr_ctrl 0] 13 4>, <&[lindex $intr_ctrl 0] 14 4>,
-<&[lindex $intr_ctrl 0] 15 4>, <&[lindex $intr_ctrl 0] 16 4>, <&[lindex $intr_ctrl 0] 17 4>, <&[lindex $intr_ctrl 0] 18 4>, <&[lindex $intr_ctrl 0] 19 4>,
-<&[lindex $intr_ctrl 0] 20 4>, <&[lindex $intr_ctrl 0] 21 4>, <&[lindex $intr_ctrl 0] 22 4>, <&[lindex $intr_ctrl 0] 23 4>, <&[lindex $intr_ctrl 0] 24 4>,
-<&[lindex $intr_ctrl 0] 25 4>, <&[lindex $intr_ctrl 0] 26 4>, <&[lindex $intr_ctrl 0] 27 4>, <&[lindex $intr_ctrl 0] 28 4>, <&[lindex $intr_ctrl 0] 29 4>,
-<&[lindex $intr_ctrl 0] 30 4>, <&[lindex $intr_ctrl 0] 31 4 "
-                       add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
-               }
-               "2"   {
-                       set ref [lindex $intr_ctrl 0]
-                       append ref " 0 4>, <&[lindex $intr_ctrl 0] 1 4>, <&[lindex $intr_ctrl 0] 2 4>, <&[lindex $intr_ctrl 0] 3 4>, <&[lindex $intr_ctrl 0] 4 4>, <&[lindex $intr_ctrl 0] 5 4>, <&[lindex $intr_ctrl 0] 6 4>, <&[lindex $intr_ctrl 0] 7 4>, <&[lindex $intr_ctrl 0] 8 4>, <&[lindex $intr_ctrl 0] 9 4>, <&[lindex $intr_ctrl 0] 10 4>, <&[lindex $intr_ctrl 0] 11 4>, <&[lindex $intr_ctrl 0] 12 4>, <&[lindex $intr_ctrl 0] 13 4>, <&[lindex $intr_ctrl 0] 14 4>, <&[lindex $intr_ctrl 0] 15 4>, <&[lindex $intr_ctrl 0] 16 4>, <&[lindex $intr_ctrl 0] 17 4>, <&[lindex $intr_ctrl 0] 18 4>, <&[lindex $intr_ctrl 0] 19 4>, <&[lindex $intr_ctrl 0] 20 4>, <&[lindex $intr_ctrl 0] 21 4>, <&[lindex $intr_ctrl 0] 22 4>, <&[lindex $intr_ctrl 0] 23 4>, <&[lindex $intr_ctrl 0] 24 4>, <&[lindex $intr_ctrl 0] 25 4>, <&[lindex $intr_ctrl 0] 26 4>, <&[lindex $intr_ctrl 0] 27 4>, <&[lindex $intr_ctrl 0] 28 4>, <&[lindex $intr_ctrl 0] 29 4>, <&[lindex $intr_ctrl 0] 30 4>, <&[lindex $intr_ctrl 0] 31 4>, <&[lindex $intr_ctrl 1] 0 4>, <&[lindex $intr_ctrl 1] 1 4>, <&[lindex $intr_ctrl 1] 2 4>,  <&[lindex $intr_ctrl 1] 3 4>,  <&[lindex $intr_ctrl 1] 4 4>,  <&[lindex $intr_ctrl 1] 5 4>, <&[lindex $intr_ctrl 1] 6 4>, <&[lindex $intr_ctrl 1] 7 4>,  <&[lindex $intr_ctrl 1] 8 4>,  <&[lindex $intr_ctrl 1] 9 4>,  <&[lindex $intr_ctrl 1] 10 4>, <&[lindex $intr_ctrl 1] 11 4>, <&[lindex $intr_ctrl 1] 12 4>, <&[lindex $intr_ctrl 1] 13 4>, <&[lindex $intr_ctrl 1] 14 4>, <&[lindex $intr_ctrl 1] 15 4>, <&[lindex $intr_ctrl 1] 16 4>, <&[lindex $intr_ctrl 1] 17 4>, <&[lindex $intr_ctrl 1] 18 4>, <&[lindex $intr_ctrl 1] 19 4>, <&[lindex $intr_ctrl 1] 20 4>, <&[lindex $intr_ctrl 1] 21 4>, <&[lindex $intr_ctrl 1] 22 4>, <&[lindex $intr_ctrl 1] 23 4>, <&[lindex $intr_ctrl 1] 24 4>, <&[lindex $intr_ctrl 1] 25 4>, <&[lindex $intr_ctrl 1] 26 4>, <&[lindex $intr_ctrl 1] 27 4>, <&[lindex $intr_ctrl 1] 28 4>, <&[lindex $intr_ctrl 1] 29 4>, <&[lindex $intr_ctrl 1] 30 4 "
-               add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
-               }
-               "3" {
-                       set ref [lindex $intr_ctrl 0]
-                       append ref " 0 4>, <&[lindex $intr_ctrl 0] 1 4>, <&[lindex $intr_ctrl 0] 2 4>, <&[lindex $intr_ctrl 0] 3 4>, <&[lindex $intr_ctrl 0] 4 4>, <&[lindex $intr_ctrl 0] 5 4>, <&[lindex $intr_ctrl 0] 6 4>, <&[lindex $intr_ctrl 0] 7 4>, <&[lindex $intr_ctrl 0] 8 4>, <&[lindex $intr_ctrl 0] 9 4>, <&[lindex $intr_ctrl 0] 10 4>, <&[lindex $intr_ctrl 0] 11 4>, <&[lindex $intr_ctrl 0] 12 4>, <&[lindex $intr_ctrl 0] 13 4>, <&[lindex $intr_ctrl 0] 14 4>, <&[lindex $intr_ctrl 0] 15 4>, <&[lindex $intr_ctrl 0] 16 4>, <&[lindex $intr_ctrl 0] 17 4>, <&[lindex $intr_ctrl 0] 18 4>, <&[lindex $intr_ctrl 0] 19 4>, <&[lindex $intr_ctrl 0] 20 4>, <&[lindex $intr_ctrl 0] 21 4>, <&[lindex $intr_ctrl 0] 22 4>, <&[lindex $intr_ctrl 0] 23 4>, <&[lindex $intr_ctrl 0] 24 4>, <&[lindex $intr_ctrl 0] 25 4>, <&[lindex $intr_ctrl 0] 26 4>, <&[lindex $intr_ctrl 0] 27 4>, <&[lindex $intr_ctrl 0] 28 4>, <&[lindex $intr_ctrl 0] 29 4>, <&[lindex $intr_ctrl 0] 30 4>, <&[lindex $intr_ctrl 0] 31 4>, <&[lindex $intr_ctrl 1] 0 4>, <&[lindex $intr_ctrl 1] 1 4>, <&[lindex $intr_ctrl 1] 2 4>, <&[lindex $intr_ctrl 1] 2 4>, <&[lindex $intr_ctrl 1] 3 4>, <&[lindex $intr_ctrl 1] 4 4>, <&[lindex $intr_ctrl 1] 5 4>, <&[lindex $intr_ctrl 1] 6 4>, <&[lindex $intr_ctrl 1] 7 4>, <&[lindex $intr_ctrl 1] 8 4>, <&[lindex $intr_ctrl 1] 9 4>, <&[lindex $intr_ctrl 1] 10 4>, <&[lindex $intr_ctrl 1] 11 4>, <&[lindex $intr_ctrl 1] 12 4>, <&[lindex $intr_ctrl 1] 13 4>, <&[lindex $intr_ctrl 1] 14 4>, <&[lindex $intr_ctrl 1] 15 4>, <&[lindex $intr_ctrl 1] 16 4>, <&[lindex $intr_ctrl 1] 17 4>, <&[lindex $intr_ctrl 1] 18 4>, <&[lindex $intr_ctrl 1] 19 4>, <&[lindex $intr_ctrl 1] 20 4>, <&[lindex $intr_ctrl 1] 21 4>, <&[lindex $intr_ctrl 1] 22 4>, <&[lindex $intr_ctrl 1] 23 4>, <&[lindex $intr_ctrl 1] 24 4>, <&[lindex $intr_ctrl 1] 25 4>, <&[lindex $intr_ctrl 1] 26 4>, <&[lindex $intr_ctrl 1] 27 4>, <&[lindex $intr_ctrl 1] 28 4>, <&[lindex $intr_ctrl 1] 29 4>, <&[lindex $intr_ctrl 1] 30 4>, <&[lindex $intr_ctrl 1] 31 4>, <&[lindex $intr_ctrl 2] 0 4>, <&[lindex $intr_ctrl 2] 1 4>, <&[lindex $intr_ctrl 2] 2 4>, <&[lindex $intr_ctrl 2] 3 4>, <&[lindex $intr_ctrl 2] 4 4>, <&[lindex $intr_ctrl 2] 5 4>, <&[lindex $intr_ctrl 2] 6 4>, <&[lindex $intr_ctrl 2] 7 4>, <&[lindex $intr_ctrl 2] 8 4>, <&[lindex $intr_ctrl 2] 9 4>, <&[lindex $intr_ctrl 2] 10 4>, <&[lindex $intr_ctrl 2] 11 4>, <&[lindex $intr_ctrl 2] 12 4>, <&[lindex $intr_ctrl 2] 13 4>, <&[lindex $intr_ctrl 2] 14 4>, <&[lindex $intr_ctrl 2] 15 4>, <&[lindex $intr_ctrl 2] 16 4>, <&[lindex $intr_ctrl 2] 17 4>, <&[lindex $intr_ctrl 2] 18 4>, <&[lindex $intr_ctrl 2] 19 4>, <&[lindex $intr_ctrl 2] 20 4>, <&[lindex $intr_ctrl 2] 21 4>, <&[lindex $intr_ctrl 2] 22 4 >, <&[lindex $intr_ctrl 2] 23 4>, <&[lindex $intr_ctrl 2] 24 4>, <&[lindex $intr_ctrl 2] 25 4>, <&[lindex $intr_ctrl 2] 26 4>, <&[lindex $intr_ctrl 2] 27 4>, <&[lindex $intr_ctrl 2] 28 4>, <&[lindex $intr_ctrl 2] 29 4>, <&[lindex $intr_ctrl 2] 30 4 "
-               add_prop $zocl_node "interrupts-extended" $ref reference $default_dts
-               }
-       }
-    }
- 		set decouplers [hsi get_cells -hier -filter {IP_NAME == "dfx_decoupler"}]
-		set count 1
-		foreach decoupler $decouplers {
-			if { $count == 1 } {
-				add_prop "$zocl_node" "xlnx,pr-decoupler" "" boolean $default_dts
-			} else {
-				#zocl driver not supporting multiple decouplers so display warning.
-				dtg_warning "Multiple dfx_decoupler IPs found in the design,\
-					using pr-isolation-addr from [lindex [split $decouplers " "] 0] IP"
-				break
-			}
-			set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $decoupler]]
-			if {[llength $baseaddr]} {
-				set baseaddr "0x0 $baseaddr"
-				add_prop "$zocl_node" "xlnx,pr-isolation-addr" "$baseaddr" intlist $default_dts
-			}
-			incr count
-		}
-}
-
 proc gen_zynqmp_pinctrl {} {
        set default_dts "pcw.dtsi"
        set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
@@ -1369,6 +1273,8 @@ proc generate_sdt args {
 	global processor_ip_list
 	global linear_spi_list
 	global cur_hw_iss_data
+	global non_val_list
+	global non_val_ip_types
 
 	set linear_spi_list "psu_qspi_linear ps7_qspi_linear"
 
@@ -1395,6 +1301,9 @@ Generates system device tree based on args given in:
         }
 	if {[catch {set trace $env(trace)} msg]} {
 		set env(trace) "disable"
+	}
+	if {[catch {set zocl $env(zocl)} msg]} {
+		set env(zocl) "disable"
 	}
 	if {[catch {set xsa $env(xsa)} msg]} {
 		error "\[DTG++ ERROR]:	No xsa provided, please set the xsa \
@@ -1485,6 +1394,7 @@ Generates system device tree based on args given in:
 	set_microblaze_list
 	set_microblaze_riscv_list
 	suppress_hsi_warnings
+	get_pl_ip_list
 
 	# Generate properties only once if different instances of the same IP is 
 	# having a common base address. (e.g. mailbox connected to muliple 
@@ -1603,6 +1513,12 @@ Generates system device tree based on args given in:
         include_custom_dts
 	set proctype [get_hw_family]
 	set kernel_ver [get_user_config $common_file -kernel_ver]
+	if {[string match -nocase $env(zocl) "enable"]} {
+		if {$proctype in {"zynq" "zynqmp" "versal"}} {
+			source [file join $path "zocl" "data" "zocl.tcl"]
+			gen_zocl_node $proctype
+		}
+	}
 
     	if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
 		if {[string match -nocase $kernel_ver "none"]} {
@@ -1611,19 +1527,13 @@ Generates system device tree based on args given in:
 			gen_versal_clk
 			gen_zynqmp_opp_freq
 			gen_zynqmp_pinctrl
-			gen_zocl_node
 			if {[string match -nocase $proctype "versal"]} {
 				gen_edac_node
 				gen_ddrmc_node
 			}
 		}
     	}
-    	if {[string match -nocase $proctype "zynq"]} {
-		set mainline_ker [get_user_config $common_file -mainline_kernel]
-	       	if {[string match -nocase $mainline_ker "none"]} {
-			gen_zocl_node
-        	}
-    	}
+
 	update_alias
     	update_cpu_node
 	gen_r5_trustzone_config

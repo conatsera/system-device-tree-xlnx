@@ -19,5 +19,5 @@ dict_devicetree:
     board_dts: versal-vck190-reva
     dt_overlay: false
     output_dir: output_dts
-    dt_zocl: false
+    zocl: disable
 ---

@@ -432,7 +432,7 @@ proc get_user_config args {
         	set mainline_kernel [dict get $user mainline_kernel]
         	set kernel_ver [dict get $user kernel_ver]
         	set dir [dict get $user output_dir]
-        	set zocl [dict get $user dt_zocl]
+		set zocl [dict get $user zocl]
         	set param ""
         	switch -glob -- [lindex $args 1] {
                 	-repo {
@@ -453,7 +453,7 @@ proc get_user_config args {
 				set param $kernel_ver
 			} -dir {
 				set param $dir
-			} -dt_zocl {
+			} -zocl {
 				set param $zocl
                 	} default {
                         	error "get_user_config bad option - [lindex $args 0]"
@@ -2960,6 +2960,20 @@ proc add_or_get_dt_node args {
 	set node [eval "create_dt_node ${cmd}"]
 	set_cur_working_dts ${cur_working_dts}
 	return $node
+}
+
+# FIXME: Consolidate it with get_ip_type, is_pl_ip, is_ps_ip, check the usecase of nochk list
+proc get_pl_ip_list {} {
+	global non_val_list
+	global pl_ip_list
+	set pl_ip_list ""
+	set is_pl_ip_list [hsi get_cells -hier -filter IS_PL==1]
+	foreach drv_handle $is_pl_ip_list {
+		set ip_name [get_ip_property $drv_handle IP_NAME]
+		if {[lsearch -nocase $non_val_list $ip_name] < 0} {
+			lappend pl_ip_list $drv_handle
+		}
+	}
 }
 
 proc get_ip_type {ip_inst} {
