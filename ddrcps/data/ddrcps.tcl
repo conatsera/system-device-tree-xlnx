@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -52,6 +52,38 @@
                         add_prop $node "xlnx,brc-mapping" "1" hexint $dts_file
                 }
         }
+	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__BANK_ADDR_COUNT"] >= 0} {
+		set bang_bits [hsi get_property CONFIG.PSU__DDRC__BANK_ADDR_COUNT [hsi::get_cells -hier $zynq_periph]]
+		if {[string match -nocase $bang_bits "NA"]} {
+			add_prop $node "xlnx,bank-addr-bits" "0" hexint $dts_file
+		} else {
+			add_prop $node "xlnx,bank-addr-bits" $bang_bits hexint $dts_file
+		}
+	}
+	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__COL_ADDR_COUNT"] >= 0} {
+		set col_bits [hsi get_property CONFIG.PSU__DDRC__COL_ADDR_COUNT [hsi::get_cells -hier $zynq_periph]]
+		if {[string match -nocase $col_bits "NA"]} {
+			add_prop $node "xlnx,col-addr-bits" "0" hexint $dts_file
+		} else {
+			add_prop $node "xlnx,col-addr-bits" $col_bits hexint $dts_file
+		}
+	}
+	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__ROW_ADDR_COUNT"] >= 0} {
+		set row_bits [hsi get_property CONFIG.PSU__DDRC__ROW_ADDR_COUNT [hsi::get_cells -hier $zynq_periph]]
+		if {[string match -nocase $row_bits "NA"]} {
+			add_prop $node "xlnx,row-addr-bits" "0" hexint $dts_file
+		} else {
+			add_prop $node "xlnx,row-addr-bits" $row_bits hexint $dts_file
+		}
+	}
+	if {[lsearch -nocase $avail_param "CONFIG.PSU__DDRC__BG_ADDR_COUNT"] >= 0} {
+		set bg_bits [hsi get_property CONFIG.PSU__DDRC__BG_ADDR_COUNT [hsi::get_cells -hier $zynq_periph]]
+		if {[string match -nocase $bg_bits "NA"]} {
+			add_prop $node "xlnx,bg-addr-bits" "0" hexint $dts_file
+		} else {
+			add_prop $node "xlnx,bg-addr-bits" $bg_bits hexint $dts_file
+		}
+	}
     }
 
 
