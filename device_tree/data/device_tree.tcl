@@ -83,7 +83,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_cortexa9" "cpu_cortexa9"
 	dict set ::sdtgen::namespacelist "psu_cortexr5" "cpu_cortexr5"
 	dict set ::sdtgen::namespacelist "psv_cortexr5" "cpu_cortexr5"
-	dict set ::sdtgen::namespacelist "psx_cortexr52" "cpu_cortexr5"
+	dict set ::sdtgen::namespacelist "psx_cortexr52" "cpu_cortexr52"
 	dict set ::sdtgen::namespacelist "psx_cortexa78" "cpu_cortexa78"
 	dict set ::sdtgen::namespacelist "psu_crl_apb" "crl_apb"
 	dict set ::sdtgen::namespacelist "ps7_ddrc" "ddrcps"

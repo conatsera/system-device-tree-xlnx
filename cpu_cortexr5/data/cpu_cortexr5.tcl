@@ -21,8 +21,6 @@
                 set node [create_node -n "&psu_cortexr5_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         } elseif {[string match -nocase $ip_name "psv_cortexr5"]} {
                 set node [create_node -n "&psv_cortexr5_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
-        } elseif {[string match -nocase $ip_name "psx_cortexr52"]} {
-                set node [create_node -n "&psx_cortexr52_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
         } else {
                 error "Driver cpu_cortexr5 is not valid for given handle $drv_handle"
         }
