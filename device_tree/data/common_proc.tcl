@@ -373,12 +373,14 @@ proc set_hw_family {proclist} {
 	global pl_design
 	global design_family
 	global is_versal_net_platform
+	global is_versal_gen2_platform
 	global apu_proc_ip
 	set apu_proc_ip ""
 	set design_family ""
 	set pl_design 0
 	set ps_design 0
 	set is_versal_net_platform 0
+	set is_versal_gen2_platform 0
 
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
@@ -389,6 +391,9 @@ proc set_hw_family {proclist} {
 				set ps_design 1
 				set is_versal_net_platform 1
 				set apu_proc_ip "psx_cortexa78"
+				if {[llength [hsi::get_cells -hier -filter "IP_NAME==ps11"]]} {
+					set is_versal_gen2_platform 1
+				}
 			} "psv_cortexa72" {
 				set design_family "versal"
 				set ps_design 1
@@ -3135,75 +3140,163 @@ proc add_driver_prop {drv_handle dt_node prop} {
 
 proc gen_ps_mapping {} {
 	global is_versal_net_platform
+	global is_versal_gen2_platform
 	set family [get_hw_family]
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
 		if { $is_versal_net_platform } {
-			dict set def_ps_mapping eb330000 label ipi0
-			dict set def_ps_mapping eb340000 label ipi1
-			dict set def_ps_mapping eb350000 label ipi2
-			dict set def_ps_mapping eb360000 label ipi3
-			dict set def_ps_mapping eb370000 label ipi4
-			dict set def_ps_mapping eb380000 label ipi5
-			dict set def_ps_mapping eb3a0000 label ipi6
-			dict set def_ps_mapping eb3b0000 label ipi_nobuf1
-			dict set def_ps_mapping eb3b1000 label ipi_nobuf2
-			dict set def_ps_mapping eb3b2000 label ipi_nobuf3
-			dict set def_ps_mapping eb3b3000 label ipi_nobuf4
-			dict set def_ps_mapping eb3b4000 label ipi_nobuf5
-			dict set def_ps_mapping eb3b5000 label ipi_nobuf6
-			dict set def_ps_mapping eb310000 label ipi_psm
-			dict set def_ps_mapping eb320000 label ipi_pmc
-			dict set def_ps_mapping eb390000 label ipi_pmc_nobuf
-			dict set def_ps_mapping e2000000 label gic_a78
-			dict set def_ps_mapping eb9a0000 label gic_r52
-			dict set def_ps_mapping ebd00000 label adma0
-			dict set def_ps_mapping ebd10000 label adma1
-			dict set def_ps_mapping ebd20000 label adma2
-			dict set def_ps_mapping ebd30000 label adma3
-			dict set def_ps_mapping ebd40000 label adma4
-			dict set def_ps_mapping ebd50000 label adma5
-			dict set def_ps_mapping ebd60000 label adma6
-			dict set def_ps_mapping ebd70000 label adma7
-			dict set def_ps_mapping f1980000 label can0
-			dict set def_ps_mapping f1990000 label can1
-			dict set def_ps_mapping f11c0000 label dma0
-			dict set def_ps_mapping f11d0000 label dma1
-			dict set def_ps_mapping f19e0000 label gem0
-			dict set def_ps_mapping f19f0000 label gem1
-			dict set def_ps_mapping f19d0000 label gpio0
-			dict set def_ps_mapping f1020000 label gpio1
-			dict set def_ps_mapping f1940000 label i2c0
-			dict set def_ps_mapping f1950000 label i2c1
-			dict set def_ps_mapping f1948000 label i3c0
-			dict set def_ps_mapping f1958000 label i3c1
-			dict set def_ps_mapping	f0300000 label iomodule0
-			dict set def_ps_mapping f1010000 label ospi
-			dict set def_ps_mapping f1030000 label qspi
-			dict set def_ps_mapping f12a0000 label rtc
-			dict set def_ps_mapping f1040000 label sdhci0
-			dict set def_ps_mapping f1050000 label sdhci1
-			dict set def_ps_mapping f1920000 label serial0
-			dict set def_ps_mapping f1930000 label serial1
-			dict set def_ps_mapping f1270000 label sysmon0
-			dict set def_ps_mapping ec000000 label smmu
-			dict set def_ps_mapping f1960000 label spi0
-			dict set def_ps_mapping f1970000 label spi1
-			dict set def_ps_mapping f1dc0000 label ttc0
-			dict set def_ps_mapping f1dd0000 label ttc1
-			dict set def_ps_mapping f1de0000 label ttc2
-			dict set def_ps_mapping f1df0000 label ttc3
-			dict set def_ps_mapping f1e00000 label usb0
-			dict set def_ps_mapping f1e10000 label usb1
-			dict set def_ps_mapping ecc10000 label wwdt0
-			dict set def_ps_mapping ecd10000 label wwdt1
-			dict set def_ps_mapping ece10000 label wwdt2
-			dict set def_ps_mapping ecf10000 label wwdt3
-			dict set def_ps_mapping ea420000 label lpd_wwdt0
-			dict set def_ps_mapping ea430000 label lpd_wwdt1
-			dict set def_ps_mapping f03f0000 label pmc_wwdt
-			dict set def_ps_mapping f0800000 label coresight
-			dict set def_ps_mapping f1230000 label pmc_trng
+			if { $is_versal_gen2_platform } {
+				dict set def_ps_mapping eb330000 label ipi0
+				dict set def_ps_mapping eb340000 label ipi1
+				dict set def_ps_mapping eb350000 label ipi2
+				dict set def_ps_mapping eb360000 label ipi3
+				dict set def_ps_mapping eb370000 label ipi4
+				dict set def_ps_mapping eb380000 label ipi5
+				dict set def_ps_mapping eb3a0000 label ipi6
+				dict set def_ps_mapping eb3b0000 label ipi_nobuf1
+				dict set def_ps_mapping eb3b1000 label ipi_nobuf2
+				dict set def_ps_mapping eb3b2000 label ipi_nobuf3
+				dict set def_ps_mapping eb3b3000 label ipi_nobuf4
+				dict set def_ps_mapping eb3b4000 label ipi_nobuf5
+				dict set def_ps_mapping eb3b5000 label ipi_nobuf6
+				dict set def_ps_mapping eb310000 label ipi_psm
+				dict set def_ps_mapping eb320000 label ipi_pmc
+				dict set def_ps_mapping eb390000 label ipi_pmc_nobuf
+				dict set def_ps_mapping e2000000 label gic_a78
+				dict set def_ps_mapping eb9a0000 label gic_r52
+				dict set def_ps_mapping ebd00000 label adma0
+				dict set def_ps_mapping ebd10000 label adma1
+				dict set def_ps_mapping ebd20000 label adma2
+				dict set def_ps_mapping ebd30000 label adma3
+				dict set def_ps_mapping ebd40000 label adma4
+				dict set def_ps_mapping ebd50000 label adma5
+				dict set def_ps_mapping ebd60000 label adma6
+				dict set def_ps_mapping ebd70000 label adma7
+				dict set def_ps_mapping f199e000 label can0
+				dict set def_ps_mapping f199f000 label can1
+				dict set def_ps_mapping f19a0000 label can2
+				dict set def_ps_mapping f19a1000 label can3
+				dict set def_ps_mapping f11c0000 label dma0
+				dict set def_ps_mapping f11d0000 label dma1
+				dict set def_ps_mapping f1a60000 label gem0
+				dict set def_ps_mapping f1a70000 label gem1
+				dict set def_ps_mapping f1a50000 label gpio0
+				dict set def_ps_mapping f1020000 label gpio1
+				dict set def_ps_mapping f1940000 label i2c0
+				dict set def_ps_mapping f1948000 label i3c0
+				dict set def_ps_mapping f1950000 label i2c1
+				dict set def_ps_mapping f1958000 label i3c1
+				dict set def_ps_mapping f1960000 label i2c2
+				dict set def_ps_mapping f1968000 label i3c2
+				dict set def_ps_mapping f1970000 label i2c3
+				dict set def_ps_mapping f1978000 label i3c3
+				dict set def_ps_mapping f1980000 label i2c4
+				dict set def_ps_mapping f1988000 label i3c4
+				dict set def_ps_mapping f1990000 label i2c5
+				dict set def_ps_mapping f1998000 label i3c5
+				dict set def_ps_mapping f19a0000 label i2c6
+				dict set def_ps_mapping f19a8000 label i3c6
+				dict set def_ps_mapping f19b0000 label i2c7
+				dict set def_ps_mapping f19b8000 label i3c7
+				dict set def_ps_mapping	f0300000 label iomodule0
+				dict set def_ps_mapping f1010000 label ospi
+				dict set def_ps_mapping f1030000 label qspi
+				dict set def_ps_mapping f12a0000 label rtc
+				dict set def_ps_mapping f1040000 label sdhci0
+				dict set def_ps_mapping f1050000 label sdhci1
+				dict set def_ps_mapping f1920000 label serial0
+				dict set def_ps_mapping f1930000 label serial1
+				dict set def_ps_mapping f1270000 label sysmon0
+				dict set def_ps_mapping ec000000 label smmu
+				dict set def_ps_mapping f19c0000 label spi0
+				dict set def_ps_mapping f19d0000 label spi1
+				dict set def_ps_mapping f1e60000 label ttc0
+				dict set def_ps_mapping f1e70000 label ttc1
+				dict set def_ps_mapping f1e80000 label ttc2
+				dict set def_ps_mapping f1e90000 label ttc3
+				dict set def_ps_mapping f1ea0000 label ttc4
+				dict set def_ps_mapping f1eb0000 label ttc5
+				dict set def_ps_mapping f1ec0000 label ttc6
+				dict set def_ps_mapping f1ed0000 label ttc7
+				dict set def_ps_mapping f10b0000 label ufshc
+				dict set def_ps_mapping f1ee0000 label usb0
+				dict set def_ps_mapping f1ef0000 label usb1
+				dict set def_ps_mapping ecc10000 label wwdt0
+				dict set def_ps_mapping ecd10000 label wwdt1
+				dict set def_ps_mapping ece10000 label wwdt2
+				dict set def_ps_mapping ecf10000 label wwdt3
+				dict set def_ps_mapping ea420000 label lpd_wwdt0
+				dict set def_ps_mapping ea430000 label lpd_wwdt1
+				dict set def_ps_mapping f03f0000 label pmc_wwdt
+				dict set def_ps_mapping f0800000 label coresight
+				dict set def_ps_mapping f1230000 label pmc_trng
+			} else {
+				dict set def_ps_mapping eb330000 label ipi0
+				dict set def_ps_mapping eb340000 label ipi1
+				dict set def_ps_mapping eb350000 label ipi2
+				dict set def_ps_mapping eb360000 label ipi3
+				dict set def_ps_mapping eb370000 label ipi4
+				dict set def_ps_mapping eb380000 label ipi5
+				dict set def_ps_mapping eb3a0000 label ipi6
+				dict set def_ps_mapping eb3b0000 label ipi_nobuf1
+				dict set def_ps_mapping eb3b1000 label ipi_nobuf2
+				dict set def_ps_mapping eb3b2000 label ipi_nobuf3
+				dict set def_ps_mapping eb3b3000 label ipi_nobuf4
+				dict set def_ps_mapping eb3b4000 label ipi_nobuf5
+				dict set def_ps_mapping eb3b5000 label ipi_nobuf6
+				dict set def_ps_mapping eb310000 label ipi_psm
+				dict set def_ps_mapping eb320000 label ipi_pmc
+				dict set def_ps_mapping eb390000 label ipi_pmc_nobuf
+				dict set def_ps_mapping e2000000 label gic_a78
+				dict set def_ps_mapping eb9a0000 label gic_r52
+				dict set def_ps_mapping ebd00000 label adma0
+				dict set def_ps_mapping ebd10000 label adma1
+				dict set def_ps_mapping ebd20000 label adma2
+				dict set def_ps_mapping ebd30000 label adma3
+				dict set def_ps_mapping ebd40000 label adma4
+				dict set def_ps_mapping ebd50000 label adma5
+				dict set def_ps_mapping ebd60000 label adma6
+				dict set def_ps_mapping ebd70000 label adma7
+				dict set def_ps_mapping f1980000 label can0
+				dict set def_ps_mapping f1990000 label can1
+				dict set def_ps_mapping f11c0000 label dma0
+				dict set def_ps_mapping f11d0000 label dma1
+				dict set def_ps_mapping f19e0000 label gem0
+				dict set def_ps_mapping f19f0000 label gem1
+				dict set def_ps_mapping f19d0000 label gpio0
+				dict set def_ps_mapping f1020000 label gpio1
+				dict set def_ps_mapping f1940000 label i2c0
+				dict set def_ps_mapping f1950000 label i2c1
+				dict set def_ps_mapping f1948000 label i3c0
+				dict set def_ps_mapping f1958000 label i3c1
+				dict set def_ps_mapping	f0300000 label iomodule0
+				dict set def_ps_mapping f1010000 label ospi
+				dict set def_ps_mapping f1030000 label qspi
+				dict set def_ps_mapping f12a0000 label rtc
+				dict set def_ps_mapping f1040000 label sdhci0
+				dict set def_ps_mapping f1050000 label sdhci1
+				dict set def_ps_mapping f1920000 label serial0
+				dict set def_ps_mapping f1930000 label serial1
+				dict set def_ps_mapping f1270000 label sysmon0
+				dict set def_ps_mapping ec000000 label smmu
+				dict set def_ps_mapping f1960000 label spi0
+				dict set def_ps_mapping f1970000 label spi1
+				dict set def_ps_mapping f1dc0000 label ttc0
+				dict set def_ps_mapping f1dd0000 label ttc1
+				dict set def_ps_mapping f1de0000 label ttc2
+				dict set def_ps_mapping f1df0000 label ttc3
+				dict set def_ps_mapping f1e00000 label usb0
+				dict set def_ps_mapping f1e10000 label usb1
+				dict set def_ps_mapping ecc10000 label wwdt0
+				dict set def_ps_mapping ecd10000 label wwdt1
+				dict set def_ps_mapping ece10000 label wwdt2
+				dict set def_ps_mapping ecf10000 label wwdt3
+				dict set def_ps_mapping ea420000 label lpd_wwdt0
+				dict set def_ps_mapping ea430000 label lpd_wwdt1
+				dict set def_ps_mapping f03f0000 label pmc_wwdt
+				dict set def_ps_mapping f0800000 label coresight
+				dict set def_ps_mapping f1230000 label pmc_trng
+			}
 		} else {
 			dict set def_ps_mapping f9000000 label "gic_a72: interrupt-controller"
 			dict set def_ps_mapping f9001000 label "gic_r5: interrupt-controller"

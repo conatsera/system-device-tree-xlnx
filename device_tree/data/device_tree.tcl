@@ -891,6 +891,8 @@ proc gen_pss_ref_clk_freq {drv_handle node ip_name} {
 
 proc gen_board_info {} {
 	global env
+	global is_versal_net_platform
+	global is_versal_gen2_platform
 	set path $env(REPO)
 	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
@@ -898,7 +900,35 @@ proc gen_board_info {} {
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
 	set device [hsi get_property DEVICE [hsi::current_hw_design]]
-	add_prop "root" "device_id" "${device}" string $default_dts 
+	add_prop "root" "device_id" "${device}" string $default_dts
+
+	set family [get_hw_family]
+	switch $family {
+		"versal" {
+			if {$is_versal_gen2_platform} {
+				set family "VersalGen2"
+			} elseif {$is_versal_net_platform} {
+				set family "VersalNet"
+			} else {
+				set family "Versal"
+			}
+		}
+		"zynqmp" {
+			set family "ZynqMP"
+		}
+		"zynq" {
+			set family "Zynq"
+		}
+		"microblaze" {
+			set family "microblaze"
+			set mb_riscv_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze_riscv}]
+			if {[llength $mb_riscv_proc]} {
+				set family "microblaze_riscv"
+			}
+		}
+	}
+	add_prop "root" "family" "${family}" string $default_dts
+
 	if {[hsi get_current_part] != ""} {
 		set slrcount [common::get_property NUM_OF_SLRS [hsi get_current_part]]
 		if {$slrcount != -1} {
@@ -1386,7 +1416,7 @@ Generates system device tree based on args given in:
 		}
 	}
 
-	set non_val_list "versal_cips psx_wizard psxl ps_wizard dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series hbm noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc pmcps psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux ${linear_spi_list}"
+	set non_val_list "versal_cips psx_wizard psxl ps_wizard ps11 dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series hbm noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc pmcps psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux ${linear_spi_list}"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard ps_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc pmcps"
 	set non_val_ip_types1 "MONITOR BUS"
@@ -1937,6 +1967,7 @@ proc update_memory_node {} {
 
 proc gen_cpu_cluster {} {
 	global is_versal_net_platform
+	global is_versal_gen2_platform
 	global mb_dict_64_bit
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
@@ -2026,6 +2057,9 @@ proc gen_cpu_cluster {} {
     		set r5_cores 2
     		if { $is_versal_net_platform } {
     			set r5_cores 4
+			if { $is_versal_gen2_platform } {
+				set r5_cores 10
+			}
     		}
 		for {set core 0} {$core < $r5_cores} {incr core} {
 			set proc_name "r5"
@@ -3803,6 +3837,7 @@ proc gen_xppu {drv_handle} {
 proc gen_power_domains {drv_handle} {
         global env
         global is_versal_net_platform
+        global is_versal_gen2_platform
 
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
@@ -3818,6 +3853,9 @@ proc gen_power_domains {drv_handle} {
 
         if {[string match -nocase $family "versal"] && [is_ps_ip $drv_handle]} {
 		if { $is_versal_net_platform } {
+			if { $is_versal_gen2_platform } {
+				return
+			}
 			set firmware_name "versal_net_firmware"
 			dict set node_id EBA00000 id 0x183180CB
 			dict set node_id EBA10000 id 0x183180CC
