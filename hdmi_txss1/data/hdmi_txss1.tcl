@@ -190,6 +190,30 @@
 		}
 	}
 
+	if {[llength $inip]} {
+		set hdmitx_in_end ""
+		set hdmitx_remo_in_end ""
+		global end_mappings
+		global remo_mappings
+		if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
+			set hdmitx_in_end [dict get $end_mappings $inip]
+			dtg_verbose "hdmitx_in_end:$hdmitx_in_end"
+		}
+		if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
+			set hdmitx_remo_in_end [dict get $remo_mappings $inip]
+			dtg_verbose "hdmitx_remo_in_end:$hdmitx_remo_in_end"
+		}
+		if {[llength $hdmitx_remo_in_end]} {
+			set hdmitx_node [create_node -n "endpoint" -l $hdmitx_remo_in_end -p $hdmi_port_node -d $dts_file]
+		}
+		if {[llength $hdmitx_in_end]} {
+			add_prop "$hdmitx_node" "remote-endpoint" $hdmitx_in_end reference $dts_file 1
+		}
+		# Add endpoints if IN IP is axis_switch and NM
+		if {[llength $axis_sw_nm]} {
+			update_axis_switch_endpoints $inip $hdmi_port_node $drv_handle
+		}
+	}
 	set vid_clk_freq [hsi get_property CONFIG.C_VID_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,vid-clk-freq-khz" $vid_clk_freq hexint $dts_file 1
 	set frl_clk_freq [hsi get_property CONFIG.C_FRL_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
