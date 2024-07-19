@@ -19,6 +19,9 @@ proc dp_rxss14_generate {drv_handle} {
 	}
 	dp_rx_add_hier_instances $drv_handle
 
+	set compatible [get_comp_str $drv_handle]
+	pldt append $node compatible "\ \, \"xlnx,v-dp-rxss-3.1\""
+
         set dts_file [set_drv_def_dts $drv_handle]
         set audio_channels [hsi get_property CONFIG.AUDIO_CHANNELS [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,audio-channels" $audio_channels int $dts_file
