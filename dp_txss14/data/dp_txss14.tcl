@@ -21,6 +21,9 @@ proc dp_txss14_generate {drv_handle} {
 	dp_tx_add_hier_instances $drv_handle
 
         set dtsi_file [set_drv_def_dts $drv_handle]
+	set compatible [get_comp_str $drv_handle]
+	pldt append $node compatible "\ \, \"xlnx,v-dp-txss-3.1\""
+
         set num_audio_channels [hsi get_property CONFIG.Number_of_Audio_Channels [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,num-audio-channels" $num_audio_channels int $dtsi_file
         set audio_enable [hsi get_property CONFIG.AUDIO_ENABLE [hsi::get_cells -hier $drv_handle]]
@@ -33,8 +36,9 @@ proc dp_txss14_generate {drv_handle} {
         add_prop "${node}" "xlnx,include-fec-ports" $include_fec_ports int $dtsi_file
         set lane_count [hsi get_property CONFIG.LANE_COUNT [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,lane-count" $lane_count int $dtsi_file
-        set lane_count [hsi get_property CONFIG.LINK_RATE [hsi::get_cells -hier $drv_handle]]
+        set lane_count [hsi get_property CONFIG.LANE_COUNT [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,max-lanes" $lane_count int $dtsi_file
+	set link_rate [hsi get_property CONFIG.LINK_RATE [hsi::get_cells -hier $drv_handle]]
         set link_rate [expr {${link_rate} * 1000}]
         set link_rate [expr int ($link_rate)]
         add_prop "${node}" "xlnx,linkrate" $link_rate int $dtsi_file
