@@ -21,7 +21,7 @@
         if {$node == 0} {
                 return
         }
-        set keyval [pldt append $node compatible "\ \, \"xlnx,v-demosaic-1.1\""]
+        set keyval [pldt append $node compatible "\ \, \"xlnx,v-demosaic\""]
         set s_axi_ctrl_addr_width [hsi get_property CONFIG.C_S_AXI_CTRL_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,s-axi-ctrl-addr-width" $s_axi_ctrl_addr_width int $dts_file
         set s_axi_ctrl_data_width [hsi get_property CONFIG.C_S_AXI_CTRL_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
@@ -340,7 +340,7 @@
         add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
         add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
         set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dts_file]
-        add_prop "$vcap_port_node" "reg" 0 int $dts_fil*e
+        add_prop "$vcap_port_node" "reg" 0 int $dts_file
         add_prop "$vcap_port_node" "direction" input string $dts_file
         set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
         gen_endpoint $drv_handle "demo_out$drv_handle"
