@@ -20,6 +20,8 @@
                 return
         }
 
+	set compatible [get_comp_str $drv_handle]
+	set compatible [append compatible " " "xlnx,dsi"]
 	set dphy_en_reg_if [hsi get_property CONFIG.DPHY_EN_REG_IF [hsi::get_cells -hier $drv_handle]]
         if  {[string match -nocase "true" $dphy_en_reg_if]} {
                 add_prop "${node}" "xlnx,dphy-en-reg-if" 1 int $dts_file 1

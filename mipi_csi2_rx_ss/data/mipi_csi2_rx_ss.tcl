@@ -19,6 +19,8 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
         if {$node == 0} {
                 return
         }
+	set compatible [get_comp_str $drv_handle]
+	set compatible [append compatible " " "xlnx,mipi-csi2-rx-subsystem-6.0"]
 	set dphy_en_reg_if [hsi get_property CONFIG.DPY_EN_REG_IF [hsi::get_cells -hier $drv_handle]]
         if  {[string match -nocase "true" $dphy_en_reg_if]} {
                 add_prop "${node}" "xlnx,dpy-en-reg-if" 1 int $dts_file 1

@@ -21,7 +21,7 @@
         if {$node == 0} {
                 return
         }
-        pldt append $node compatible "\ \, \"xlnx,v-gamma-lut-1.1\""
+        pldt append $node compatible "\ \, \"xlnx,v-gamma\""
         set gamma_ip [hsi::get_cells -hier $drv_handle]
         if 0 {
         set s_axi_ctrl_addr_width [hsi get_property CONFIG.C_S_AXI_CTRL_ADDR_WIDTH [hsi::get_cells -hier $drv_handle]]
