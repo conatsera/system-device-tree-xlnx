@@ -193,7 +193,7 @@ proc vproc_ss_generate {drv_handle} {
                     gen_remoteendpoint $drv_handle "$ip$drv_handle"
                     if {[string match -nocase [hsi::get_property IP_NAME $ip] "v_frmbuf_wr"] \
                         || [string match -nocase [hsi::get_property IP_NAME $ip] "axi_vdma"]} {
-			vpss_gen_csc_frm_buf_node $ip $drv_handle
+			vpss_gen_csc_frm_buf_node $ip $drv_handle $dts_file
                     }
 		        } else {
                     if {[string match -nocase [hsi::get_property IP_NAME $ip] "system_ila"]} {
@@ -207,7 +207,7 @@ proc vproc_ss_generate {drv_handle} {
                         gen_remoteendpoint $drv_handle "$connectip$drv_handle"
                         if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"] \
                            || [string match -nocase [hsi::get_property IP_NAME $ip] "axi_vdma"]} {
-                           vpss_gen_csc_frm_buf_node $connectip $drv_handle
+                           vpss_gen_csc_frm_buf_node $connectip $drv_handle $dts_file
                         }
                     }
                 }
@@ -225,8 +225,23 @@ proc vproc_ss_generate {drv_handle} {
       add_prop "$port_node" "xlnx,video-format" 3 int $dts_file
       add_prop "$port_node" "xlnx,video-width" $max_data_width int $dts_file
       set scaninip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis"]
+        if {[llength $scaninip] && \
+            [string match -nocase [hsi::get_property IP_NAME $scaninip] "axis_switch"]} {
+            set axis_node [create_node -n "endpoint" -l $drv_handle$scaninip -p $port_node -d $dts_file]
+            add_prop "$axis_node" "remote-endpoint" axis_switch_out1$scaninip reference $dts_file
+        }
+        # Get next IN IP if axis_slice connected
+        if {[llength "$scaninip"] && \
+            [string match -nocase [hsi::get_property IP_NAME $scaninip] "axis_register_slice"]} {
+            set intf "S_AXIS"
+            set scaninip [get_connected_stream_ip [hsi::get_cells -hier $scaninip] "$intf"]
+        }
           foreach inip $scaninip {
               if {[llength $inip]} {
+                if {[string match -nocase [hsi::get_property IP_NAME $inip] "ISPPipeline_accel"]} {
+                set port0_node [create_node -n "endpoint" -l v_proc_ss$inip -p $port_node -d $dts_file]
+                add_prop "$port0_node" "remote-endpoint" $inip$drv_handle reference $dts_file
+            }
 	          set ip_mem_handles [hsi::get_mem_ranges $inip]
                   if {![llength $ip_mem_handles]} {
                       set broad_ip [get_broad_in_ip $inip]
@@ -455,6 +470,8 @@ proc vproc_ss_generate {drv_handle} {
         } else {
             dtg_warning "$drv_handle pin s_axis is not connected..check your design"
 	}
+    } else {
+	    dtg_warning "$drv_handle unsupportedd topology for linux driver"
     }
 }
 
@@ -592,5 +609,31 @@ proc vproc_ss_generate {drv_handle} {
 	set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
 	gen_endpoint $drv_handle "sca_out$drv_handle"
 	add_prop "$vcap_in_node" "remote-endpoint" sca_out$drv_handle reference $dts_file
+	gen_remoteendpoint $drv_handle "$outip$drv_handle"
+    }
+
+    proc vpss_gen_csc_frm_buf_node {outip drv_handle dts_file} {
+        global env
+        set path $env(REPO)
+        set common_file "$path/device_tree/data/config.yaml"
+	set dt_overlay [get_user_config $common_file -dt_overlay]
+        if {$dt_overlay} {
+            set bus_node "amba"
+        } else {
+            set bus_node "amba_pl: amba_pl"
+        }
+        set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
+        add_prop $vcap "compatible" "xlnx,video" string $dts_file
+        add_prop $vcap "dmas" "$outip 0" reference $dts_file
+        add_prop $vcap "dma-names" "port0" string $dts_file
+        set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
+        add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
+        add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
+        set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dts_file]
+        add_prop "$vcap_port_node" "reg" 0 int $dts_file
+        add_prop "$vcap_port_node" "direction" input string $dts_file
+        set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dts_file]
+        gen_endpoint $drv_handle "csc_out$drv_handle"
+        add_prop "$vcap_in_node" "remote-endpoint" csc_out$drv_handle reference $dts_file
 	gen_remoteendpoint $drv_handle "$outip$drv_handle"
     }
