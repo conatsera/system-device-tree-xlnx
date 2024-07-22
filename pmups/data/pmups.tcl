@@ -31,7 +31,11 @@
                 gen_pss_ref_clk_freq $drv_handle $node $ip_name
         } elseif {[string match -nocase $ip_name "psx_psm"]} {
                 set node [create_node -n "&psx_psm_0" -d "pcw.dtsi" -p root -h $drv_handle]
-
+        } elseif {[string match -nocase $ip_name "pmc"]} {
+                set node [create_node -n "&pmc_0" -d "pcw.dtsi" -p root -h $drv_handle]
+                gen_pss_ref_clk_freq $drv_handle $node $ip_name
+        } elseif {[string match -nocase $ip_name "psm"]} {
+                set node [create_node -n "&psm_0" -d "pcw.dtsi" -p root -h $drv_handle]
         } else {
                 error "Driver pmups is not valid for given handle $drv_handle"
         }

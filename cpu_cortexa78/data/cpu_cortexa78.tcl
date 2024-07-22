@@ -17,13 +17,18 @@ proc cpu_cortexa78_generate {drv_handle} {
 	global is_versal_net_platform
 	global is_versal_gen2_platform
 	global platform_filename ""
+	set bus_name "amba"
+	set fields [split [get_ip_property $drv_handle NAME] "_"]
+	set cpu_nr [lindex $fields end]
 	if { $is_versal_net_platform } {
 		if {$is_versal_gen2_platform} {
 			set platform_filename "versal2"
 			update_system_dts_include [file tail "${platform_filename}-scmi.dtsi"]
+			set cpu_node [create_node -n "&cortexa78_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
 		} else {
 			set platform_filename "versal-net"
 			update_system_dts_include [file tail "${platform_filename}-clk-ccf.dtsi"]
+			set cpu_node [create_node -n "&psx_cortexa78_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
 		}
 		set dtsi_fname "${platform_filename}/${platform_filename}.dtsi"
 		update_system_dts_include [file tail ${dtsi_fname}]
@@ -32,10 +37,6 @@ proc cpu_cortexa78_generate {drv_handle} {
 		error "Invalid board family for A78. Only Versal-Net and Versal-Gen2 are supported."
 	}
 
-	set bus_name "amba"
-	set fields [split [get_ip_property $drv_handle NAME] "_"]
-	set cpu_nr [lindex $fields end]
-	set cpu_node [create_node -n "&psx_cortexa78_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
 	set ip_name [get_ip_property $drv_handle IP_NAME]
 	add_prop $cpu_node "xlnx,ip-name" $ip_name string "pcw.dtsi"
 	add_prop $cpu_node "bus-handle" $bus_name reference "pcw.dtsi"

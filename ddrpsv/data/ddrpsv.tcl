@@ -200,10 +200,10 @@
                 set interface_block_names [hsi get_property ADDRESS_BLOCK ${mapped_periph_list}]
 
                 # If the mappings have already been found for a72_0, then ignore the process for a72_1
-                if {$a72 == 1 && ([string match -nocase ${proc_ip_name} "psv_cortexa72"] || [string match -nocase ${proc_ip_name} "psx_cortexa78"]) } {
+                if {$a72 == 1 && ($proc_ip_name in {"psv_cortexa72" "psx_cortexa78" "cortexa78"} ) } {
                         continue
                 }
-                if {[string match -nocase ${proc_ip_name} "psv_cortexa72"] || [string match -nocase ${proc_ip_name} "psx_cortexa78"]} {
+                if {$proc_ip_name in {"psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
                        set a72 1
                 }
 
@@ -231,16 +231,16 @@
                         set reg_val [join $updat ">, <"]
                         ddrpsv_update_mc_ranges $drv_handle $reg_val
                         switch $proc_ip_name {
-                                "psv_cortexr5" - "psx_cortexr52" - "microblaze" - "microblaze_riscv" {
+                                "psv_cortexr5" - "psx_cortexr52" - "cortexr52" - "microblaze" - "microblaze_riscv" {
                                         set_memmap "${label}" $procc $reg_val
                                 }
-                                "psv_cortexa72" - "psx_cortexa78" {
+                                "psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
                                         set_memmap "${label}" a53 $reg_val
                                 }
-                                "psv_pmc" - "psx_pmc" {
+                                "psv_pmc" - "psx_pmc" - "pmc" {
                                         set_memmap "${label}" pmc $reg_val
                                 }
-                                "psv_psm" - "psx_psm" {
+                                "psv_psm" - "psx_psm" - "psm" {
                                         set_memmap "${label}" psm $reg_val
                                 }
                                 default {
@@ -514,7 +514,7 @@
     # This leads to the DDR region's overlapping with the TCM region and results into linking error.
     proc ddrpsv_check_tcm_overlapping {proc ddr_base_addr} {
         set proc_ip [get_ip_property $proc IP_NAME]
-        if {[string match -nocase $proc_ip "psv_cortexr5"] || [string match -nocase $proc_ip "psx_cortexr52"]} {
+        if {$proc_ip in {"psv_cortexr5" "psx_cortexr52" "cortexr52"}} {
                 set tcm_ip [hsi::get_cells -hier -filter {NAME=~"*tcm_ram_global" || NAME=~"*tcm_alias"}]
                 if {[llength $tcm_ip] == 1} {
                         set tcm_high_addr [get_highaddr $tcm_ip]

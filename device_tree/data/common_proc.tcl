@@ -56,10 +56,12 @@ dict with driver_param alias {
 	lappend items psu_ospi spi
 	lappend items psv_pmc_ospi spi
 	lappend items psx_pmc_ospi spi
+	lappend items pmc_ospi spi
 	lappend items ps7_qspi spi
 	lappend items psu_qspi spi
 	lappend items psv_pmc_qspi spi
 	lappend items psx_pmc_qspi spi
+	lappend items pmc_qspi spi
 	lappend items mdm serial
 	lappend items axi_uartlite serial
 	lappend items axi_uart16550 serial
@@ -69,10 +71,12 @@ dict with driver_param alias {
 	lappend items psv_uart serial
 	lappend items psv_sbsauart serial
 	lappend items psx_sbsauart serial
+	lappend items sbsuart serial
 	lappend items ps7_coresight_comp serial
 	lappend items psu_coresight_0 serial
 	lappend items psv_coresight serial
 	lappend items psx_coresight serial
+	lappend items coresight serial
 }
 
 global set osmap [dict create]
@@ -184,9 +188,9 @@ proc set_microblaze_list {} {
 	set microblaze_list ""
 	if {[string match -nocase $design_family "versal"]} {
 		if {$is_versal_net_platform} {
-			set microblaze_list "psx_pmc psx_psm"
+			set microblaze_list "psx_pmc psx_psm pmc psm"
 		} else {
-			set microblaze_list "psv_pmc psv_psm"
+			set microblaze_list "psv_pmc psv_psm pmc psm"
 		}
 	} elseif {[string match -nocase $design_family "zynqmp"]} {
 		set microblaze_list "psu_pmu"
@@ -381,16 +385,15 @@ proc set_hw_family {proclist} {
 	set ps_design 0
 	set is_versal_net_platform 0
 	set is_versal_gen2_platform 0
-
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
 		switch $ip_name {
-			"psx_cortexa78" {
+			"psx_cortexa78" - "cortexa78" {
 				set design_family "versal"
 				set ps_design 1
 				set is_versal_net_platform 1
-				set apu_proc_ip "psx_cortexa78"
+				set apu_proc_ip $ip_name
 				if {[llength [hsi::get_cells -hier -filter "IP_NAME==ps11"]]} {
 					set is_versal_gen2_platform 1
 				}
@@ -1672,6 +1675,7 @@ proc get_drivers args {
 	dict set driverlist psu_apm driver apmps
 	dict set driverlist psv_apm driver apmps
 	dict set driverlist psx_apm driver apmps
+	dict set driverlist apm driver apmps
 	dict set driverlist v_uhdsdi_audio driver audio_embed
 	dict set driverlist audio_formatter driver audio_spdif
 	dict set driverlist spdif driver audio_spdif
@@ -1712,6 +1716,7 @@ proc get_drivers args {
 	dict set driverlist psu_canfd driver canfdps
 	dict set driverlist psv_canfd driver canfdps
 	dict set driverlist psx_canfd driver canfdps
+	dict set driverlist canfd driver canfdps
 	dict set driverlist ps7_can driver canps
 	dict set driverlist psu_can driver canps
 	dict set driverlist psv_can driver canps
@@ -1741,10 +1746,13 @@ proc get_drivers args {
 	dict set driverlist psu_csudma driver dmaps
 	dict set driverlist psv_adma driver dmaps
 	dict set driverlist psx_adma driver dmaps
+	dict set driverlist adma driver dmaps
 	dict set driverlist psv_gdma driver dmaps
 	dict set driverlist psx_gdma driver dmaps
+	dict set driverlist gdma driver dmaps
 	dict set driverlist psv_csudma driver dmaps
 	dict set driverlist psx_csudma driver dmaps
+	dict set driverlist csudma driver dmaps
 	dict set driverlist psu_dp driver dp
 	dict set driverlist psv_dp driver dp
 	dict set driverlist dpu_eu driver dpu_eu
@@ -1753,6 +1761,7 @@ proc get_drivers args {
 	dict set driverlist psu_ethernet driver emacps
 	dict set driverlist psv_ethernet driver emacps
 	dict set driverlist psx_ethernet driver emacps
+	dict set driverlist ethernet driver emacps
 	dict set driverlist ernic driver ernic
 	dict set driverlist v_frmbuf_rd driver framebuf_rd
 	dict set driverlist v_frmbuf_wr driver framebuf_wr
@@ -1762,6 +1771,7 @@ proc get_drivers args {
 	dict set driverlist psu_gpio driver gpiops
 	dict set driverlist psv_gpio driver gpiops
 	dict set driverlist psx_gpio driver gpiops
+	dict set driverlist gpio driver gpiops
 	dict set driverlist hdmi_acr_ctlr driver hdmi_ctrl
 	dict set driverlist hdmi_gt_controller driver hdmi_gt_ctrl
 	dict set driverlist v_hdmi_rx_ss driver hdmi_rx_ss
@@ -1772,11 +1782,13 @@ proc get_drivers args {
 	dict set driverlist psu_i2c driver iicps
 	dict set driverlist psv_i2c driver iicps
 	dict set driverlist psx_i3c driver i3cpsx
+	dict set driverlist i3c driver i3cpsx
 	dict set driverlist axi_intc driver intc
 	dict set driverlist iomodule driver iomodule
 	dict set driverlist psu_ipi driver ipipsu
 	dict set driverlist psv_ipi driver ipipsu
 	dict set driverlist psx_ipi driver ipipsu
+	dict set driverlist ipi driver ipipsu
 	dict set driverlist mig_7series driver mig_7series
 	dict set driverlist dd4 driver mig_7series
 	dict set driverlist ddr3 driver mig_7series
@@ -1802,6 +1814,7 @@ proc get_drivers args {
 	dict set driverlist psu_ocm_ram_0 driver psu_ocm
 	dict set driverlist psv_ocm_ram_0 driver psu_ocm
 	dict set driverlist psx_ocm_ram driver psu_ocm
+	dict set driverlist ocm_ram driver psu_ocm
 	dict set driverlist ps7_ram driver ramps
 	dict set driverlist usp_rf_data_converter driver rfdc
 	dict set driverlist v_scenechange driver scene_change_detector
@@ -1809,6 +1822,7 @@ proc get_drivers args {
 	dict set driverlist psu_acpu_gic driver scugic
 	dict set driverlist psv_acpu_gic driver scugic
 	dict set driverlist psx_acpu_gic driver scugic
+	dict set driverlist acpu_gic driver scugic
 	dict set driverlist ps7_scutimer driver scutimer
 	dict set driverlist ps7_scuwdt driver scuwdt
 	dict set driverlist psu_wdt driver scuwdt
@@ -1826,6 +1840,7 @@ proc get_drivers args {
 	dict set driverlist psu_qspi driver spips
 	dict set driverlist psv_pmc_qspi driver qspips
 	dict set driverlist psx_pmc_qspi driver qspips
+	dict set driverlist pmc_qspi driver qspips
 	dict set driverlist psu_qspi driver qspips
 	dict set driverlist ps7_qspi driver qspips
 	dict set driverlist psv_spi driver spips
@@ -1837,6 +1852,7 @@ proc get_drivers args {
 	dict set driverlist psu_ttc driver ttcps
 	dict set driverlist psv_ttc driver ttcps
 	dict set driverlist psx_ttc driver ttcps
+	dict set driverlist ttc driver ttcps
 	dict set driverlist mdm driver uartlite
 	dict set driverlist axi_uartlite driver uartlite
 	dict set driverlist axi_uart16550 driver uartns
@@ -1846,10 +1862,12 @@ proc get_drivers args {
 	dict set driverlist psv_uart driver uartps
 	dict set driverlist psv_sbsauart driver uartps
 	dict set driverlist psx_sbsauart driver uartps
+	dict set driverlist sbsuart driver uartps
 	dict set driverlist ps7_coresight_comp driver coresight
 	dict set driverlist psu_coresight_0 driver coresight
 	dict set driverlist psv_coresight driver coresight
 	dict set driverlist psx_coresight driver coresight
+	dict set driverlist coresight driver coresight
 	dict set driverlist ps7_usb driver usbps
 	dict set driverlist psu_usb_xhci driver usbps
 	dict set driverlist psv_usb_xhci driver usbps
@@ -1998,7 +2016,7 @@ proc add_cross_property args {
 	set ip [hsi::get_cells -hier $src_handle]
 	set ipname [hsi get_property IP_NAME $ip]
 	set proctype [get_hw_family]
-	set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 microblaze microblaze_riscv psx_cortexa78 psx_cortexr52 psx_pmc psx_psm"
+	set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 microblaze microblaze_riscv psx_cortexa78 psx_cortexr52 psx_pmc psx_psm cortexa78 cortexr52 pmc psm"
 	set type "hexint"
 	if {[llength $args] >= 6} {
 		set type [lindex $args 5]
@@ -2047,7 +2065,7 @@ proc add_cross_property args {
 
 				if {[string match -nocase $ipname "psv_rcpu_gic"]} {
 					set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
-				} elseif {[string match -nocase $ipname "psx_rcpu_gic"]} {
+				} elseif {$ipname in {"psx_rcpu_gic" "rcpu_gic"}} {
 					set node [create_node -n "&gic_r52" -d "pcw.dtsi" -p root]
 				} elseif {[lsearch $valid_proclist $ipname] >= 0} {
 					set node [get_node $src_handle]
@@ -2185,7 +2203,7 @@ proc get_intr_id {drv_handle intr_port_name} {
 			} elseif {[string match "[hsi get_property IP_NAME $intc]" "axi_intc"] } {
 				set cur_intr_info "$intr_id $intr_type"
 			}
-		} elseif {[string match -nocase $intc_ipname "psu_acpu_gic"] || [string match -nocase $intc_ipname "psv_acpu_gic"] || [string match -nocase $intc_ipname "psx_acpu_gic"]} {
+		} elseif {$intc_ipname in {"psu_acpu_gic" "psv_acpu_gic" "psx_acpu_gic" "acpu_gic"}} {
 		    set cur_intr_info "0 $intr_id $intr_type"
 		} else {
 			set cur_intr_info "$intr_id $intr_type"
@@ -2347,7 +2365,7 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 	set ip_name [get_ip_property [hsi::get_cells -hier $slave_ip] IP_NAME]
 	if {[string match -nocase $slave_ip "psu_sata"]} {
 		set addr [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
-	} elseif {[string match -nocase $ip_name "psx_i3c"]} {
+	} elseif {$ip_name in {"psx_i3c" "i3c"}} {
 		set addr1 [string tolower [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]]
 		set addr [format 0x%08x [expr {$addr1  + 0x8000}]]
 	} elseif {[string match -nocase $ip_name "psv_cpm"]} {
@@ -3839,7 +3857,7 @@ proc gen_dfx_reg_property {drv_handle dfx_node} {
                set size [format 0x%x [expr {${high} - ${base} + 1}]]
                set proctype [hsi get_property IP_NAME [hsi::get_cells -hier [get_sw_processor]]]
                if {[string_is_empty $reg]} {
-                       if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+                       if {$proctype in {"psu_cortexa53" "psv_cortexa72" "psx_cortexa78" "cortex78"}} {
                        # check if base address is 64bit and split it as MSB and LSB
                                if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                                        set temp $base
@@ -3874,7 +3892,7 @@ proc gen_dfx_reg_property {drv_handle dfx_node} {
                                        continue
                                }
                        }
-                       if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"] } {
+                       if {$proctype in {"psu_cortexa53" "psv_cortexa72" "psx_cortexa78" "cortexa78" }} {
                                set index [check_64_base $reg $base $size]
                                if {$index == "true"} {
                                        continue
@@ -3882,7 +3900,7 @@ proc gen_dfx_reg_property {drv_handle dfx_node} {
                        }
                        # ensure no duplication
                        if {![regexp ".*${reg}.*" "$base $size" matched]} {
-                               if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+                               if {$proctype in {"psu_cortexa53" "psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
                                        set base1 "0x0 $base"
                                        set size1 "0x0 $size"
                                        if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
@@ -4036,7 +4054,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                                }
                        }
                }
-               if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+               if {$proctype in {"psu_cortexa53" "psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
                        set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
                }
                foreach pin $pins {
@@ -4045,7 +4063,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
                                set is_pl_clk 1
                        }
                }
-               if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+               if {$proctype in {"psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
                        switch $pl_clk {
                                "pl_clk0" {
                                        set pl_clk0 "versal_clk 65"
@@ -4291,7 +4309,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
                                }
                        }
                }
-               if {[string match -nocase $proctype "psu_cortexa53"] || [string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+               if {$proctype in {"psu_cortexa53" "psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
                        set clklist "pl_clk0 pl_clk1 pl_clk2 pl_clk3"
                }
                foreach pin $pins {
@@ -4300,7 +4318,7 @@ proc gen_axis_switch_clk_property {drv_handle dts_file node} {
                                set is_pl_clk 1
                        }
                }
-               if {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+               if {$proctype in {"psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
                        switch $pl_clk {
                                "pl_clk0" {
                                        set pl_clk0 "versal_clk 65"
@@ -4972,7 +4990,7 @@ proc get_intr_type {intc_name ip_name port_name} {
 		set sensitivity [hsi get_property SENSITIVITY $intr_pin]
 	}
 	set intc_type [hsi get_property IP_NAME $intc ]
-	set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic psx_acpu_gic"
+	set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic psx_acpu_gic acpu_gic"
 	if {[lsearch  -nocase $valid_intc_list $intc_type] >= 0} {
 		if {[string match -nocase $sensitivity "EDGE_FALLING"]} {
 			dict set intr_type_dict $cur_hw_design $intc_name $ip_name $port_name 2
@@ -5292,7 +5310,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			}
 
 			set cur_intr_info ""
-			set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic psx_acpu_gic"
+			set valid_intc_list "ps7_scugic psu_acpu_gic psv_acpu_gic psx_acpu_gic acpu_gic"
 			global intrpin_width
 			if { [string match -nocase $proctype "zynq"] }  {
 				if {[string match -nocase $intc_name "ps7_scugic"] } {
@@ -5304,7 +5322,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				} elseif {[string match "[hsi get_property IP_NAME $intc]" "axi_intc"] } {
 					set cur_intr_info "$intr_id $intr_type"
 				}
-			} elseif {[string match -nocase $intc_name "psu_acpu_gic"] || [string match -nocase $intc_name "psv_acpu_gic"] || [string match -nocase $intc_name "psx_acpu_gic"]} {
+			} elseif {$intc_name in {"psu_acpu_gic" "psv_acpu_gic" "psx_acpu_gic" "acpu_gic"}} {
 			    set cur_intr_info "0 $intr_id $intr_type"
 			    for { set i 1 } {$i < $intrpin_width} {incr i} {
 				    set intr_id_inc [expr $intr_id + $i]
@@ -5359,12 +5377,12 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	if {$intc_len > 1} {
 		foreach intc_ctr $intc { 
 			set intc_ctr [hsi get_property IP_NAME [hsi::get_cells -hier $intc]]
-			if { [string match -nocase $intc_ctr "psu_acpu_gic"] || [string match -nocase $intc_ctr "psv_acpu_gic"] || [string match -nocase $intc_ctr "psx_acpu_gic"]} {
+			if {$intc_ctr in {"psu_acpu_gic" "psv_acpu_gic" "psx_acpu_gic" "acpu_gic"}} {
 				set intc "gic"
 			}
 		}
 	} else {
-		if { [string match -nocase $intc_name "psu_acpu_gic"] || [string match -nocase $intc_name "psv_acpu_gic"] || [string match -nocase $intc_name "psx_acpu_gic"]} {
+		if { $intc_name in {"psu_acpu_gic" "psv_acpu_gic" "psx_acpu_gic" "acpu_gic"}} {
 			set intc "gic"
 		}
 	}
@@ -6246,7 +6264,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			# Base address is same for gic and rpu_gic, hence set label forcefully
 			# other wise we will get lable as "gic" which is same as acpu_gic label
 			set label "gic_r5"
-		} elseif {[string match -nocase $ip_type "psx_rcpu_gic"] } {
+		} elseif {$ip_type in {"psx_rcpu_gic" "rcpu_gic"} } {
 			set label "gic_r52"
 		} else {
 		}
@@ -6256,7 +6274,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		if {[string match -nocase $ip_type "psv_rcpu_gic"] || [string match -nocase $ip_type "psu_rcpu_gic"]} {
 			set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
 			add_prop $node "status" "okay" string $default_dts
-		} elseif {[string match -nocase $ip_type "psx_rcpu_gic"]} {
+		} elseif {$ip_type in {"psx_rcpu_gic" "rcpu_gic"}} {
 			set node [create_node -n "&gic_r52" -d "pcw.dtsi" -p root]
 			add_prop $node "status" "okay" string $default_dts
 		}
@@ -6322,10 +6340,10 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			if {[string match -nocase $proc_type "psv_cortexr5"] && [string match -nocase $ip_type "psv_acpu_gic"]} {
 				return
 			}
-			if {[string match -nocase $proc_type "psx_cortexa78"] && [string match -nocase $ip_type "psx_rcpu_gic"]} {
+			if {$proc_type in {"psx_cortexa78" "cortexa78"} && $ip_type in {"psx_rcpu_gic" "rcpu_gic"}} {
 				return
 			}
-			if {[string match -nocase $proc_type "psx_cortexr52"] && [string match -nocase $ip_type "psx_acpu_gic"]} {
+			if {$proc_type in {"psx_cortexr52" "cortexr52"} && $ip_type in {"psx_acpu_gic" "acpu_gic"}} {
 				return
 			}
 			}
@@ -6335,7 +6353,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 		if {[string match -nocase $ip_type "tsn_endpoint_ethernet_mac"]} {
 			set rt_node [create_node -n tsn_endpoint_ip_0 -l tsn_endpoint_ip_0 -d $default_dts -p $bus_node] 
 		} else {
-			set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm microblaze microblaze_riscv"
+			set valid_proclist "psv_cortexa72 psv_cortexr5 psu_cortexa53 psu_cortexr5 psu_pmu psv_pmc psv_psm ps7_cortexa9 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm microblaze microblaze_riscv cortexa78 cortexr52 pmc psm"
 			if {[lsearch $valid_proclist $ip_type] >= 0} {
 				set rt_node [get_node $drv_handle]
 			} else {
@@ -6370,7 +6388,7 @@ proc detect_bus_name {ip_drv} {
 	# 	mb: detection is required (currently always call amba_pl)
 	set valid_buses [hsi::get_cells -hier -filter { IP_TYPE == "BUS" && IP_NAME != "axi_protocol_converter" && IP_NAME != "lmb_v10"}]
 
-	set valid_proc_list "ps7_cortexa9 psu_cortexa53 psv_cortexa72 psv_cortexr5 psv_pmc psu_pmu psu_cortexr5 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm" 
+	set valid_proc_list "ps7_cortexa9 psu_cortexa53 psv_cortexa72 psv_cortexr5 psv_pmc psu_pmu psu_cortexr5 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm cortexa78 cortexr52 pmc psm"
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
@@ -6391,10 +6409,10 @@ proc detect_bus_name {ip_drv} {
 			set root_node [create_node -n "amba_pl" -l "amba_pl" -d ${default_dts} -p root]
 			return "amba_pl: amba_pl"
 		}
-		if {[string match -nocase $ip_drv "psu_acpu_gic"] || [string match -nocase $ip_drv "psv_acpu_gic"] || [string match -nocase $ip_drv "psx_acpu_gic"]} {
+		if {$ip_drv in {"psu_acpu_gic" "psv_acpu_gic" "psx_acpu_gic" "acpu_gic"}} {
 			return "amba_apu: apu-bus"
 		}
-		if {[string match -nocase $ip_drv "psu_rcpu_gic"] || [string match -nocase $ip_drv "psv_rcpu_gic"] || [string match -nocase $ip_drv "psx_rcpu_gic"]} {
+		if {$ip_drv in {"psu_rcpu_gic" "psv_rcpu_gic" "psx_rcpu_gic" "rcpu_gic"}} {
                         return "amba_rpu: rpu-bus"
                 }
 		set ipname ""
@@ -6934,7 +6952,7 @@ proc get_gpio_channel_nr { periph_name intr_pin_name } {
 proc is_interrupt { IP_NAME } {
 	if { [string match -nocase $IP_NAME "ps7_scugic"] } {
 		return true
-	} elseif { [string match -nocase $IP_NAME "psu_acpu_gic"] || [string match -nocase $IP_NAME "psv_acpu_gic"] || [string match -nocase $IP_NAME "psx_acpu_gic"]} {
+	} elseif { $IP_NAME in {"psu_acpu_gic" "psv_acpu_gic" "psx_acpu_gic" "acpu_gic"}} {
 		return true
 	} elseif { [string match -nocase $IP_NAME "psu_rcpu_gic"] } {
 		return true
@@ -7323,7 +7341,7 @@ proc check_ip_trustzone_state { drv_handle } {
                 return 1
             }
         }
-   } elseif {[string match -nocase $proctype "psv_cortexa72"] || [string match -nocase $proctype "psx_cortexa78"]} {
+   } elseif {$proctype in {"psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
         set index [lsearch [get_mem_ranges -of_objects [hsi::get_cells -hier [get_sw_processor]]] $drv_handle]
 	if {$index == -1 } {
 		return 0

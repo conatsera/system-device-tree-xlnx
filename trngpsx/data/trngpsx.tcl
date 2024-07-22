@@ -13,12 +13,13 @@
 #
 
 proc trngpsx_generate {drv_handle} {
+	global is_versal_gen2_platform
 	set node [get_node $drv_handle]
 	set pki_trng_baseaddress "0x20400051000"
 	set pki_trng_offset "0x200"
 	set pki_num_insts 8
 
-	if {$node == 0} {
+	if {$node == 0 || $is_versal_gen2_platform} {
 		return
 	}
 	for {set instance 0} {$instance < $pki_num_insts} {incr instance} {

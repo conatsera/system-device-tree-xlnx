@@ -16,7 +16,15 @@ proc cpu_cortexr52_generate {drv_handle} {
 	set ip_name [get_ip_property $drv_handle IP_NAME]
 	set fields [split [get_ip_property $drv_handle NAME] "_"]
 	set cpu_nr [lindex $fields end]
-	set node [create_node -n "&psx_cortexr52_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
+	global is_versal_net_platform
+	global is_versal_gen2_platform
+	if { $is_versal_net_platform } {
+		if {$is_versal_gen2_platform} {
+			set node [create_node -n "&cortexr52_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
+		} else {
+			set node [create_node -n "&psx_cortexr52_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
+		}
+	}
 	gen_drv_prop_from_ip $drv_handle
 	gen_pss_ref_clk_freq $drv_handle $node $ip_name
 

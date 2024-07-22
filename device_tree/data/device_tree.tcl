@@ -84,7 +84,9 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psu_cortexr5" "cpu_cortexr5"
 	dict set ::sdtgen::namespacelist "psv_cortexr5" "cpu_cortexr5"
 	dict set ::sdtgen::namespacelist "psx_cortexr52" "cpu_cortexr52"
+	dict set ::sdtgen::namespacelist "cortexr52" "cpu_cortexr52"
 	dict set ::sdtgen::namespacelist "psx_cortexa78" "cpu_cortexa78"
+	dict set ::sdtgen::namespacelist "cortexa78" "cpu_cortexa78"
 	dict set ::sdtgen::namespacelist "psu_crl_apb" "crl_apb"
 	dict set ::sdtgen::namespacelist "ps7_ddrc" "ddrcps"
 	dict set ::sdtgen::namespacelist "psu_ddrc" "ddrcps"
@@ -163,14 +165,18 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psu_i2c" "iicps"
 	dict set ::sdtgen::namespacelist "psv_i2c" "iicps"
 	dict set ::sdtgen::namespacelist "psx_i2c" "iicps"
+	dict set ::sdtgen::namespacelist "i2c" "iicps"
 	dict set ::sdtgen::namespacelist "psv_pmc_i2c" "iicps"
 	dict set ::sdtgen::namespacelist "psx_pmc_i2c" "iicps"
+	dict set ::sdtgen::namespacelist "pmc_i2c" "iicps"
 	dict set ::sdtgen::namespacelist "axi_intc" "intc"
 	dict set ::sdtgen::namespacelist "iomodule" "iomodule"
 	dict set ::sdtgen::namespacelist "psx_iomodule" "iomodule"
+	dict set ::sdtgen::namespacelist "iomodule" "iomodule"
 	dict set ::sdtgen::namespacelist "psu_ipi" "ipipsu"
 	dict set ::sdtgen::namespacelist "psv_ipi" "ipipsu"
 	dict set ::sdtgen::namespacelist "psx_ipi" "ipipsu"
+	dict set ::sdtgen::namespacelist "ipi" "ipipsu"
 	dict set ::sdtgen::namespacelist "mig_7series" "mig_7series"
 	dict set ::sdtgen::namespacelist "ddr4" "mig_7series"
 	dict set ::sdtgen::namespacelist "ddr3" "mig_7series"
@@ -187,12 +193,15 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psu_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "psv_pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "psx_pmc_ospi" "ospips"
+	dict set ::sdtgen::namespacelist "pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "ps7_pl310" "pl310ps"
 	dict set ::sdtgen::namespacelist "psu_pmu" "pmups"
 	dict set ::sdtgen::namespacelist "psv_pmc" "pmups"
 	dict set ::sdtgen::namespacelist "psv_psm" "pmups"
 	dict set ::sdtgen::namespacelist "psx_pmc" "pmups"
+	dict set ::sdtgen::namespacelist "pmc" "pmups"
 	dict set ::sdtgen::namespacelist "psx_psm" "pmups"
+	dict set ::sdtgen::namespacelist "psm" "pmups"
 	dict set ::sdtgen::namespacelist "pr_decoupler" "pr_decoupler"
 	dict set ::sdtgen::namespacelist "prc dfx_controller" "prc"
 	dict set ::sdtgen::namespacelist "psu_ocm_ram_0" "psu_ocm"
@@ -260,26 +269,42 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_qspi_linear" "linear_spi"
 
 	dict set ::sdtgen::namespacelist "psx_apm" "apmps"
+	dict set ::sdtgen::namespacelist "apm" "apmps"
 	dict set ::sdtgen::namespacelist "psx_canfd" "canfdps"
+	dict set ::sdtgen::namespacelist "canfd" "canfdps"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_adma" "dmaps"
+	dict set ::sdtgen::namespacelist "adma" "dmaps"
 	dict set ::sdtgen::namespacelist "psx_gdma" "dmaps"
-	dict set ::sdtgen::namespacelist "psx_csudma" "gpiops"
+	dict set ::sdtgen::namespacelist "gdma" "dmaps"
+	dict set ::sdtgen::namespacelist "psx_csudma" "dmaps"
+	dict set ::sdtgen::namespacelist "csudma" "dmaps"
 	dict set ::sdtgen::namespacelist "psx_ethernet" "emacps"
+	dict set ::sdtgen::namespacelist "ethernet" "emacps"
 	dict set ::sdtgen::namespacelist "psx_gpio" "gpiops"
+	dict set ::sdtgen::namespacelist "gpio" "gpiops"
 	dict set ::sdtgen::namespacelist "psx_i3c" "i3cpsx"
+	dict set ::sdtgen::namespacelist "i3c" "i3cpsx"
 	dict set ::sdtgen::namespacelist "psx_acpu_gic" "scugic"
+	dict set ::sdtgen::namespacelist "acpu_gic" "scugic"
 	dict set ::sdtgen::namespacelist "psx_pmc_sd" "sdps"
+	dict set ::sdtgen::namespacelist "pmc_sd" "sdps"
 	dict set ::sdtgen::namespacelist "psx_pmc_qspi" "qspips"
+	dict set ::sdtgen::namespacelist "pmc_qspi" "qspips"
 	dict set ::sdtgen::namespacelist "psx_ttc" "ttcps"
+	dict set ::sdtgen::namespacelist "ttc" "ttcps"
 	dict set ::sdtgen::namespacelist "psx_sbsauart" "uartps"
+	dict set ::sdtgen::namespacelist "sbsauart" "uartps"
 	dict set ::sdtgen::namespacelist "axi_noc2" "ddrpsv"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_ocm_ram" "psu_ocm"
+	dict set ::sdtgen::namespacelist "ocm_ram" "psu_ocm"
 	dict set ::sdtgen::namespacelist "psx_ocm_ram_0" "psu_ocm"
+	dict set ::sdtgen::namespacelist "ocm_ram_0" "psu_ocm"
 	dict set ::sdtgen::namespacelist "psx_wwdt" "wdttb"
+	dict set ::sdtgen::namespacelist "wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "psx_pmc_trng" "trngpsx"
-
+	dict set ::sdtgen::namespacelist "pmc_trng" "trngpsx"
 }
 
 proc Pop {varname {nth 0}} {
@@ -1417,7 +1442,7 @@ Generates system device tree based on args given in:
 		}
 	}
 
-	set non_val_list "versal_cips psx_wizard psxl ps_wizard ps11 dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series hbm noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc pmcps psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux ${linear_spi_list}"
+	set non_val_list "versal_cips psx_wizard psxl ps_wizard ps11 dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series hbm noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc pmcps psv_ocm_ram_0 psv_pmc_qspi_ospi psx_pmc_qspi_ospi pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux ${linear_spi_list}"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard ps_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc pmcps"
 	set non_val_ip_types1 "MONITOR BUS"
@@ -1705,6 +1730,7 @@ proc proc_mapping {} {
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
+
 	# For Versal Net designs dmac_mst IP is also coming as a PROCESSOR
 	set proc_list [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR && IP_NAME!=dmac_mst}]
 	set hier_periph_list [hsi::get_cells -hier -filter {IS_HIERARCHICAL==1}]
@@ -1732,6 +1758,7 @@ proc proc_mapping {} {
 		}
 
 		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
+
 		foreach periph $periph_list {
 			# There can be a custom IP which is appearing in the output of get_mem_ranges
 			# but is missing in get_cells -hier. Such IP's base address and high address
@@ -1756,7 +1783,7 @@ proc proc_mapping {} {
 			}
 			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
-				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi axi_emc ${linear_spi_list}"
+				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi pmc_qspi axi_emc ${linear_spi_list}"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
                               	} else {
                                 	continue
@@ -1765,10 +1792,10 @@ proc proc_mapping {} {
 			if {[string match -nocase $iptype "psv_cortexa72"] && [string match -nocase $ipname "psv_rcpu_gic"]} {
 				continue
 			}
-			if {[string match -nocase $iptype "psx_cortexa78"] && [string match -nocase $ipname "psx_rcpu_gic"]} {
+			if {$iptype in {"psx_cortexa78" "cortexa78"} && $ipname in {"psx_rcpu_gic" "rcpu_gic"}} {
 				continue
 			}
-			if {[string match -nocase $iptype "psx_cortexr52"] && [string match -nocase $ipname "psx_acpu_gic"]} {
+			if {$iptype in {"psx_cortexr52" "cortexr52"} && $ipname in {"psx_acpu_gic" "acpu_gic"}} {
 				continue
 			}
 			if {[string match -nocase $iptype "psv_cortexr5"] && [string match -nocase $ipname "psv_acpu_gic"]} {
@@ -1780,10 +1807,10 @@ proc proc_mapping {} {
 			if {[string match -nocase $iptype "psu_cortexr5"] && [string match -nocase $ipname "psu_acpu_gic"]} {
 				continue
 			}
-			if {$ipname in {"psv_pmc_qspi_ospi" "psx_pmc_qspi_ospi"}} {
+			if {$ipname in {"psv_pmc_qspi_ospi" "psx_pmc_qspi_ospi" "pmc_qspi_ospi"}} {
 				continue
 			}
-			if {[string match -nocase $ipname "psv_ipi"] || [string match -nocase $ipname "psx_ipi"]} {
+			if {$ipname in {"psv_ipi" "psx_ipi" "ipi"}} {
 				continue
 			}
 			set regprop ""
@@ -1846,7 +1873,7 @@ proc proc_mapping {} {
 
 			if {[string match -nocase $ipname "psv_rcpu_gic"] } {
 				set temp "gic_r5"
-			} elseif {[string match -nocase $ipname "psx_rcpu_gic"]} {
+			} elseif {$ipname in {"psx_rcpu_gic" "rcpu_gic"}} {
 				set temp "gic_r52"
 				# Incase of R52, the address coming from the xsa seems incorrect
 				# hence override the regprop here to reflect properly in address-map
@@ -1862,13 +1889,17 @@ proc proc_mapping {} {
 			dict set mem_proc_key_map "psu_cortexr5" "$val"
 			dict set mem_proc_key_map "psv_cortexr5" "$val"
 			dict set mem_proc_key_map "psx_cortexr52" "$val"
+			dict set mem_proc_key_map "cortexr52" "$val"
 			dict set mem_proc_key_map "psv_pmc" "pmc"
 			dict set mem_proc_key_map "psv_psm" "psm"
 			dict set mem_proc_key_map "psu_pmu" "pmu"
 			dict set mem_proc_key_map "ps7_cortexa9" "a53"
 			dict set mem_proc_key_map "psx_cortexa78" "a53"
+			dict set mem_proc_key_map "cortexa78" "a53"
 			dict set mem_proc_key_map "psx_pmc" "pmc"
+			dict set mem_proc_key_map "pmc" "pmc"
 			dict set mem_proc_key_map "psx_psm" "psm"
+			dict set mem_proc_key_map "psm" "psm"
 			dict set mem_proc_key_map "slv1_psv_pmc" "slv1_pmc"
 			dict set mem_proc_key_map "slv2_psv_pmc" "slv2_pmc"
 			dict set mem_proc_key_map "slv3_psv_pmc" "slv3_pmc"
@@ -1972,7 +2003,7 @@ proc gen_cpu_cluster {} {
 	global mb_dict_64_bit
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
-	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52}]
+	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52 || IP_NAME==cortexr52}]
 	set r5_present 0
 
 	if {[string match -nocase [get_hw_family] "zynq"]} {
@@ -2150,7 +2181,7 @@ proc gen_cpu_cluster {} {
 	} elseif {[is_zynqmp_platform $proctype]} {
 		add_prop $cpu_node "address-map" $list_values special $default_dts
 	}
-	if {[string match -nocase $proctype "versal"]} {
+	if {[llength [hsi get_cells -hier -filter {IP_NAME == psv_psm || IP_NAME == psx_psm || IP_NAME == psm}]]} {
 		set cpu_node [create_node -l "cpus_microblaze_1" -n "cpus_microblaze" -u 1 -d ${default_dts} -p root]
 		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
 		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
@@ -2293,6 +2324,9 @@ proc update_alias {} {
 		if {$is_versal_net_platform} {
 			set pos [lsearch $all_drivers "psx_pmc_qspi*"]
 		}
+		if {$pos == -1} {
+			set pos [lsearch $all_drivers "pmc_qspi*"]
+		}
 	} else {
 		set pos [lsearch $all_drivers "psu_qspi*"]
 	}
@@ -2304,7 +2338,7 @@ proc update_alias {} {
     	}
 
 	set valid_pluarts "mdm axi_uartlite axi_uart16550"
-	set valid_coresights "ps7_coresight_comp psu_coresight_0 psv_coresight psx_coresight"
+	set valid_coresights "ps7_coresight_comp psu_coresight_0 psv_coresight psx_coresight coresight"
 
 	set design_pluarts ""
 	set design_coresight ""
@@ -2319,15 +2353,7 @@ proc update_alias {} {
 
 	set family [get_hw_family]
 	if {![regexp "microblaze" $family match]} {
-		set uart_platform_map [dict create]
-		dict set uart_platform_map "versal" "psv_sbsauart"
-		if { $is_versal_net_platform } {
-			dict set uart_platform_map "versal" "psx_sbsauart"
-		}
-		dict set uart_platform_map "zynqmp" "psu_uart"
-		dict set uart_platform_map "zynq" "ps7_uart"
-
-		set ps_uarts [hsi::get_cells -hier -filter "IP_NAME==[dict get $uart_platform_map $family]"]
+		set ps_uarts [hsi::get_cells -hier -filter {IP_NAME==psv_sbsauart || IP_NAME==psx_sbsauart || IP_NAME==sbsauart || IP_NAME==psu_uart || IP_NAME==ps7_uart}]
 
 	        if {[llength $ps_uarts] >= 2} {
 			set uart_address "ff000000 ff010000"
@@ -2347,7 +2373,7 @@ proc update_alias {} {
 			continue
 		}
             	set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-		if {$ip_name in {"psv_pmc_qspi" "psx_pmc_qspi"}} {
+		if {$ip_name in {"psv_pmc_qspi" "psx_pmc_qspi" "pmc_qspi"}} {
                   	set ip_type [get_ip_property $drv_handle IP_TYPE]
                   	if {[string match -nocase $ip_type "PERIPHERAL"]} {
                         	continue

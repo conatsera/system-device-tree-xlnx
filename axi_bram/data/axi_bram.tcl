@@ -125,7 +125,7 @@
                                 set reg "$base $size"
                         }
                         set proc_key $procc
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psv_cortexr5"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_cortexr52"]} {
+                        if {$proc_ip_name in {"psu_cortexr5" "psv_cortexr5" "psx_cortexr52" "cortexr52"}} {
                                 set_memmap "${drv_handle}_memory" $procc $reg
                         }
                         if { $proc_ip_name == $apu_proc_ip} {
@@ -136,19 +136,19 @@
                                         set_memmap "${drv_handle}_memory" a53 $reg
                                 }
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psu_pmu"]} {
+                        if {$proc_ip_name == "psu_pmu"} {
                                 set_memmap "${drv_handle}_memory" pmu $reg
                                 set proc_key pmu
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_pmc"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_pmc"]} {
+                        if {$proc_ip_name in {"psv_pmc" "psx_pmc" "pmc"}} {
                                 set_memmap "${drv_handle}_memory" pmc $reg
                                 set proc_key pmc
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "psv_psm"] || [string match -nocase [hsi get_property IP_NAME $procc] "psx_psm"]} {
+                        if {$proc_ip_name in {"psv_psm" "psx_psm" "psm"}} {
                                 set_memmap "${drv_handle}_memory" psm $reg
                                 set proc_key psm
                         }
-                        if {[string match -nocase [hsi get_property IP_NAME $procc] "microblaze"] || [string match -nocase [hsi get_property IP_NAME $procc] "microblaze_riscv"]} {
+                        if {$proc_ip_name in {"microblaze" "microblaze_riscv"}} {
                                 if {$64_bit} {
                                         set_memmap "${drv_handle}_memory" $procc $reg
                                 } else {

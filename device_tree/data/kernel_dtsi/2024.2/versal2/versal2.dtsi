@@ -22,81 +22,81 @@
 		cpu-map {
 			cluster0 {
 				core0 {
-					cpu = <&psx_cortexa78_0>;
+					cpu = <&cortexa78_0>;
 				};
 				core1 {
-					cpu = <&psx_cortexa78_1>;
+					cpu = <&cortexa78_1>;
 				};
 			};
 			cluster1 {
 				core0 {
-					cpu = <&psx_cortexa78_2>;
+					cpu = <&cortexa78_2>;
 				};
 				core1 {
-					cpu = <&psx_cortexa78_3>;
+					cpu = <&cortexa78_3>;
 				};
 			};
 			cluster2 {
 				core0 {
-					cpu = <&psx_cortexa78_4>;
+					cpu = <&cortexa78_4>;
 				};
 				core1 {
-					cpu = <&psx_cortexa78_5>;
+					cpu = <&cortexa78_5>;
 				};
 			};
 			cluster3 {
 				core0 {
-					cpu = <&psx_cortexa78_6>;
+					cpu = <&cortexa78_6>;
 				};
 				core1 {
-					cpu = <&psx_cortexa78_7>;
+					cpu = <&cortexa78_7>;
 				};
 			};
 		};
 
-		psx_cortexa78_0: cpu@0 {
+		cortexa78_0: cpu@0 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0>;
 		};
-		psx_cortexa78_1: cpu@100 {
+		cortexa78_1: cpu@100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x100>;
 		};
-		psx_cortexa78_2: cpu@10000 {
+		cortexa78_2: cpu@10000 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x10000>;
 		};
-		psx_cortexa78_3: cpu@10100 {
+		cortexa78_3: cpu@10100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x10100>;
 		};
-		psx_cortexa78_4: cpu@20000 {
+		cortexa78_4: cpu@20000 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x20000>;
 		};
-		psx_cortexa78_5: cpu@20100 {
+		cortexa78_5: cpu@20100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x20100>;
 		};
-		psx_cortexa78_6: cpu@30000 {
+		cortexa78_6: cpu@30000 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x30000>;
 		};
-		psx_cortexa78_7: cpu@30100 {
+		cortexa78_7: cpu@30100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
@@ -110,106 +110,106 @@
 		cpu-map {
 			cluster0 {
 				core0 {
-					cpu = <&psx_cortexr52_0>;
+					cpu = <&cortexr52_0>;
 				};
 				core1 {
-					cpu = <&psx_cortexr52_1>;
+					cpu = <&cortexr52_1>;
 				};
 			};
 
 			cluster1 {
 				core0 {
-					cpu = <&psx_cortexr52_2>;
+					cpu = <&cortexr52_2>;
 				};
 
 				core1 {
-					cpu = <&psx_cortexr52_3>;
+					cpu = <&cortexr52_3>;
 				};
 			};
 
 			cluster2 {
 				core0 {
-					cpu = <&psx_cortexr52_4>;
+					cpu = <&cortexr52_4>;
 				};
 				core1 {
-					cpu = <&psx_cortexr52_5>;
+					cpu = <&cortexr52_5>;
 				};
 			};
 
 			cluster3 {
 				core0 {
-					cpu = <&psx_cortexr52_6>;
+					cpu = <&cortexr52_6>;
 				};
 				core1 {
-					cpu = <&psx_cortexr52_7>;
+					cpu = <&cortexr52_7>;
 				};
 			};
 
 			cluster4 {
 				core0 {
-					cpu = <&psx_cortexr52_8>;
+					cpu = <&cortexr52_8>;
 				};
 				core1 {
-					cpu = <&psx_cortexr52_9>;
+					cpu = <&cortexr52_9>;
 				};
 			};
 		};
 
-		psx_cortexr52_0: cpu@0 {
+		cortexr52_0: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x0>;
 		};
 
-		psx_cortexr52_1: cpu@1 {
+		cortexr52_1: cpu@1 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x1>;
 		};
 
-		psx_cortexr52_2: cpu@2 {
+		cortexr52_2: cpu@2 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x2>;
 		};
 
-		psx_cortexr52_3: cpu@3 {
+		cortexr52_3: cpu@3 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x3>;
 		};
 
-		psx_cortexr52_4: cpu@4 {
+		cortexr52_4: cpu@4 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x4>;
 		};
 
-		psx_cortexr52_5: cpu@5 {
+		cortexr52_5: cpu@5 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x5>;
 		};
 
-		psx_cortexr52_6: cpu@6 {
+		cortexr52_6: cpu@6 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x6>;
 		};
 
-		psx_cortexr52_7: cpu@7 {
+		cortexr52_7: cpu@7 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x7>;
 		};
 
-		psx_cortexr52_8: cpu@8 {
+		cortexr52_8: cpu@8 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x8>;
 		};
 
-		psx_cortexr52_9: cpu@9 {
+		cortexr52_9: cpu@9 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x9>;
@@ -219,7 +219,7 @@
 	cpus_microblaze_0: cpus_microblaze@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		psx_pmc_0: cpu@0 {
+		pmc_0: cpu@0 {
 			compatible = "pmc-microblaze";
 			device_type = "cpu";
 			reg = <0x0>;
@@ -791,7 +791,7 @@
 		};
 
 		pmc_trng: pmc_trng@f1230000 {
-			compatible = "xlnx,psx-pmc-trng-11.0";
+			compatible = "xlnx,pmc-trng-11.0";
 			status = "disabled";
 			reg = <0x0 0xf1230000 0x0 0x10000>;
 		};
