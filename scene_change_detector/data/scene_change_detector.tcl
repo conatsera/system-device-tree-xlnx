@@ -36,6 +36,7 @@
                 for {set stream 0} {$stream < $max_nr_streams} {incr stream} {
                         set scd_node [create_node -n "subdev" -u $stream -p $node -d $dts_file]
                         set port_node [create_node -n "port" -u 0 -l "port_$stream" -p $scd_node -d $dts_file]
+			add_prop "$port_node" "reg" 0 int $dts_file
                         set endpoint [create_node -n "endpoint" -l "scd_in$stream" -p $port_node -d $dts_file]
                         add_prop "$endpoint" "remote-endpoint" "vcap0_out$stream" reference $dts_file
                 }
@@ -108,6 +109,7 @@
 
         }
         scene_change_detector_add_handles $drv_handle
+        scene_change_detector_gen_gpio_reset $drv_handle $node $dts_file
     }
 
     proc scene_change_detector_generate_dmas {vcap_scd dmas dts_file} {
@@ -187,4 +189,41 @@
     add_prop "$vcap_in_node" "remote-endpoint" scd_out$drv_handle reference $dts_file
     }
 
+    proc scene_change_detector_gen_gpio_reset {drv_handle node dts_file} {
+        set pins [get_source_pins [hsi::get_pins -of_objects [hsi::get_cells -hier [hsi::get_cells -hier $drv_handle]] "ap_rst_n"]]
+        foreach pin $pins {
+            set sink_periph [hsi::get_cells -of_objects $pin]
+            if {[llength $sink_periph]} {
+                set sink_ip [hsi::get_property IP_NAME $sink_periph]
+                if {[string match -nocase $sink_ip "xlslice"]} {
+                    set gpio [hsi::get_property CONFIG.DIN_FROM $sink_periph]
+                    set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
+                    foreach pin $pins {
+                        set periph [hsi::get_cells -of_objects $pin]
+                        if {[llength $periph]} {
+                            set ip [hsi::get_property IP_NAME $periph]
+                            if {[string match -nocase $ip "versal_cips"]} {
+                                # As versal has only bank0 for MIOs
+                                set gpio [expr $gpio + 26]
+                                add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
+                                break
+                            }
+                            if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
+                                set gpio [expr $gpio + 78]
+                                add_prop "$node" "reset-gpios" "gpio $gpio 1" reference $dts_file
+                                break
+                            }
+                            if {[string match -nocase $ip "axi_gpio"]} {
+                                add_prop "$node" "reset-gpios" "$periph $gpio 1" reference $dts_file
+                            }
+                        } else {
+                            dtg_warning "$drv_handle: peripheral is NULL for the $pin $periph"
+                        }
+                    }
+                }
+            } else {
+                dtg_warning "$drv_handle:peripheral is NULL for the $pin $sink_periph"
+            }
+        }
+    }
 
