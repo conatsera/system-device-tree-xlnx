@@ -1343,23 +1343,22 @@ proc write_dt args {
 	}
 	global env
 	set path $env(REPO)
-	# Windows treats an empty env variable as not defined
-	if {[catch {set include_dts $env(include_dts)} msg]} {
-		set include_dts ""
-	}
 	set common_file "$path/device_tree/data/config.yaml"
 	set dt_overlay [get_user_config $common_file -dt_overlay]
+	# Windows treats an empty env variable as not defined
+	if {[catch {set board_dtsi_file $env(board)} msg]} {
+		set board_dtsi_file ""
+	}
 	set fd [open $file w]
 	if {[string match -nocase $dt "systemdt"]} {
 		puts $fd "\/dts-v1\/\;"
 		global include_list
 		set includelist [split $include_list ","]
 		foreach val $includelist {
+			if {$val == "${board_dtsi_file}.dtsi"} {
+				continue
+			}
 			puts $fd "#include \"$val\""
-		}
-		foreach include_dts_file $include_dts {
-			set include_dts_filename [file tail $include_dts_file]
-			puts $fd "#include \"$include_dts_filename\""
 		}
 	}
 	if {[string match -nocase $dt "pldt"] && $dt_overlay} {
@@ -1654,6 +1653,20 @@ proc write_dt args {
 	if {$dtcheck != 1} {
 		puts $fd "\};"
 	}
+	# Windows treats an empty env variable as not defined
+	if {[catch {set include_dts $env(include_dts)} msg]} {
+		set include_dts ""
+	}
+	if {[string match -nocase $dt "systemdt"]} {
+		if {![string_is_empty $board_dtsi_file]} {
+			puts $fd "#include \"${board_dtsi_file}.dtsi\""
+		}
+		foreach include_dts_file $include_dts {
+			set include_dts_filename [file tail $include_dts_file]
+			puts $fd "#include \"$include_dts_filename\""
+		}
+	}
+
 	close $fd
 }
 
