@@ -26,7 +26,26 @@
         if {$node == 0} {
                 return
         }
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {$node == 0} {
+                return
+        }
+
         pldt append $node compatible "\ \, \"xlnx,audio-formatter-1.0\""
+
+	set tx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "m_axis_mm2s"]
+        if {[llength $tx_connect_ip] != 0} {
+                add_prop "$node" "xlnx,tx" $tx_connect_ip reference $dts_file 1
+        } else {
+                dtg_warning "$drv_handle pin m_axis_mm2s is not connected... check your design"
+        }
+        set rx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "s_axis_s2mm"]
+        if {[llength $rx_connect_ip] != 0} {
+                add_prop "$node" "xlnx,rx" $rx_connect_ip reference $dts_file 1
+        } else {
+                dtg_warning "$drv_handle pin s_axis_s2mm is not connected... check your design"
+        }
+
 
     }
 
