@@ -6301,9 +6301,16 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 
 		# check if it has status property
 		set rt_node [get_node $drv_handle]
-		if {[string match -nocase $ip_type "psv_rcpu_gic"] || [string match -nocase $ip_type "psu_rcpu_gic"]} {
+		if {$ip_type in {"psv_rcpu_gic" "psu_rcpu_gic"}} {
 			set node [create_node -n "&gic_r5" -d "pcw.dtsi" -p root]
 			add_prop $node "status" "okay" string $default_dts
+			# HSI reports the same address for Versal GIC A72 and R5.
+			# This is leading to missing ip-name and name property from gic_r5 node for versal.
+			# Add them forcibly here.
+			if {$ip_type == "psv_rcpu_gic"} {
+				add_prop $node "xlnx,ip-name" $ip_type string $default_dts
+				add_prop $node "xlnx,name" $drv_handle string $default_dts
+			}
 		} elseif {$ip_type in {"psx_rcpu_gic" "rcpu_gic"}} {
 			set node [create_node -n "&gic_r52" -d "pcw.dtsi" -p root]
 			add_prop $node "status" "okay" string $default_dts
