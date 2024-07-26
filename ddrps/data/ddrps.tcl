@@ -51,17 +51,14 @@
 			lappend proc_addr_list "$base $high"
 			incr index
 		}
-		if {[string match -nocase ${proc_ip_name} "psu_cortexr5"]} {
+		if {$proc_ip_name in {"psu_cortexr5" "microblaze" "microblaze_riscv"}} {
 			set_memmap "${drv_handle}_memory" $procc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
 		}
-		if {[string match -nocase ${proc_ip_name} "psu_cortexa53"] || [string match -nocase ${proc_ip_name} "ps7_cortexa9"]} {
+		if {$proc_ip_name in {"psu_cortexa53" "ps7_cortexa9"}} {
 			set_memmap "${drv_handle}_memory" a53 [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
 		}
-		if {[string match -nocase ${proc_ip_name} "psu_pmu"]} {
+		if {$proc_ip_name == "psu_pmu"} {
 			set_memmap "${drv_handle}_memory" pmu [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
-		}
-		if {[string match -nocase ${proc_ip_name} "microblaze"]} {
-			set_memmap "${drv_handle}_memory" $procc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
 		}
 	}
 
