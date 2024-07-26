@@ -302,7 +302,7 @@
     }
 
     proc ddrpsv_generate_reg_property {base high} {
-        set size [format 0x%x [expr {${high} - ${base} + 1}]]
+        set size [format 0x%lx [expr {${high} - ${base} + 1}]]
 
         set proctype [get_hw_family]
         if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "psv_cortexr5"]} {
@@ -463,7 +463,7 @@
         # If the DDR region is accessed for the first time OR
         # If the base address found is less than the address present in the list for this DDR region,
         # replace the address in the list with the new address found.
-        if { $is_ddr_region_accessed == 0 || ([scan $temp %x] < [scan [lindex $base_addr_list $ddr_region_id] %x])} {
+        if { $is_ddr_region_accessed == 0 || ([scan $temp %lx] < [scan [lindex $base_addr_list $ddr_region_id] %lx])} {
                 lset base_addr_list $ddr_region_id $temp
         }
 
@@ -473,7 +473,7 @@
         # If the DDR region is accessed for the first time OR
         # If the high address found is greater than the address present in the list for this DDR region,
         # replace the address in the list with the new address found.
-        if { $is_ddr_region_accessed == 0 || ([scan $temp %x] > [scan [lindex $high_addr_list $ddr_region_id] %x])} {
+        if { $is_ddr_region_accessed == 0 || ([scan $temp %lx] > [scan [lindex $high_addr_list $ddr_region_id] %lx])} {
                 lset high_addr_list $ddr_region_id $temp
         }
     }
@@ -519,8 +519,8 @@
                 if {[llength $tcm_ip] == 1} {
                         set tcm_high_addr [get_highaddr $tcm_ip]
                         set tcm_base_addr [get_baseaddr $tcm_ip]
-                        set tcm_size [format 0x%x [expr {${tcm_high_addr} - ${tcm_base_addr} + 1}]]
-                        if {[scan $tcm_size %x] > [scan $ddr_base_addr %x]} {
+                        set tcm_size [format 0x%lx [expr {${tcm_high_addr} - ${tcm_base_addr} + 1}]]
+                        if {[scan $tcm_size %lx] > [scan $ddr_base_addr %lx]} {
                                 set ddr_base_addr $tcm_size
                         }
                 }
