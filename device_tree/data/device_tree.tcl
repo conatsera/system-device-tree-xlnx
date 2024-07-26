@@ -2301,6 +2301,7 @@ proc update_cpu_node {} {
 
 proc update_alias {} {
 	global is_versal_net_platform
+	global dup_periph_handle
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
@@ -2384,7 +2385,7 @@ proc update_alias {} {
 		set common_file "$path/$drvname/data/config.yaml"
 		set exists [file exists $common_file]
 		set tmp [get_driver_config $drv_handle alias]
-        	if {[string_is_empty $tmp]} {
+		if {[string_is_empty $tmp] || [dict exists $dup_periph_handle $drv_handle] } {
             		continue
         	} else {
 			set alias_str $tmp
