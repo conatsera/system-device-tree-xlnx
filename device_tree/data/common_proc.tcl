@@ -643,7 +643,24 @@ proc write_value {type value} {
 				}
                 	}
                 } elseif {$type == "hexint"} {
-			if {[regexp -nocase {0x([0-9a-f])} $value match]} {
+			if {[regexp -nocase {0x([0-9a-f]{9})} "$value" match]} {
+				set temp [string trimleft $value "0x"]
+				set len [string length $temp]
+				set rem [expr {${len} - 8}]
+				set high_base [string range $temp $rem $len]
+				set low_base [string range $temp 0 [expr {${rem} - 1}]]
+				if {[string_is_empty $high_base]} {
+					set high_base "0x0"
+				} else {
+					set high_base "0x${high_base}"
+				}
+				if {[string_is_empty $low_base]} {
+					set val "<$high_base>"
+				} else {
+					set low_base [format 0x%08x $low_base]
+					set val "<$low_base $high_base>"
+				}
+			} elseif {[regexp -nocase {0x([0-9a-f])} $value match]} {
 				set val "<$value>"
 			} elseif {[regexp -nocase {([a-f])} $value match]} {
 				set val "<0x$value>"
