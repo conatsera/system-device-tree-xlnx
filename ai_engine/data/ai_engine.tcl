@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -91,7 +91,7 @@
         add_prop "${ai_clk_node}" "clock-frequency" $clk_freq int "pl.dtsi"
         set clocks "aie_core_ref_clk_0"
         set_drv_prop_if_empty $drv_handle clocks "$clocks" $node reference
-        add_prop "${node}" "clock-names" "aclk0" stringlist "pl.dtsi"
+        set_drv_prop_if_empty $drv_handle "clock-names" "aclk0" $node string
 
         return ${node}
     }
