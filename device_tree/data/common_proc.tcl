@@ -5974,10 +5974,11 @@ proc ip2drv_prop {ip_name prop_name_list} {
 			# remove CONFIG.C_
 			set drv_prop_name $ip_prop_name
 			regsub -all {CONFIG.C_} $drv_prop_name {xlnx,} drv_prop_name
+			regsub -all {CONFIG.c_} $drv_prop_name {xlnx,} drv_prop_name
 			regsub -all {^CONFIG.} $drv_prop_name {xlnx,} drv_prop_name
 			regsub -all {_} $drv_prop_name {-} drv_prop_name
 			set drv_prop_name [string tolower $drv_prop_name]
-			if {[string match -nocase $drv_prop_name "xlnx,include-sg"] || [string match -nocase $drv_prop_name "xlnx,sg-include-stscntrl-strm"]} {
+			if {[string match -nocase $drv_prop_name "xlnx,include-sg"]} {
 				continue
 			}
 		}
@@ -6048,10 +6049,15 @@ proc remove_duplicates {ip_handle} {
 			set temp [regsub -all {CONFIG.C_} $prop $inner]
 			dict set dictval [string tolower $temp] $prop
 		}
+		if {[regexp -nocase "CONFIG.c_.*" $prop match]} {
+                        set temp [regsub -all {CONFIG.c_} $prop $inner]
+                        dict set dictval [string tolower $temp] $prop
+                }
 	}
 	foreach prop $par_handles {
 		set temp [regsub -all {^CONFIG.} $prop ""]
 		set temp [regsub -all {^C_} $temp ""]
+		set temp [regsub -all {^c_} $temp ""]
 		set temp [string tolower $temp]
 		if {![dict exists $dictval $temp]} {
 			dict set dictval $temp $prop
