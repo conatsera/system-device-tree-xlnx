@@ -1404,6 +1404,7 @@ Generates system device tree based on args given in:
 				set fp [open $cur_hw_iss_file r]
 				set cur_hw_iss_data [read $fp]
 				set cur_hw_iss_data [::json::json2dict $cur_hw_iss_data]
+				is_smmu_en
 			}
 		}
 		file delete -force "$xsa_path"

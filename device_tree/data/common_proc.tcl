@@ -131,6 +131,7 @@ global comp_str_dict
 global cur_hw_design
 global intr_type_dict
 global cur_hw_iss_data
+global cur_hw_is_smmu_en
 
 set node_dict [dict create]
 set nodename_dict [dict create]
@@ -142,6 +143,7 @@ set comp_str_dict [dict create]
 set cur_hw_design ""
 set intr_type_dict [dict create]
 set cur_hw_iss_data [dict create]
+set cur_hw_is_smmu_en ""
 
 package require Tcl 8.5.14
 package require yaml
@@ -7424,6 +7426,30 @@ proc generate_board_compatible { rt_node } {
             }
 }
 
+proc is_smmu_en {} {
+	proc_called_by
+	global cur_hw_iss_data
+	global cur_hw_is_smmu_en
+
+	if {[catch {set subsystem_list [dict get $cur_hw_iss_data design subsystems]} msg]} {
+		set subsystem_list ""
+	}
+	foreach subsystem $subsystem_list {
+		if {[catch {set dest_list [dict get $cur_hw_iss_data design subsystems $subsystem access]} msg]} {
+			set dest_list ""
+		}
+		foreach entry $dest_list {
+			if {![catch {set destinations [dict get $entry destinations]}]} {
+				if {![catch {set entry_flags [dict get $entry flags]}]} {
+					if {![catch {set is_virtualized [dict get $entry flags requested_virtualized]}]} {
+						set cur_hw_is_smmu_en "true"
+					}
+				}
+			}
+		}
+	}
+}
+
 proc get_smid { iss_name} {
 	proc_called_by
 	global cur_hw_iss_data
@@ -7449,21 +7475,22 @@ proc get_iss_drv_name { versal_periph addr} {
 	if {[catch {set destn [dict get $cur_hw_iss_data design cells $versal_periph destinations]} msg]} {
 		set destn ""
 	}
+	set iss_name ""
 	foreach entry $destn {
 		if {[dict exists $entry addr]} {
 			if {[dict get $entry addr] == $addr} {
 				set iss_name [dict get $entry name]
-				return $iss_name
 			}
 		}
 	}
-	return
+	return $iss_name
 }
 
 
 proc generate_smmu_cci_config { iss_name drv_handle} {
 	proc_called_by
 	global cur_hw_iss_data
+	global cur_hw_is_smmu_en
 	if {[catch {set subsystem_list [dict get $cur_hw_iss_data design subsystems]} msg]} {
 		set subsystem_list ""
 	}
@@ -7476,17 +7503,21 @@ proc generate_smmu_cci_config { iss_name drv_handle} {
 				if {$iss_name in $destinations} {
 					if {![catch {set entry_flags [dict get $entry flags]}]} {
 						set node [get_node $drv_handle]
+						set is_coherent ""
+						set is_virtualized ""
 						foreach flag {requested_coherent requested_secure requested_virtualized} {
 							if {![catch {set is_flag [dict get $entry_flags $flag]}]} {
 								if {[string match -nocase $is_flag "true"]} {
 									switch -- $flag {
 										"requested_coherent" {
 											add_prop $node "dma-coherent" boolean [set_drv_def_dts $drv_handle]
+											set is_coherent "true"
 										}
 										"requested_secure" {
 											add_prop $node "xlnx,is-secure" boolean [set_drv_def_dts $drv_handle]
 										}
 										"requested_virtualized" {
+											set is_virtualized "true"
 											set smid [get_smid $iss_name]
 											if {![string_is_empty $smid]} {
 												add_prop $node "iommus" "smmu $smid" reference [set_drv_def_dts $drv_handle]
@@ -7494,6 +7525,14 @@ proc generate_smmu_cci_config { iss_name drv_handle} {
 										}
 									}
 								}
+							}
+						}
+						if {[string match -nocase $cur_hw_is_smmu_en "true"] &&
+						    [string match -nocase $is_coherent "true"] &&
+						    [string_is_empty $is_virtualized]} {
+							set smid [get_smid $iss_name]
+							if {![string_is_empty $smid]} {
+								add_prop $node "iommus" "smmu $smid" reference [set_drv_def_dts $drv_handle]
 							}
 						}
 					}
