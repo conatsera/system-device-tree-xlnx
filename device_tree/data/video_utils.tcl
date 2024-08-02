@@ -560,6 +560,52 @@ proc gen_axis_switch {ip} {
 	set num_mi [hsi get_property CONFIG.NUM_MI [hsi::get_cells -hier $ip]]
 	add_prop "$switch_node" "xlnx,num-mi-slots" $num_mi int $dts
 	add_prop "$switch_node" "compatible" "$compatible" string $dts
+        if {[string match -nocase [hsi get_property IP_NAME $ip] "axis_switch"]} {
+            set axis_ip [hsi get_property IP_NAME $ip]
+            set dts_file [set_drv_def_dts $ip]
+            set unit_addr [get_baseaddr ${ip} no_prefix]
+            if { ![string equal $unit_addr ""] } {
+                return
+            }
+            set label $ip
+            set bus_node [detect_bus_name $ip]
+            set dev_type [hsi get_property IP_NAME [hsi::get_cells -hier [hsi::get_cells -hier $ip]]]
+            if {[llength $axis_ip]} {
+                set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+                set inip [get_in_connect_ip $ip $intf]
+                set node [get_node $ip]
+                if {[llength $inip]} {
+                    set inipname [hsi get_property IP_NAME $inip]
+                    set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange"
+                    if {[lsearch -nocase $valid_mmip_list $inipname] >= 0} {
+                        set ports_node [create_node -n "ports" -l axis_switch_ports$ip -p $node -d $dts_file]
+                        add_prop "$ports_node" "#address-cells" 1 int $dts_file
+                        add_prop "$ports_node" "#size-cells" 0 int $dts_file
+                        set port_node [create_node -n "port" -l axis_switch_port0$ip -u 0 -p $ports_node -d $dts_file]
+                        add_prop "$port_node" "reg" 0 int $dts_file
+                        if {[llength $inip]} {
+                            set axis_switch_in_end ""
+                            set axis_switch_remo_in_end ""
+                            if {[info exists axis_switch_in_end_mappings] && [dict exists $axis_switch_in_end_mappings $inip]} {
+                                set axis_switch_in_end [dict get $axis_switch_in_end_mappings $inip]
+                                dtg_verbose "drv:$ip inend:$axis_switch_in_end"
+                            }
+                            if {[info exists axis_switch_in_remo_mappings] && [dict exists $axis_switch_in_remo_mappings $inip]} {
+                                set axis_switch_remo_in_end [dict get $axis_switch_in_remo_mappings $inip]
+                                dtg_verbose "drv:$ip inremoend:$axis_switch_remo_in_end"
+                            }
+                            if {[llength $axis_switch_remo_in_end]} {
+                                set axisinnode [create_node -n "endpoint" -l $axis_switch_remo_in_end -p $port_node -d $dts_file]
+                            }
+                            if {[llength $axis_switch_in_end]} {
+                                add_prop "$axisinnode" "remote-endpoint" $axis_switch_in_end reference $dts_file
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
 	set count 0
 	foreach intf $master_intf {
 	       set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
@@ -674,3 +720,70 @@ proc gen_axis_switch {ip} {
         }
         return $connectip
     }
+
+proc get_endpoint_mapping {inip mappings} {
+	#search the inip in mappings and return value if found
+	set endpoint ""
+	if {[dict exists $mappings $inip]} {
+		set endpoint [dict get $mappings $inip]
+	}
+	return "$endpoint"
+}
+
+proc add_endpoint_mapping {drv_handle port_node in_end remo_in_end} {
+	#Add the endpoint/remote-endpoint for given drv_handle
+	if {[regexp -nocase $drv_handle "$remo_in_end" match]} {
+		if {[llength $remo_in_end]} {
+			set node [create_node -n "endpoint" -l $remo_in_end -p $port_node]
+		}
+		if {[llength $in_end]} {
+			add_prop "$node" "remote-endpoint" $in_end reference
+		}
+	}
+}
+
+proc update_axis_switch_endpoints {inip port_node drv_handle} {
+	#Read all the non memorymapped axis_switch global variables to get the
+	#inip value corresponding to drv_handle
+	global port1_end_mappings
+	global port2_end_mappings
+	global port3_end_mappings
+	global port4_end_mappings
+	global axis_port1_remo_mappings
+	global axis_port2_remo_mappings
+	global axis_port3_remo_mappings
+	global axis_port4_remo_mappings
+	if {[info exists port1_end_mappings] && [info exists axis_port1_remo_mappings]} {
+		set in1_end [get_endpoint_mapping $inip $port1_end_mappings]
+		set remo_in1_end [get_endpoint_mapping $inip $axis_port1_remo_mappings]
+	}
+	if {[info exists port2_end_mappings] && [info exists axis_port2_remo_mappings]} {
+		set in2_end [get_endpoint_mapping $inip $port2_end_mappings]
+		set remo_in2_end [get_endpoint_mapping $inip $axis_port2_remo_mappings]
+	}
+	if {[info exists port3_end_mappings] && [info exists axis_port3_remo_mappings]} {
+		set in3_end [get_endpoint_mapping $inip $port3_end_mappings]
+		set remo_in3_end [get_endpoint_mapping $inip $axis_port3_remo_mappings]
+	}
+	if {[info exists port4_end_mappings] && [info exists axis_port4_remo_mappings]} {
+		set in4_end [get_endpoint_mapping $inip $port4_end_mappings]
+		set remo_in4_end [get_endpoint_mapping $inip $axis_port4_remo_mappings]
+	}
+
+	if {[info exists remo_in1_end] && [info exists in1_end]} {
+		dtg_verbose "$port_node $remo_in1_end"
+		add_endpoint_mapping $drv_handle $port_node $in1_end $remo_in1_end
+	}
+	if {[info exists remo_in2_end] && [info exists in2_end]} {
+		dtg_verbose "$port_node $remo_in2_end"
+		add_endpoint_mapping $drv_handle $port_node $in2_end $remo_in2_end
+	}
+	if {[info exists remo_in3_end] && [info exists in3_end]} {
+		dtg_verbose "$port_node $remo_in3_end"
+		add_endpoint_mapping $drv_handle $port_node $in3_end $remo_in3_end
+	}
+	if {[info exists remo_in4_end] && [info exists in4_end]} {
+		dtg_verbose "$port_node $remo_in4_end"
+		add_endpoint_mapping $drv_handle $port_node $in4_end $remo_in4_end
+	}
+}
