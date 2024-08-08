@@ -127,10 +127,26 @@
                 dtg_warning "$drv_handle pin M_AXIS_VIDEO is not connected ...check your design"
             }
         }
+
+        v_tpg_gen_gpio_reset $drv_handle $node $dts_file
+
+}
+
+proc tpg_update_endpoints {drv_handle} {
+        set node [get_node $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {[string_is_empty $node]} {
+                return
+        }
+
+        global end_mappings
+        global remo_mappings
+
         set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
         set port0_node [create_node -n "port" -l tpg_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
         add_prop "$port0_node" "reg" 0 int $dts_file 1
         add_prop "$port0_node" "xlnx,video-format" 2 int $dts_file 1
+        set max_data_width [hsi get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
         add_prop "$port0_node" "xlnx,video-width" $max_data_width int $dts_file
         set tpg_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_VIDEO"]
         if {![llength $tpg_inip]} {
@@ -154,7 +170,6 @@
                 add_prop "$tpg_node" "remote-endpoint" $tpg_in_end reference $dts_file
             }
         }
-        v_tpg_gen_gpio_reset $drv_handle $node $dts_file
 
     }
 

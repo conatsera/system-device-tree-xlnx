@@ -14,7 +14,6 @@
 #
 
 proc vproc_ss_generate {drv_handle} {
-
 	set node [get_node $drv_handle]
 	if {$node == 0} {
 		return
@@ -218,8 +217,34 @@ proc vproc_ss_generate {drv_handle} {
 
   vproc_ss_gen_gpio_reset $drv_handle $node $topology $dts_file
   }
+}
+
+proc vproc_ss_update_endpoints {drv_handle} {
+        set node [get_node $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {[string_is_empty $node]} {
+                return
+        }
+
+        global end_mappings
+        global remo_mappings
+        global set port1_broad_end_mappings
+        global set port2_broad_end_mappings
+        global set port3_broad_end_mappings
+        global set port4_broad_end_mappings
+        global set port5_broad_end_mappings
+        global set port6_broad_end_mappings
+        global set broad_port1_remo_mappings
+        global set broad_port2_remo_mappings
+        global set broad_port3_remo_mappings
+        global set broad_port4_remo_mappings
+
+
+        set topology [hsi get_property CONFIG.C_TOPOLOGY [hsi::get_cells -hier $drv_handle]]
 
   if {$topology == 0} {
+        set ports_node [create_node -n "ports" -l scaler_ports$drv_handle -p $node -d $dts_file]
+        set max_data_width [hsi get_property CONFIG.C_MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
       set port_node [create_node -n "port" -l scaler_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
       add_prop "$port_node" "reg" 0 int $dts_file
       add_prop "$port_node" "xlnx,video-format" 3 int $dts_file

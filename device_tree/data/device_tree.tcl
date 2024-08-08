@@ -1332,6 +1332,7 @@ proc generate_sdt args {
 	global cur_hw_iss_data
 	global non_val_list
 	global non_val_ip_types
+	set endpoint_proc_dict [dict create]
 
 	set linear_spi_list "psu_qspi_linear ps7_qspi_linear"
 
@@ -1559,8 +1560,16 @@ Generates system device tree based on args given in:
 				set drvname [dict get $::sdtgen::namespacelist $ip_name]
 				source [file join $path $drvname "data" "${drvname}.tcl"]
 				${drvname}_generate $drv_handle
+				if {[lsearch [info procs] ${drvname}_update_endpoints] >= 0} {
+					dict set endpoint_proc_dict $drv_handle ${drvname}_update_endpoints
+				}
 			}
 		}
+	}
+
+	foreach drv_handle [dict keys $endpoint_proc_dict] {
+		set endpoint_proc_name [dict get $endpoint_proc_dict $drv_handle]
+		$endpoint_proc_name $drv_handle
 	}
 
 	namespace forget ::

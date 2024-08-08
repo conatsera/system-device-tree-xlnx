@@ -46,7 +46,17 @@ proc sdi_txss_generate {drv_handle} {
 		add_prop "${node}" "xlnx,Isstd_352" 1 int $dts_file 1
 		add_prop "${node}" "xlnx,tx-insert-c-str-st352" true int $dts_file 1
 	}
+}
 
+proc sdi_txss_update_endpoints {drv_handle} {
+        set node [get_node $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {[string_is_empty $node]} {
+                return
+        }
+
+        global end_mappings
+        global remo_mappings
 
 	set ports_node [create_node -n "ports" -l sditx_ports$drv_handle -p $node -d $dts_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dts_file 1

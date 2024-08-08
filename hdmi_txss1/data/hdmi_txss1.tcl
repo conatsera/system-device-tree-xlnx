@@ -144,6 +144,21 @@
 		If this is incorrect, the peripheral $drv_handle will be non-functional"
 	}
        add_prop "${node}" "xlnx,axi-lite-freq-hz" $freq hexint $dts_file 1
+       set vid_clk_freq [hsi get_property CONFIG.C_VID_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,vid-clk-freq-khz" $vid_clk_freq hexint $dts_file 1
+	set frl_clk_freq [hsi get_property CONFIG.C_FRL_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,frl-clk-freq-khz" $frl_clk_freq hexint $dts_file 1
+
+}
+
+proc hdmi_txss1_update_endpoints {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	if {[string_is_empty $node]} {
+		return
+	}
+	global end_mappings
+	global remo_mappings
 	set ports_node [create_node -n "ports" -l hdmitx_ports$drv_handle -p $node -d $dts_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
 	add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
@@ -214,10 +229,6 @@
 			update_axis_switch_endpoints $inip $hdmi_port_node $drv_handle
 		}
 	}
-	set vid_clk_freq [hsi get_property CONFIG.C_VID_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,vid-clk-freq-khz" $vid_clk_freq hexint $dts_file 1
-	set frl_clk_freq [hsi get_property CONFIG.C_FRL_CLK_FREQ_KHZ [hsi get_cells -hier $drv_handle]]
-	add_prop "${node}" "xlnx,frl-clk-freq-khz" $frl_clk_freq hexint $dts_file 1
 
     }
 

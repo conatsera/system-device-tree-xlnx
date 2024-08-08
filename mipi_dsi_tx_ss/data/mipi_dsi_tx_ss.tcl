@@ -56,11 +56,23 @@
 	add_prop "$panel_node" "reg" 0 int $dts_file 1
 	add_prop "$panel_node" "compatible" "auo,b101uan01" string $dts_file 1
 
+        dsitx_add_hier_instances $drv_handle
+}
+
+proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
+        set node [get_node $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {[string_is_empty $node]} {
+                return
+        }
+
+        global end_mappings
+        global remo_mappings
+
         set dsitx_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS"]
         if {![llength $dsitx_inip]} {
             dtg_warning "$drv_handle pin S_AXIS is not connected ..check your design"
         }
-
         set port_node [create_node -n "port" -l encoder_dsi_port$drv_handle -u 0 -p $node -d $dts_file]
         add_prop "$port_node" "reg" 0 int $dts_file
         set inip ""
@@ -103,8 +115,6 @@
                 add_prop "$dsitx_node" "remote-endpoint" $dsitx_in_end reference $dts_file
             }
         }
-
-	dsitx_add_hier_instances $drv_handle
 
     }
 

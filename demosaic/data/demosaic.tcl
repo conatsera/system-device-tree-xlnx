@@ -76,6 +76,31 @@
             }
         }
     }
+    demosaic_gen_gpio_reset $drv_handle $node $dts_file
+
+}
+
+proc demosaic_update_endpoints {drv_handle} {
+        set node [get_node $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {[string_is_empty $node]} {
+                return
+        }
+
+        global end_mappings
+        global remo_mappings
+        global set port1_end_mappings
+        global set port2_end_mappings
+        global set port3_end_mappings
+        global set port4_end_mappings
+        global set axis_port1_remo_mappings
+        global set axis_port2_remo_mappings
+        global set axis_port3_remo_mappings
+        global set axis_port4_remo_mappings
+
+        set ports_node [create_node -n "ports" -l demosaic_ports$drv_handle -p $node -d $dts_file]
+        add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
+        add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
 
     set port_node [create_node -n "port" -l demosaic_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
     add_prop "$port_node" "reg" 0 int $dts_file 1
@@ -326,8 +351,6 @@
                 dtg_warning "$drv_handle pin s_axis is not connected..check your design"
                }
         }
-
-        demosaic_gen_gpio_reset $drv_handle $node $dts_file
     }
 
     proc demosaic_gen_frmbuf_wr_node {outip drv_handle dts_file} {

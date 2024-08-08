@@ -105,6 +105,16 @@
 		}
 	}
 
+}
+
+proc hdmi_tx_ss_update_endpoints {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	if {[string_is_empty $node]} {
+		return
+	}
+	global end_mappings
+	global remo_mappings
 	set ports_node [create_node -n "ports" -l hdmitx_ports$drv_handle -p $node -d $dts_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
 	add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
