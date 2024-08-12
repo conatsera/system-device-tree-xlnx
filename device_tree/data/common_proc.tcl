@@ -5232,6 +5232,8 @@ proc get_interrupt_parent {  periph_name intr_pin_name } {
         }  elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
 		set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
 		set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "$intr"]]
+	} elseif {[llength $sink_periph] &&  [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_ff"]} {
+		set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Q"]]
 	}
     }
     return $intr_cntrl
@@ -5266,12 +5268,14 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	# TODO: consolidation with get_intr_id proc
 	foreach pin ${intr_port_name} {
 		set connected_intc [get_intr_cntrl_name $drv_handle $pin]
-		if {[llength $connected_intc] == 0 || [string match $connected_intc "{}"] } {
+		regsub -all {\{|\}} $connected_intc "" connected_intc
+		if {[llength $connected_intc] == 0 } {
 			if {![string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_intc"]} {
 				dtg_warning "Interrupt pin \"$pin\" of IP block: \"$drv_handle\" is not connected to any interrupt controller\n\r"
 			}
 			continue
 		}
+		set connected_intc [hsi::get_cells -hier $connected_intc]
 		set connected_intc_name [hsi get_property IP_NAME $connected_intc]
 		set valid_gpio_list "ps7_gpio axi_gpio"
 		set valid_cascade_proc "microblaze microblaze_riscv zynq zynqmp zynquplus versal zynquplusRFSOC"
@@ -6881,6 +6885,11 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 			if {$intr_present == 1} {
 				lappend intr_cntrl $sink_periph
 			}
+		} elseif {[llength $sink_periph] &&  [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_ff"]} {
+			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Q"]
+		} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
+			set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
+			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$intr"]
 		}
 		if {[llength $intr_cntrl] > 1} {
 				foreach intc $intr_cntrl {
@@ -7259,9 +7268,13 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			}
 		}
 	}
-	# check for ORgate
-	if { [string compare -nocase "$sink_pin" "Op1"] == 0 } {
-		set dout "Res"
+	# check for ORgate or util_ff
+	if { [string compare -nocase "$sink_pin" "Op1"] == 0 || [string compare -nocase "$sink_pin" "D"] == 0 } {
+		if { [string compare -nocase "$sink_pin" "Op1"] == 0 } {
+			set dout "Res"
+		} elseif { [string compare -nocase "$sink_pin" "D"] == 0 } {
+			set dout "Q"
+		}
 		set sink_periph [hsi::get_cells -of_objects $sink_pin]
 		if {[llength $sink_periph]} {
 			set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
