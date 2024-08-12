@@ -102,13 +102,23 @@ proc axi_vdu_generate {drv_handle} {
 	set al5d_offset "0x100000"
 	set intr_width ""
 
-	set intrnames_List [split [string map {" " ""} [pldt get $node "interrupt-names"]] ","]
-	set intr_val [string trim [pldt get $node "interrupts"] \<\>]
-	set intr_parent [string trim [pldt get $node "interrupt-parent"] \<\&\>]
+	if {![catch {set intrnames_List [split [string map {" " ""} [pldt get $node "interrupt-names"]] ","]} msg]} {
+		pldt unset $node "interrupt-names"
+	} else {
+		dtg_warning "Interrupt names could not be fetched from VDU nodes"
+	}
 
-	pldt unset $node "interrupt-names"
-	pldt unset $node "interrupts"
-	pldt unset $node "interrupt-parent"
+	if {![catch {set intr_val [string trim [pldt get $node "interrupts"] \<\>]} msg]} {
+		pldt unset $node "interrupts"
+	} else {
+		dtg_warning "Interrupt pins could not be fetched from VDU nodes"
+	}
+
+	if {![catch {set intr_parent [string trim [pldt get $node "interrupt-parent"] \<\&\>]} msg]} {
+		pldt unset $node "interrupt-parent"
+	} else {
+		dtg_warning "Interrupt parent could not be fetched from VDU nodes"
+	}
 
 	for {set inst 0} {$inst < $num_decoders} {incr inst} {
 		set al5d_node_label "al5d${inst}"
