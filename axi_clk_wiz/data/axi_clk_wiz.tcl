@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -38,7 +38,11 @@
                 add_prop $node "xlnx,nr-outputs" $j int "pl.dtsi"
         }
         add_prop $node "#clock-cells" 1 int "pl.dtsi"
-        gen_dev_ccf_binding $drv_handle "clk_in1 s_axi_aclk" "clocks clock-names"
+
+        set family [get_hw_family]
+        if {[regexp "microblaze" $family match]} {
+                gen_dev_ccf_binding $drv_handle "clk_in1 s_axi_aclk" "clocks clock-names"
+       }
     }
 
     proc axi_clk_wiz_gen_speedgrade {drv_handle} {
