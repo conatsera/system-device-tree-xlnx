@@ -65,6 +65,7 @@
         } else {
                 axi_cdma_generate_clk_nodes $drv_handle
         }
+        axi_cdma_add_dma_coherent_prop $drv_handle "M_AXI"
     }
 
     proc axi_cdma_add_dma_channel {drv_handle parent_node xdma addr mode devid} {
@@ -121,3 +122,36 @@
     }
 
 
+    proc axi_cdma_add_dma_coherent_prop {drv_handle intf} {
+        set connectedip [get_connected_stream_ip $drv_handle $intf]
+        if {[llength $connectedip] == 0} {
+                return
+        }
+        set intrconnect [hsi get_property IP_NAME [hsi::get_cells -hier $connectedip]]
+        set done 0
+
+        # check whether dma connected to interconnect ip, loop until you get the
+        # port name HPC
+        while {[string match -nocase $intrconnect "axi_interconnect"]} {
+                # loop over number of master interfaces
+                set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectedip] -filter {TYPE==MASTER}]
+                if {[llength $master_intf] == 0} {
+                        break
+                }
+                foreach interface ${master_intf} {
+                        set intf_port [get_connected_intf $connectedip $interface]
+                        set intrconnect [get_connected_stream_ip $connectedip $interface]
+                        if {![string_is_empty $intf_port] && [string match -nocase $intf_port "S_AXI_HPC0_FPD"] ||
+			    [string match -nocase $intf_port "S_AXI_HPC1_FPD"]} {
+                                set node [get_node $drv_handle]
+                                add_prop $node "dma-coherent" "" boolean "pl.dtsi"
+                                # here dma connected to HPC port
+                                set done 1
+                                break;
+                        }
+                        if {$done} {
+                                break
+                        }
+                }
+        }
+    }
