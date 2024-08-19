@@ -309,12 +309,15 @@ proc mipi_csi2_rx_gen_pixel_format {pxl_format node dts_file} {
 }
 
 proc mipi_csi2_rx_ss_gen_frmbuf_node {outip drv_handle dts_file} {
-	set dt_overlay [get_property CONFIG.dt_overlay [get_os]]
-	if {$dt_overlay} {
-		set bus_node "amba"
-	} else {
-		set bus_node "amba_pl"
-	}
+	global env
+	set path $env(REPO)
+	set common_file "$path/device_tree/data/config.yaml"
+	set dt_overlay [get_user_config $common_file -dt_overlay]
+        if {$dt_overlay} {
+                set bus_node "amba"
+        } else {
+               set bus_node "amba_pl: amba_pl"
+        }
         set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
         add_prop $vcap "compatible" "xlnx,video" string $dts_file
         add_prop $vcap "dmas" "$outip 0" reference $dts_file
