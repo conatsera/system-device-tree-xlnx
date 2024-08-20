@@ -71,7 +71,7 @@
 	}
 	set include_hdcp_2_2 [hsi::get_property CONFIG.C_INCLUDE_HDCP_2_2 [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $include_hdcp_2_2 "true"]} {
-		add_prop "${node}" "xlnx,include-hdcp-2-2" "" boolean
+		add_prop "${node}" "xlnx,include-hdcp-2-2" "" boolean $dts_file 1
 	}
 	if {[string match -nocase $include_hdcp_1_4 "true"] || [string match -nocase $include_hdcp_2_2 "true"]} {
 		add_prop "${node}" "xlnx,hdcp-authenticate" 0x1 int $dts_file 1
