@@ -59,15 +59,8 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
                 add_prop "${node}" "xlnx,en-csi-v2" 0 int $dts_file 1
 	}
 
-	set dphymode [hsi get_property CONFIG.C_DPHY_MODE [hsi::get_cells -hier $drv_handle]]
-        if  {[string match -nocase "master" $dphymode]} {
-                add_prop "${node}" "xlnx,dphy-mode" 1 int $dts_file 1
-        } elseif {[string match -nocase "slave" $dphymode]} {
-                add_prop "${node}" "xlnx,dphy-mode" 0 int $dts_file 1
-	}
-
 	set cphymode [hsi get_property CONFIG.C_PHY_MODE [hsi::get_cells -hier $drv_handle]]
-        if  {[string match -nocase "dphy" $dphymode]} {
+        if  {[string match -nocase "dphy" $cphymode]} {
                 add_prop "${node}" "xlnx,mipi-rx-phy-mode" 1 int $dts_file 1
         } else {
                 add_prop "${node}" "xlnx,mipi-rx-phy-mode" 0 int $dts_file 1
