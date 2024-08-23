@@ -1918,6 +1918,9 @@ proc proc_mapping {} {
 			dict set mem_proc_key_map "microblaze_riscv" "$val"
 
 			if {![catch {set mem_map_key [dict get $mem_proc_key_map $iptype]} msg]} {
+				if {[regexp -nocase "pmc_wdt" $periph match] && $mem_map_key != "pmc"} {
+					continue
+				}
 				if {$pl_ip} {
 					if { ![dict exists $dup_periph_handle $periph] } {
 						set_memmap $temp $mem_map_key $regprop
