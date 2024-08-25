@@ -305,6 +305,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "psx_pmc_trng" "trngpsx"
 	dict set ::sdtgen::namespacelist "pmc_trng" "trngpsx"
+
+	dict set ::sdtgen::namespacelist "asu" "asu"
 }
 
 proc Pop {varname {nth 0}} {
@@ -1916,6 +1918,7 @@ proc proc_mapping {} {
 
 			dict set mem_proc_key_map "microblaze" "$val"
 			dict set mem_proc_key_map "microblaze_riscv" "$val"
+			dict set mem_proc_key_map "asu" "asu"
 
 			if {![catch {set mem_map_key [dict get $mem_proc_key_map $iptype]} msg]} {
 				if {[regexp -nocase "pmc_wdt" $periph match] && $mem_map_key != "pmc"} {
@@ -2221,6 +2224,34 @@ proc gen_cpu_cluster {} {
 		}
 		add_prop $cpu_node "address-map" $list_values special $default_dts
 		#add_prop $cpu_node "bus-master-id" "&lpd_xppu 0x238> , <&pmc_xppu 0x238> , <&pmc_xppu_npi 0x238" hexlist $default_dts
+	}
+
+	if {[llength [hsi get_cells -hier -filter {IP_NAME == asu}]]} {
+		set cpu_node [create_node -l "cpus_asu" -n "cpus_asu" -u 0 -d ${default_dts} -p root]
+		add_prop $cpu_node "compatible" "cpus,cluster" string $default_dts
+		add_prop $cpu_node "#ranges-size-cells" "0x1" hexint $default_dts
+		add_prop $cpu_node "#ranges-address-cells" "0x1" hexint $default_dts
+		global memmap
+		set values [dict keys $memmap]
+		set list_values "0xf0000000 &amba 0xf0000000 0x10000000"
+		foreach val $values {
+			set temp [get_memmap $val asu]
+			set com_val [split $temp ","]
+			foreach value $com_val {
+				# coresight is mapped as a PS IP in gen_ps_mapping
+				# But it is not needed in pmc/psm/asu cpu cluster
+				set ips_to_ignore "coresight"
+				# Ignore if a 40 bit address is mapped to PSM
+				if {![check_if_forty_bit_address $value] && [lsearch $ips_to_ignore $val] < 0} {
+					set addr "[lindex $value 1]"
+					set size "[lindex $value 3]"
+					set addr [string trimright $addr ">"]
+					set size [string trimright $size ">"]
+					set list_values [append list_values ">, \n\t\t\t      " "<$addr &${val} $addr $size"]
+				}
+			}
+		}
+		add_prop $cpu_node "address-map" $list_values special $default_dts
 	}
 
 	set microblaze_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze || IP_NAME==microblaze_riscv}]

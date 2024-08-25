@@ -226,6 +226,16 @@
 		};
 	};
 
+	cpus_asu: cpus_asu@0 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		asu: cpu@0 {
+			compatible = "asu-microblaze-riscv";
+			device_type = "cpu";
+			reg = <0x0>;
+		};
+	};
+
 	aliases {
 		serial0 = &serial0;
 		serial1 = &serial1;
@@ -1273,7 +1283,7 @@
 			ranges;
 		};
 
-		ipi_psm: mailbox@eb310000 {
+		ipi_asu: mailbox@eb310000 {
 			status = "disabled";
 			compatible = "xlnx,zynqmp-ipi-mailbox";
 			interrupt-parent = <&imux>;

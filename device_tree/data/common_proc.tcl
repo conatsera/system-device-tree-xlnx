@@ -3209,7 +3209,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping eb3b3000 label ipi_nobuf4
 				dict set def_ps_mapping eb3b4000 label ipi_nobuf5
 				dict set def_ps_mapping eb3b5000 label ipi_nobuf6
-				dict set def_ps_mapping eb310000 label ipi_psm
+				dict set def_ps_mapping eb310000 label ipi_asu
 				dict set def_ps_mapping eb320000 label ipi_pmc
 				dict set def_ps_mapping eb390000 label ipi_pmc_nobuf
 				dict set def_ps_mapping e2000000 label gic_a78
