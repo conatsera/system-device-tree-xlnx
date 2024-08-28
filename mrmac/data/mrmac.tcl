@@ -490,7 +490,7 @@
                                                    if {[llength $fiforx_connect_ip]} {
 
                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axi_mcdma"]} {
-                                                           add_prop "$node" "axistream-connected" "$fiforx_connect_ip" reference $dts_file
+                                                           add_prop "$node" "axistream-connected" "$fiforx_connect_ip" reference $dts_file "pl.dtsi"
                                                            set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip]
                                                            set inhex [format %x $num_queues]
                                                            append numqueues "/bits/ 16 <0x$inhex>"
@@ -723,7 +723,7 @@
                                                    if {[llength $fiforx_connect_ip1]} {
 
                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip1] "axi_mcdma"]} {
-                                                           add_prop "$mrmac1_node" "axistream-connected" "$fiforx_connect_ip1" reference
+                                                           add_prop "$mrmac1_node" "axistream-connected" "$fiforx_connect_ip1" reference "pl.dtsi"
                                                            set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip1]
                                                            set inhex [format %x $num_queues]
                                                            append numqueues1 "/bits/ 16 <0x$inhex>"
@@ -1120,7 +1120,7 @@
                                                    }
                                                    if {[llength $fiforx_connect_ip2]} {
                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip2] "axi_mcdma"]} {
-                                                           add_prop "$mrmac2_node" "axistream-connected" "$fiforx_connect_ip2" reference
+                                                           add_prop "$mrmac2_node" "axistream-connected" "$fiforx_connect_ip2" reference "pl.dtsi"
                                                            set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip2]
                                                            set inhex [format %x $num_queues]
                                                            append numqueues2 "/bits/ 16 <0x$inhex>"
@@ -1488,7 +1488,7 @@
                                                    if {[llength $fiforx_connect_ip3]} {
 
                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip3] "axi_mcdma"]} {
-                                                           add_prop "$mrmac3_node" "axistream-connected" "$fiforx_connect_ip3" reference
+                                                           add_prop "$mrmac3_node" "axistream-connected" "$fiforx_connect_ip3" reference "pl.dtsi"
                                                            set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip3]
                                                            set inhex [format %x $num_queues]
                                                            append numqueues3 "/bits/ 16 <0x$inhex>"
@@ -1876,16 +1876,34 @@
                         set target_handle $ip
                 }
         }
-        set temp_node [get_node $target_handle]
-        set intr_val $dts_filer_val [pldt get $temp_node interrupts]
-        set intr_parent $dts_filer_parent [pldt get $temp_node interrupt-parent]
-        set int_names $dts_file_names [pldt get $temp_node interrupt-names]
-    #   set int $dts_filer_val [hsi get_property CONFIG.interrupts $target_handle]
-    #   set int $dts_filer_parent [hsi get_property CONFIG.interrupt-parent $target_handle]
-    #   set int $dts_file_names  [hsi get_property CONFIG.interrupt-names $target_handle]
-        add_prop "${node}" "interrupts" $intr_val int $dts_file
+        set ipnode [get_node $target_handle]
+        set values [pldt getall $ipnode]
+        set intr_parent ""
+        if {[regexp "interrupt*" $values match]} {
+                set intr_val [pldt get $ipnode interrupts]
+                set intr_val [string trimright $intr_val " >"]
+                set intr_val [string trimleft $intr_val "< "]
+                set intr_parent [pldt get $ipnode interrupt-parent]
+                set intr_parent [string trimright $intr_parent ">"]
+                set intr_parent [string trimleft $intr_parent "<"]
+                set intr_parent [string trimleft $intr_parent "&"]
+                set int_names  [pldt get $ipnode interrupt-names]
+                set names [split $int_names ","]
+                if {[llength $names] >= 1} {
+                set int1 [string trimright [lindex $names 0] "\" "]
+                set int1 [string trimleft $int1 "\""]
+                }
+                if {[llength $names] >= 2} {
+                set int2 [string trimright [lindex $names 1] "\" "]
+                set int2 [string trimleft $int2 "\" "]
+                }
+        }
+
+        set dts_file "pl.dtsi"
+        add_prop "${node}" "interrupts" $intr_val intlist $dts_file
         add_prop "${node}" "interrupt-parent" $intr_parent reference $dts_file
-        add_prop "${node}" "interrupt-names" $int_names stringlist $dts_file
+        add_prop "${node}" "interrupt-names" $int_names noformating $dts_file
+
     }
 
     proc mrmac_check_size {base node} {
