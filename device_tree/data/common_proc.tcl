@@ -3222,10 +3222,10 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ebd50000 label adma5
 				dict set def_ps_mapping ebd60000 label adma6
 				dict set def_ps_mapping ebd70000 label adma7
-				dict set def_ps_mapping f199e000 label can0
-				dict set def_ps_mapping f199f000 label can1
-				dict set def_ps_mapping f19a0000 label can2
-				dict set def_ps_mapping f19a1000 label can3
+				dict set def_ps_mapping f19e0000 label can0
+				dict set def_ps_mapping f19f0000 label can1
+				dict set def_ps_mapping f1a00000 label can2
+				dict set def_ps_mapping f1a10000 label can3
 				dict set def_ps_mapping f11c0000 label dma0
 				dict set def_ps_mapping f11d0000 label dma1
 				dict set def_ps_mapping f1a60000 label gem0
@@ -3275,8 +3275,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ecd10000 label wwdt1
 				dict set def_ps_mapping ece10000 label wwdt2
 				dict set def_ps_mapping ecf10000 label wwdt3
-				dict set def_ps_mapping ea420000 label lpd_wwdt0
-				dict set def_ps_mapping ea430000 label lpd_wwdt1
+				dict set def_ps_mapping eb000000 label lpd_wwdt0
+				dict set def_ps_mapping eb010000 label lpd_wwdt1
 				dict set def_ps_mapping f03f0000 label pmc_wwdt
 				dict set def_ps_mapping f0800000 label coresight
 				dict set def_ps_mapping f1230000 label pmc_trng
