@@ -41,6 +41,7 @@
         add_prop $node #address-cells 1 int "pl.dtsi"
         add_prop $node #size-cells 0 int "pl.dtsi"
         set node [create_node -n "cpu" -l "$drv_handle" -u $nr -d "pl.dtsi" -p $node]
+        add_prop $node device_type "cpu" string "pl.dtsi"
         set comp_prop [gen_compatible_string $drv_handle]
         add_prop $node compatible "$comp_prop xlnx,${ip_name}" stringlist "pl.dtsi"
         add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
