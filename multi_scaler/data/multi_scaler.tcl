@@ -34,7 +34,7 @@
         set pixes_per_clock [hsi get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
         set pixel $pixes_per_clock
         append pixel_per_clock "/bits/ 8 <$pixel>"
-        add_prop "$node" "xlnx,pixels-per-clock" $pixel_per_clock string $dts_file
+        add_prop "$node" "xlnx,pixels-per-clock" $pixel_per_clock noformating $dts_file
         set has_bgr8 [hsi get_property CONFIG.HAS_BGR8 [hsi::get_cells -hier $drv_handle]]
         set vid_formats ""
         if {$has_bgr8 == 1} {
