@@ -1680,7 +1680,7 @@ proc write_dt args {
 		if {![string_is_empty $board_dtsi_file]} {
 			puts $fd "#include \"${board_dtsi_file}.dtsi\""
 		}
-		foreach include_dts_file $include_dts {
+		foreach include_dts_file [split $include_dts] {
 			set include_dts_filename [file tail $include_dts_file]
 			puts $fd "#include \"$include_dts_filename\""
 		}

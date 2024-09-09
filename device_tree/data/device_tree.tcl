@@ -429,7 +429,6 @@ proc get_dt_param args {
                        set val [print_usage]
                }
        }
-
        return $val
 }
 
@@ -665,7 +664,7 @@ proc include_custom_dts {} {
 		set include_dts ""
 	}
 	set dir_name $env(dir)
-	foreach include_dts_file $include_dts {
+	foreach include_dts_file [split $include_dts] {
 		if {[file exists $include_dts_file]} {
 			file normalize $include_dts_file
 			file copy -force $include_dts_file $dir_name
