@@ -6406,8 +6406,13 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			if {[lsearch $valid_proclist $ip_type] >= 0} {
 				set rt_node [get_node $drv_handle]
 			} else {
-				if {[string match -nocase $dev_type "psv_fpd_smmutcu"]} {
+				switch $dev_type {
+					"psv_fpd_smmutcu" {
 						set dev_type "psv_fpd_maincci"
+					}
+					"axi_intc" {
+						set dev_type "interrupt-controller"
+					}
 				}
 				set t [get_ip_property $drv_handle IP_NAME]
 				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
