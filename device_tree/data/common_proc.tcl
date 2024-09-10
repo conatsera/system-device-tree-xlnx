@@ -132,6 +132,7 @@ global cur_hw_design
 global intr_type_dict
 global cur_hw_iss_data
 global cur_hw_is_smmu_en
+global monitor_ip_exclusion_list
 
 set node_dict [dict create]
 set nodename_dict [dict create]
@@ -144,6 +145,7 @@ set cur_hw_design ""
 set intr_type_dict [dict create]
 set cur_hw_iss_data [dict create]
 set cur_hw_is_smmu_en ""
+set monitor_ip_exclusion_list {"axi_perf_mon" "exdes_rfadc_data_bram_capture"}
 
 package require Tcl 8.5.14
 package require yaml
@@ -478,6 +480,7 @@ proc get_user_config args {
 proc get_node args {
 	global node_dict
 	global cur_hw_design
+	global monitor_ip_exclusion_list
 
 	proc_called_by
 	set handle [lindex $args 0]
@@ -493,7 +496,8 @@ proc get_node args {
 		dict set node_dict $cur_hw_design $handle {}
 		return ""
 	}
-	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 && ![string match -nocase "axi_perf_mon" $ip_name]} {
+	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
+	    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
 		dict set node_dict $cur_hw_design $handle {}
 		return ""
 	}

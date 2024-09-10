@@ -1333,6 +1333,7 @@ proc generate_sdt args {
 	global cur_hw_iss_data
 	global non_val_list
 	global non_val_ip_types
+	global monitor_ip_exclusion_list
 	set endpoint_proc_dict [dict create]
 
 	set linear_spi_list "psu_qspi_linear ps7_qspi_linear"
@@ -1493,7 +1494,7 @@ Generates system device tree based on args given in:
 			set skip1 1
 		}
 		if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
-		     ![string match -nocase "axi_perf_mon" $ip_name]} {
+		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
 			set skip1 1
 		}
 		if {[string match -nocase $ip_name "gmii_to_rgmii"]} {
@@ -1550,7 +1551,7 @@ Generates system device tree based on args given in:
 			set skip2 1
 		}
 		if {[lsearch -nocase $non_val_ip_types1 $ip_type] >= 0 &&
-		     ![string match -nocase "axi_perf_mon" $ip_name]} {
+		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
 			set skip2 1
 		}
 		if { [dict exists $dup_periph_handle $drv_handle] } {
