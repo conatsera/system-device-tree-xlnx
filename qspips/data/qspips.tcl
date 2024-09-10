@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -18,9 +18,9 @@
         set dts_file [set_drv_def_dts $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
         set qspi_mode [get_ip_param_value $slave "C_QSPI_MODE"]
-        set pspmc [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]
-        if {[string compare -nocase $pspmc ""] != 0} {
-                set fbclk [hsi get_property CONFIG.PMC_QSPI_FBCLK [hsi get_cells -hier -filter {IP_NAME =~ "*pspmc*"}]]
+        set ipname [hsi get_cells -hier -filter {IP_NAME == "pspmc" || IP_NAME == "pmcps" || IP_NAME == "psx_wizard" || IP_NAME == "ps_wizard"}]
+        if {[llength $ipname]} {
+            set fbclk [hsi get_property CONFIG.PMC_QSPI_FBCLK [hsi get_cells -hier $ipname]]
                    if {[regexp "ENABLE 0" $fbclk matched]} {
                        set node [gen_peripheral_nodes $drv_handle]
                        if {$node == 0} {
