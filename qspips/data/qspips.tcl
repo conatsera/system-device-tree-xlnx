@@ -78,6 +78,7 @@
         set_drv_conf_prop $drv_handle C_QSPI_BUS_WIDTH xlnx,bus-width $node int
         set_drv_conf_prop $drv_handle C_QSPI_MODE xlnx,connection-mode $node int
         set_drv_conf_prop $drv_handle C_QSPI_CLK_FREQ_HZ xlnx,clock-freq $node int
+        set_drv_conf_prop $drv_handle C_QSPI_BAUD_RATE_DIV xlnx,baud-rate-div $node int
     }
 
 
