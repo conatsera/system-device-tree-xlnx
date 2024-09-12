@@ -57,6 +57,7 @@
     }
 
     proc emacps_gen_phy_node args {
+        global env
         set mdio_node [lindex $args 0]
         set phy_name [lindex $args 1]
         set phya [lindex $args 2]
@@ -64,10 +65,13 @@
         set rgmii_node [create_node -l $phy_name -n $phy_name -u $phya -p $mdio_node -d $dts_file]
         add_prop "${rgmii_node}" "reg" $phya int $dts_file
         add_prop "${rgmii_node}" "compatible" "xlnx,gmii-to-rgmii-1.0" string $dts_file
-        add_prop "${rgmii_node}" "phy-handle" phy1 reference $dts_file
+        if {![catch {[string_is_empty $env(board)]} msg]} {
+            add_prop "${rgmii_node}" "phy-handle" phy1 reference $dts_file
+        }
     }
 
     proc emacps_generate {drv_handle} {
+        global env
         update_eth_mac_addr $drv_handle
         set node [get_node $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
@@ -152,7 +156,9 @@
         set phya [lindex $conv_data 0]
         if { $phya != "-1" } {
             set phy_name "[lindex $conv_data 1]"
-            set_drv_prop $drv_handle phy-handle "phy1" $node reference
+            if {![catch {[string_is_empty $env(board)]} msg]} {
+                set_drv_prop $drv_handle phy-handle "phy1" $node reference
+            }
             set mdio_node [emacps_gen_mdio1_node $drv_handle $node]
             emacps_gen_phy_node $mdio_node $phy_name $phya
         }
