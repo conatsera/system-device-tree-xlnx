@@ -14,6 +14,7 @@
 #
 
     proc axi_bram_generate {drv_handle} {
+        set node [get_node $drv_handle]
         set a53 0
         set bram_ip ""
         set slave [hsi::get_cells -hier ${drv_handle}]
@@ -86,6 +87,11 @@
                                         set base [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
                                         set high [hsi get_property CONFIG.C_HIGHADDR [hsi::get_cells -hier $drv_handle]]
                                         set addr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
+                                        set width [hsi get_property CONFIG.C_S_AXI_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
+                                        if {[llength $width] == 0} {
+                                             set width 32
+                                        }
+                                        add_prop $node "xlnx,data-width" $width int "pl.dtsi"
                                 } else {
                                         set base [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $drv_handle]]
                                         set high [hsi get_property CONFIG.C_S_AXI_HIGHADDR [hsi::get_cells -hier $drv_handle]]
@@ -167,6 +173,8 @@
                 set ctrl_base [hsi get_property CONFIG.C_S_AXI_CTRL_BASEADDR [hsi::get_cells -hier $drv_handle]]
                 if { $ctrl_base > 0 &&  $have_ecc == 1} {
                          set high [hsi get_property CONFIG.C_S_AXI_CTRL_HIGHADDR [hsi::get_cells -hier $drv_handle]]
+                         add_prop $node "xlnx,mem-ctrl-base-address" $ctrl_base int "pl.dtsi"
+                         add_prop $node "xlnx,mem-ctrl-high-address" $high int "pl.dtsi"
                          set size [format 0x%x [expr {${high} - ${ctrl_base} + 1}]]
                          if {[regexp -nocase {0x([0-9a-f]{9})} "$ctrl_base" match]} {
                                 set temp $ctrl_base
