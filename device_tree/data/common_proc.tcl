@@ -4490,7 +4490,7 @@ proc gen_clk_property {drv_handle} {
 	if {$is_rm_design} {
 		set rp_info [get_rprm_for_drv $drv_handle]
 		if {[llength $rp_info] != 0} {
-			set firmware_name [get_partial_file [lindex $rp_info 1]]
+			set firmware_name [get_partial_file]
 			set partial_fileName [file rootname $firmware_name]
 			set partial_fileName "${partial_fileName}_"
 		}
@@ -5449,7 +5449,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 				set intc "gic_a72"
 			}
 		} else {
-			set firmware_name [get_partial_file [lindex $rp_info 1]]
+			set firmware_name [get_partial_file]
 			set partial_fileName [file rootname $firmware_name]
 			set partial_fileName "${partial_fileName}_"
 			set intc "${partial_fileName}${intc}"

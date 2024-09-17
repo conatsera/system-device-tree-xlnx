@@ -293,36 +293,15 @@ proc get_rm_names {pr} {
         return $rm_name
 }
 
-proc get_partial_file {rmName} {
-	set proctype [get_hw_family]
+proc get_partial_file {} {
+	global rm_firmware_name
 
-	if {[is_zynqmp_platform $proctype]} {
-		append rp_inst $rmName "_BIT_FILE"
-	} else {
-		append rp_inst $rmName "_PDI_FILE"
-	}
-
-        set firmware_name [hsi::get_property $rp_inst [hsi::current_hw_design]]
-	set firmware_name [file tail $firmware_name]
-
-	return $firmware_name
-}
-
-proc get_partial_bin {rmName} {
-        set proctype [get_hw_family]
-
-        if {[is_zynqmp_platform $proctype]} {
-                append rp_inst $rmName "_BIT_FILE"
-        } else {
-                append rp_inst $rmName "_PDI_FILE"
-        }
-        set firmware_name [hsi::get_property $rp_inst [hsi::current_hw_design]]
-
-	return $firmware_name
+	return $rm_firmware_name
 }
 
 proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	variable ::sdtgen::namespacelist
+	global rm_firmware_name
 	global rp_region_dict
 	global is_rm_design
 	global is_bridge_en
@@ -347,7 +326,17 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	set rm_xsa_path "$dir/$rm_xsa_name"
 	set rm_ws [file rootname $rm_xsa_name]
 	setws -switch "$dir/$rm_ws"
-	platform create -name $rm_ws -hw $static_xsa_path -rm-hw $rm_xsa_path
+
+	hsi::open_hw_design $rm_xsa_path
+	set rp_cell [hsi::get_property RP_INST_NAME [hsi::current_hw_design]]
+	set proctype [get_hw_family]
+	if {[is_zynqmp_platform $proctype]} {
+		set rm_firmware_name [hsi::get_hw_files -filter {TYPE == partial_bit}]
+	} else {
+		set rm_firmware_name [hsi::get_hw_files -filter {TYPE == partial_pdi}]
+	}
+
+	hsi::open_hw_design -static $static_xsa_path -cells $rp_cell:$rm_xsa_path
 	set cur_hw_design [hsi::current_hw_design]
 	file delete -force "$static_xsa_path"
 	file delete -force "$rm_xsa_path"
@@ -390,9 +379,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 		if {[llength $rp_info] != 0} {
 			if {$skip == 0} {
 				set fpga_inst [regexp -inline {\d+} [lindex $rp_info 0]]
-				set firmware_name [get_partial_file [lindex $rp_info 1]]
-				set bin_file [get_partial_bin [lindex $rp_info 1]]
-				file copy -force $bin_file $dir
+				set firmware_name [get_partial_file]
 				set replacement {
 					".pdi" ".dtsi"
 					".bit" ".dtsi"
@@ -416,7 +403,6 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 			gen_peripheral_nodes $drv_handle "create_node_only"
 			gen_reg_property $drv_handle
 			gen_compatible_property $drv_handle
-			gen_ctrl_compatible $drv_handle
 			gen_drv_prop_from_ip $drv_handle
 			gen_interrupt_property $drv_handle
 			gen_clk_property $drv_handle
@@ -428,7 +414,7 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 			}
 		}
 	}
-	platform remove $rm_ws
+	hsi::close_hw_design [hsi::current_hw_design]
 	delete_tree pldt root
 	move_match_node_to_top pldt root "misc_clk_*"
 	write_rm_dt pldt root "$dir/$rm_ws/$partial_file"
