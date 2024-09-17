@@ -2463,7 +2463,10 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 				for {} {$handle_count < [llength $ip_mem_handle]} {incr handle_count} {
 					set master_intf [hsi get_property MASTER_INTERFACE [lindex $ip_mem_handle $handle_count]]
 					set pattern [join [lmap prefix $processor_ip_list {string cat $prefix*}] "|"]
-					if {[regexp $pattern $master_intf] || [string_is_empty $master_intf]} {
+					# Fetch the handle index only when master_intf matches with any of APU, RPU and Master PMC SLR
+					# or the master interface is empty. Dont take the index when the only master present is the
+					# respective slave SLR.
+					if {([regexp $pattern $master_intf] && ![regexp -nocase {^slv([1-3])_} $master_intf]) || [string_is_empty $master_intf]} {
 						break
 					}
 				}
@@ -2533,7 +2536,10 @@ proc get_highaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 			for {} {$handle_count < [llength $ip_mem_handle]} {incr handle_count} {
 				set master_intf [hsi get_property MASTER_INTERFACE [lindex $ip_mem_handle $handle_count]]
 				set pattern [join [lmap prefix $processor_ip_list {string cat $prefix*}] "|"]
-				if {[regexp $pattern $master_intf] || [string_is_empty $master_intf]} {
+				# Fetch the handle index only when master_intf matches with any of APU, RPU and Master PMC SLR
+				# or the master interface is empty. Dont take the index when the only master present is the
+				# respective slave SLR.
+				if {([regexp $pattern $master_intf] && ![regexp -nocase {^slv([1-3])_} $master_intf]) || [string_is_empty $master_intf]} {
 					break
 				}
 			}
