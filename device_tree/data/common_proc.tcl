@@ -649,22 +649,34 @@ proc write_value {type value} {
 				}
                 	}
                 } elseif {$type == "hexint"} {
-			if {[regexp -nocase {0x([0-9a-f]{9})} "$value" match]} {
-				set temp [string trimleft $value "0x"]
+			regsub -all {^0x} $value {} temp
+			if {[regexp -nocase {([0-9a-f]{9})} "$temp" match]} {
 				set len [string length $temp]
-				set rem [expr {${len} - 8}]
-				set high_base [string range $temp $rem $len]
-				set low_base [string range $temp 0 [expr {${rem} - 1}]]
-				if {[string_is_empty $high_base]} {
-					set high_base "0x0"
-				} else {
-					set high_base "0x${high_base}"
+				set hex_list ""
+
+				while {$len > 0} {
+					# Get the rightmost 8 characters
+					set part [string range $temp [expr {$len - 8}] [expr {$len - 1}]]
+					# Prepend the part to the result
+					set hex_list "$part $hex_list"
+					# Shorten the input string
+					set len [expr {$len - 8}]
 				}
-				if {[string_is_empty $low_base]} {
-					set val "<$high_base>"
+
+				if {[string_is_empty $hex_list]} {
+					set val "<0x0>"
 				} else {
-					set low_base [format 0x%08x $low_base]
-					set val "<$low_base $high_base>"
+					set val "<"
+		                        foreach element $hex_list {
+						if {$element == [lindex $hex_list 0]} {
+							set first_ele_len [string length $element]
+							set no_zeroes_to_prepend [expr {8 - $first_ele_len}]
+							set element "[string repeat "0" $no_zeroes_to_prepend]$element"
+						}
+						append val "0x$element" " "
+		                        }
+					set val [string trimright $val " "]
+		                        set val [append val ">"]
 				}
 			} elseif {[regexp -nocase {0x([0-9a-f])} $value match]} {
 				set val "<$value>"
@@ -2087,16 +2099,6 @@ proc add_cross_property args {
 				}
 				if {[string match -nocase $ipname "axi_mcdma"] && [string match -nocase $dest_prop "xlnx,include-sg"] } {
 					set value ""
-				}
-				if {[regexp -nocase {0x([0-9a-f]{9})} "$value" match] && ![string match -nocase $type "string"] } {
-					set temp [string range $value 2 end]
-					#set temp [string trimleft [string trimleft $temp 0] x]
-					set len [string length $temp]
-					set rem [expr {${len} - 8}]
-					set high_base "0x[string range $temp $rem $len]"
-					set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-					set low_base [format 0x%08x $low_base]
-					set value "$low_base $high_base"
 				}
 
 				if {[string match -nocase $ipname "psv_rcpu_gic"]} {
