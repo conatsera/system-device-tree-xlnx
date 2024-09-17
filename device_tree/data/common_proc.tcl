@@ -6096,7 +6096,13 @@ proc default_parameters {ip_handle {dont_generate ""}} {
 		# Ignore some parameters that are always handled specially
 		
 		if {$ps_ip} {
-			lappend valid_prop_names $par
+			switch -glob $tmp_par {
+				$dont_generate - \
+				"*INTERCONNECT_?_AXI*" { }
+				default {
+					lappend valid_prop_names $par
+				}
+			}
 		} else {
 			switch -glob $tmp_par {
 				$dont_generate - \
