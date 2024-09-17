@@ -6098,6 +6098,8 @@ proc default_parameters {ip_handle {dont_generate ""}} {
 		if {$ps_ip} {
 			switch -glob $tmp_par {
 				$dont_generate - \
+				"*BASEADDR" - \
+				"*HIGHADDR" - \
 				"*INTERCONNECT_?_AXI*" { }
 				default {
 					lappend valid_prop_names $par
