@@ -21,7 +21,6 @@
         }
 	hdmi_txss_add_hier_instances $drv_handle
 
-        pldt append $node compatible "\ \, \"xlnx,v-hdmi-tx-ss-3.1\""
         set input_pixels_per_clock [hsi get_property CONFIG.C_INPUT_PIXELS_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
         set max_bits_per_component [hsi get_property CONFIG.C_MAX_BITS_PER_COMPONENT [hsi::get_cells -hier $drv_handle]]
             set vid_interface [hsi get_property CONFIG.C_VID_INTERFACE [hsi::get_cells -hier $drv_handle]]
