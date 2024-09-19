@@ -23,13 +23,14 @@
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
         set platform [get_hw_family]
         set 32_bit_format 0
+        global apu_proc_ip
 
         foreach procc $proclist {
 		set proc_ip_name [hsi get_property IP_NAME $procc]
-		if {$a53 == 1 && ([string match -nocase ${proc_ip_name} "psu_cortexa53"] || [string match -nocase ${proc_ip_name} "ps7_cortexa9"]) } {
+		if {$a53 == 1 && $proc_ip_name == $apu_proc_ip} {
 			continue
 		}
-		if {[string match -nocase ${proc_ip_name} "psu_cortexa53"] || [string match -nocase ${proc_ip_name} "ps7_cortexa9"]} {
+		if {$proc_ip_name == $apu_proc_ip} {
 			set a53 1
 		}
 		set proc_addr_list ""
@@ -51,16 +52,27 @@
 			lappend proc_addr_list "$base $high"
 			incr index
 		}
-		if {$proc_ip_name in {"psu_cortexr5" "microblaze" "microblaze_riscv"}} {
-			set_memmap "${drv_handle}_memory" $procc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
-		}
-		if {$proc_ip_name in {"psu_cortexa53" "ps7_cortexa9"}} {
-			set_memmap "${drv_handle}_memory" a53 [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
-		}
-		if {$proc_ip_name == "psu_pmu"} {
-			set_memmap "${drv_handle}_memory" pmu [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
-		}
-	}
+
+        switch $proc_ip_name {
+            "psu_cortexr5" - "microblaze" - "microblaze_riscv" - "psv_cortexr5" {
+                set_memmap "${drv_handle}_memory" $procc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+            }
+            "psu_cortexa53" - "ps7_cortexa9" - "psv_cortexa72" {
+                set_memmap "${drv_handle}_memory" a53 [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+            }
+            "psu_pmu" {
+                set_memmap "${drv_handle}_memory" pmu [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+            }
+            "psv_pmc" {
+                set_memmap "${drv_handle}_memory" pmc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+            }
+            "psv_psm" {
+                set_memmap "${drv_handle}_memory" psm [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
+            }
+            default {
+            }
+        }
+        }
 
 	# get_baseaddr gives the address of the first memory bank mapped. In case of ZU+MB designs
 	# first bank can be mapped to mb whose mapped base address may not be same as the overall
