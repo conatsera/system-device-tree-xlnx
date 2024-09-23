@@ -96,8 +96,9 @@
         if {[string match -nocase $MAC_PORT0_RATE_C0 "10GE"]} {
                    set number 10000
                 add_prop "${node}" "max-speed" $number int $dts_file
-            } else {
-                add_prop "${node}" "max-speed" $MAC_PORT0_RATE_C0 string $dts_file
+        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
+                set number 25000
+                add_prop "${node}" "max-speed" $number int $dts_file
         }
         add_prop "${node}" "xlnx,mac-port0-rate-c0" $MAC_PORT0_RATE_C0 string $dts_file
         set MAC_PORT0_RATE_C1 [hsi get_property CONFIG.MAC_PORT0_RATE_C1 [hsi::get_cells -hier $drv_handle]]
@@ -844,8 +845,9 @@
         if {[string match -nocase $MAC_PORT1_RATE_C0 "10GE"]} {
                    set number 10000
                 add_prop "${mrmac1_node}" "max-speed" $number int $dts_file
-            } else {
-                add_prop "${mrmac1_node}" "max-speed" $MAC_PORT1_RATE_C0 string $dts_file
+        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
+                set number 25000
+                add_prop "${mrmac1_node}" "max-speed" $number int $dts_file
         }
         set MAC_PORT1_RATE_C1 [hsi get_property CONFIG.MAC_PORT1_RATE_C1 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac1_node}" "xlnx,mac-port1-rate-c1" $MAC_PORT1_RATE_C1 string $dts_file
@@ -1236,8 +1238,9 @@
         if {[string match -nocase $MAC_PORT2_RATE_C0 "10GE"]} {
                    set number 10000
                 add_prop "${mrmac2_node}" "max-speed" $number int $dts_file
-            } else {
-                add_prop "${mrmac2_node}" "max-speed" $MAC_PORT2_RATE_C0 string $dts_file
+        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
+                set number 25000
+                add_prop "${mrmac2_node}" "max-speed" $number int $dts_file
         }
         set MAC_PORT2_RATE_C1 [hsi get_property CONFIG.MAC_PORT2_RATE_C1 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac2_node}" "xlnx,mac-port2-rate-c1" $MAC_PORT2_RATE_C1 string $dts_file
@@ -1608,8 +1611,9 @@
         if {[string match -nocase $MAC_PORT3_RATE_C0 "10GE"]} {
                    set number 10000
                 add_prop "${mrmac3_node}" "max-speed" $number int $dts_file
-            } else {
-                add_prop "${mrmac3_node}" "max-speed" $MAC_PORT3_RATE_C0 string $dts_file
+        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
+                set number 25000
+                add_prop "${mrmac3_node}" "max-speed" $number int $dts_file
         }
         set MAC_PORT3_RATE_C1 [hsi get_property CONFIG.MAC_PORT3_RATE_C1 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac3_node}" "xlnx,mac-port3-rate-c1" $MAC_PORT3_RATE_C1 string $dts_file
