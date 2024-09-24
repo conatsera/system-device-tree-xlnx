@@ -94,6 +94,19 @@
                 add_prop $node "d-cache-line-size" $dcache_line_size int "pl.dtsi"
         }
 
+	# Generate xlnx,exceptions-in-delay-slots property
+	if { $ip_name != "microblaze_riscv" } {
+		set procver [get_ip_version $drv_handle]
+		set procmajorver [lindex [split $procver "."] 0]
+		if { [string compare -nocase $procver  "5.00.a"] >= 0 || $procmajorver > 5 } {
+			set delayslotexception 1
+		} else {
+			set delayslotexception 0
+		}
+		add_prop $node "xlnx,exceptions-in-delay-slots"  "$delayslotexception" int "pl.dtsi"
+	}
+
+
         gen_mb_interrupt_property $drv_handle
         gen_drv_prop_from_ip $drv_handle
         generate_mb_ccf_node $drv_handle
