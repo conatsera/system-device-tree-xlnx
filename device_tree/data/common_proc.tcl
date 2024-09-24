@@ -619,71 +619,57 @@ proc get_yaml_dict { config_file } {
 
 proc write_value {type value} {
         if {[catch {
-                if {$type == "int"} {
-			set base [format %x $value]
-			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-                       		set temp $base
-	                        set temp [string trimleft [string trimleft $temp 0] x]
-        	                set len [string length $temp]
-               	        	set rem [expr {${len} - 8}]
-                        	set high_base "0x[string range $temp $rem $len]"
-                        	set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                        	set low_base [format 0x%08x $low_base]
-                        	if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
-                                	set temp $size
-                                	set temp [string trimleft [string trimleft $temp 0] x]
-                                	set len [string length $temp]
-                                	set rem [expr {${len} - 8}]
-                                	set high_size "0x[string range $temp $rem $len]"
-                                	set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                                	set low_size [format 0x%08x $low_size]
-                                	set reg "$low_base $high_base $low_size $high_size"
-                        	} else {
-                                	set val "<$low_base $high_base 0x0 $size>"
-                        	}
-                	} else {
-				if {$value < 0} {
-					set val "<[format 0x%.8x [expr {$value & 0xFFFFFFFF}]]>"
-				} else {
-	                        	set val "<$value>"
-				}
-                	}
-                } elseif {$type == "hexint"} {
-			regsub -all {^0x} $value {} temp
-			if {[regexp -nocase {([0-9a-f]{9})} "$temp" match]} {
-				set len [string length $temp]
-				set hex_list ""
-
-				while {$len > 0} {
-					# Get the rightmost 8 characters
-					set part [string range $temp [expr {$len - 8}] [expr {$len - 1}]]
-					# Prepend the part to the result
-					set hex_list "$part $hex_list"
-					# Shorten the input string
-					set len [expr {$len - 8}]
-				}
-
-				if {[string_is_empty $hex_list]} {
-					set val "<0x0>"
-				} else {
-					set val "<"
-		                        foreach element $hex_list {
-						if {$element == [lindex $hex_list 0]} {
-							set first_ele_len [string length $element]
-							set no_zeroes_to_prepend [expr {8 - $first_ele_len}]
-							set element "[string repeat "0" $no_zeroes_to_prepend]$element"
-						}
-						append val "0x$element" " "
-		                        }
-					set val [string trimright $val " "]
-		                        set val [append val ">"]
-				}
-			} elseif {[regexp -nocase {0x([0-9a-f])} $value match]} {
+                if {$type in {"hexint" "int"}} {
+			set val $value
+			if {[string_is_empty $val]} {
+				set val "\"\""
+			} elseif {$val < 0} {
+				set val "<[format 0x%.8x [expr {$value & 0xFFFFFFFF}]]>"
+			} elseif {$type == "int" && ![regexp -nocase {^0x} "$val" match]} {
+				# FIXME: Below format call is put as a hack in interest of time
+				# It is a dummy call to trap the same exception that we were getting earlier
+				# xlnx,pss-ref-clk-freq = <33.330> is added in its absence.
+				set dummy [format %x $value]
 				set val "<$value>"
-			} elseif {[regexp -nocase {([a-f])} $value match]} {
-				set val "<0x$value>"
 			} else {
-                        	set val "<0x[format %x $value]>"
+				if {![regexp -nocase {^0x} "$value" match]} {
+					# When $value is not starting with 0x, $value can be a hex or an integer or a binary number starting with 0b.
+					# check if the $value can be converted into a hex using format
+					if {[catch {set val [format 0x%x $value]} msg]} {
+						# format expects either an integer, a binary number with 0b or a hex number starting with 0x
+						# When none of the above is found i.e. when the value only has hex alphabets without 0x prefix
+						# e.g. value = abcdef
+						set val "0x$value"
+					}
+				}
+
+				set val [format 0x%x $val]
+
+				regsub -all {^0x} $val {} temp
+				if {[regexp -nocase {([0-9a-f]{9})} "$temp" match]} {
+					set len [string length $temp]
+					set hex_list ""
+
+					while {$len > 0} {
+						# Get the rightmost 8 characters
+						set part [string range $temp [expr {$len - 8}] [expr {$len - 1}]]
+						# Prepend the part to the result
+						set hex_list "$part $hex_list"
+						# Shorten the input string
+						set len [expr {$len - 8}]
+					}
+
+					if {[string_is_empty $hex_list]} {
+						set val "0x0"
+					} else {
+						set val ""
+						foreach element $hex_list {
+							append val "0x$element" " "
+						}
+						set val [string trimright $val " "]
+					}
+				}
+				set val "<$val>"
 			}
                 } elseif {$type == "empty"} {
                 } elseif {$type == "inttuple" || $type == "intlist"} {
