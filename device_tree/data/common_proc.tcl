@@ -440,7 +440,6 @@ proc get_user_config args {
 	        set config_file [lindex $args 0]
        		set cfg [get_yaml_dict $config_file]
 	        set user [dict get $cfg dict_devicetree]
-	        set overlay [dict get $user dt_overlay]
         	set mainline_kernel [dict get $user mainline_kernel]
         	set kernel_ver [dict get $user kernel_ver]
         	set dir [dict get $user output_dir]
@@ -455,8 +454,6 @@ proc get_user_config args {
                         	set param $config_dts
                 	} -board_dts {
                         	set param ""
-                	} -dt_overlay {
-                        	set param $overlay
                 	} -pl_only {
                         	set param $pl_only
 			} -mainline_kernel {
@@ -1365,7 +1362,6 @@ proc write_dt args {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
 	# Windows treats an empty env variable as not defined
 	if {[catch {set board_dtsi_file $env(board)} msg]} {
 		set board_dtsi_file ""
@@ -1381,9 +1377,6 @@ proc write_dt args {
 			}
 			puts $fd "#include \"$val\""
 		}
-	}
-	if {[string match -nocase $dt "pldt"] && $dt_overlay} {
-		puts $fd "\/dts-v1\/\n\/plugin\/;"
 	}
 	set dtcheck [string match -nocase $dt "pcwdt"]
 	if {$dtcheck != 1} {
@@ -2670,31 +2663,6 @@ proc list_remove_element {cur_list elements} {
 	return $cur_list
 }
 
-proc update_overlay_custom_dts_include {include_file} {
-	set dt_overlay [hsi get_property CONFIG.dt_overlay [get_os]]
-	set overlay_custom_dts [hsi get_property CONFIG.overlay_custom_dts [get_os]]
-	set overlay_custom_dts_obj [get_dt_trees ${overlay_custom_dts}]
-	if {[string_is_empty $overlay_custom_dts_obj] == 1} {
-		set overlay_custom_dts_obj [set_cur_working_dts ${overlay_custom_dts}]
-	}
-	if {[string equal ${include_file} ${overlay_custom_dts_obj}]} {
-		return 0
-	}
-	set cur_inc_list [hsi get_property INCLUDE_FILES $overlay_custom_dts_obj]
-	set tmp_list [split $cur_inc_list ","]
-	if { [lsearch $tmp_list $include_file] < 0} {
-		if {[string_is_empty $cur_inc_list]} {
-			set cur_inc_list $include_file
-		} else {
-			append cur_inc_list "," $include_file
-			set field [split $cur_inc_list ","]
-			set cur_inc_list [lsort -decreasing $field]
-			set cur_inc_list [join $cur_inc_list ","]
-		}
-		set_property INCLUDE_FILES ${cur_inc_list} $overlay_custom_dts_obj
-	}
-}
-
 proc update_system_dts_include {include_file} {
 	# where should we get master_dts data
 	global count
@@ -2760,39 +2728,18 @@ proc set_drv_def_dts {drv_handle} {
 	#set drvname [get_drivers $drv_handle]
 	#set common_file "$path/device_tree/data/config.yaml"
 	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
-	set dt_overlay [get_user_config $common_file -dt_overlay]
 	set family [get_hw_family]
 	global bus_clk_list
 	set pl_ip [is_pl_ip $drv_handle]
 	if {$pl_ip} {
 		set default_dts "pl.dtsi"
-		if {!$dt_overlay} {
-			update_system_dts_include $default_dts
-		}
+		update_system_dts_include $default_dts
 	} else {
 		# PS IP, read pcw_dts property
 		set default_dts "pcw.dtsi"
 		update_system_dts_include $default_dts
 	}
-	if {$pl_ip && $dt_overlay} {
-		set fpga_node [create_node -n "fragment" -u 0 -d ${default_dts} -p root]
-		set pl_file $default_dts
-		set targets "fpga_full"
-		add_prop $fpga_node target "$targets" reference $default_dts 1
-		set child_name "__overlay__"
-		set child_node [create_node -l "overlay0" -n $child_name -p $fpga_node -d $default_dts]
-		add_prop "${child_node}" "#address-cells" 2 int $default_dts 1
-		add_prop "${child_node}" "#size-cells" 2 int $default_dts 1
-		if {[is_zynqmp_platform $family]} {
-			set hw_name [::hsi::get_hw_files -filter "TYPE == bit"]
-			add_prop "${child_node}" "firmware-name" "$hw_name.bin" string  $default_dts 1
-			add_prop "root" "firmware-name" "$hw_name" string  $default_dts 1
-		} elseif {[string match -nocase $family "versal"]} {
-			set hw_name [::hsi::get_hw_files -filter "TYPE == pdi"]
-			add_prop "${child_node}" "firmware-name" "$hw_name" string  $default_dts 1
-			add_prop "root" "firmware-name" "$hw_name" string  $default_dts 1
-		}
-	}
+
 	return $default_dts
 }
 
@@ -6241,12 +6188,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
-        if {$dt_overlay} {
-                set ignore_list "PERIPHERAL axi_noc dfx_decoupler mig_7series"
-        } else {
-                set ignore_list "PERIPHERAL axi_noc mig_7series"
-        }
+	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc mig_7series"
 	if {[string match -nocase $ip_type "psu_pcie"]} {
 		set pcie_config [hsi get_property CONFIG.C_PCIE_MODE [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $pcie_config "Endpoint Device"]} {
@@ -6455,17 +6397,6 @@ proc detect_bus_name {ip_drv} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
-		if {[is_pl_ip $ip_drv] && $dt_overlay} {
-			# create the parent_node for pl.dtsi
-			set default_dts [set_drv_def_dts $ip_drv]
-			set fpga_node [create_node -n "fragment" -u 2 -d $default_dts -p root]
-			set targets "amba"
-			add_prop $fpga_node target "$targets" reference $default_dts 1
-			set child_name "__overlay__"
-			set bus_node [create_node -l "overlay2" -n $child_name -p $fpga_node -d $default_dts]
-			return "overlay2: __overlay__"
-		}
 		if {[is_pl_ip $ip_drv]}  {
 			# create the parent_node for pl.dtsi
 			set default_dts [set_drv_def_dts $ip_drv]
@@ -6567,38 +6498,21 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
 	set proctype [get_hw_family]
-	if {[is_pl_ip $ip_drv] && $dt_overlay} {
-		set dts "pl.dtsi"
-		set fpga_node [create_node -n "fragment" -u 2 -d $dts -p root]
-		set targets "amba"
-		add_prop $fpga_node target "$targets" reference $dts 1
-		set child_name "__overlay__"
-		set bus_node [create_node -l "overlay2" -n $child_name -p $fpga_node -d $dts]
+	set bus_node $bus_name
+	if {[string match -nocase $bus_node "amba_pl: amba_pl"]} {
 		if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || $is_64_bit_mb} {
-			add_prop "${bus_node}" "#address-cells" 2 int $dts 1
-			add_prop "${bus_node}" "#size-cells" 2 int $dts 1
+			set addr_cells 2
+			set size_cells 2
 		} else {
-			add_prop "${bus_node}" "#address-cells" 1 int $dts 1
-			add_prop "${bus_node}" "#size-cells" 1 int $dts 1
+			set addr_cells 1
+			set size_cells 1
 		}
-	} else {
-		set bus_node $bus_name
-		if {[string match -nocase $bus_node "amba_pl: amba_pl"]} {
-			if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"] || $is_64_bit_mb} {
-				set addr_cells 2
-				set size_cells 2
-			} else {
-				set addr_cells 1
-				set size_cells 1
-			}
-			if {[catch {set val [pldt get $bus_node #address-cells]} msg]} {
-				add_prop $bus_node #address-cells $addr_cells int $dts_file
-				add_prop $bus_node #size-cells $size_cells int $dts_file
-				add_prop $bus_node compatible "simple-bus" string $dts_file
-				add_prop $bus_node ranges boolean $dts_file
-			}
+		if {[catch {set val [pldt get $bus_node #address-cells]} msg]} {
+			add_prop $bus_node #address-cells $addr_cells int $dts_file
+			add_prop $bus_node #size-cells $size_cells int $dts_file
+			add_prop $bus_node compatible "simple-bus" string $dts_file
+			add_prop $bus_node ranges boolean $dts_file
 		}
 	}
 	return $bus_node

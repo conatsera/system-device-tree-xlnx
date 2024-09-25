@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 #
 # This program is free software; you can redistribute it and/or
@@ -27,12 +27,7 @@
         global env
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
-        set dt_overlay [get_user_config $common_file -dt_overlay]
-            if {$dt_overlay} {
-                    set bus_node "overlay2"
-            } else {
-                    set bus_node "amba_pl"
-            }
+        set bus_node "amba_pl"
         set dts_file [set_drv_def_dts $drv_handle]
         set mem_ranges [hsi get_mem_ranges [hsi::get_cells -hier $drv_handle]]
         dtg_verbose "mem_ranges:$mem_ranges"
@@ -666,12 +661,7 @@
         global env
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
-        set dt_overlay [get_user_config $common_file -dt_overlay]
-            if {$dt_overlay} {
-                    set bus_node "overlay2"
-            } else {
-                    set bus_node "amba_pl: amba_pl"
-            }
+        set bus_node "amba_pl: amba_pl"
         set dts_file [set_drv_def_dts $drv_handle]
         set mrmac1_base [format 0x%llx [expr $base_addr + 0x1000]]
         set mrmac1_base_hex [format %llx $mrmac1_base]

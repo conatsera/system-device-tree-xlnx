@@ -615,12 +615,7 @@ proc vproc_ss_update_endpoints {drv_handle} {
         global env
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
-	if {$dt_overlay} {
-		set bus_node "amba"
-	} else {
-		set bus_node "amba_pl: amba_pl"
-	}
+	set bus_node "amba_pl: amba_pl"
 	set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
 	add_prop $vcap "compatible" "xlnx,video" string $dts_file
 	add_prop $vcap "dmas" "$outip 0" reference $dts_file
@@ -641,12 +636,7 @@ proc vproc_ss_update_endpoints {drv_handle} {
         global env
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
-        if {$dt_overlay} {
-            set bus_node "amba"
-        } else {
-            set bus_node "amba_pl: amba_pl"
-        }
+        set bus_node "amba_pl: amba_pl"
         set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
         add_prop $vcap "compatible" "xlnx,video" string $dts_file
         add_prop $vcap "dmas" "$outip 0" reference $dts_file

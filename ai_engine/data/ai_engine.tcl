@@ -106,19 +106,8 @@
         if {$node == 0} {
                 return
         }
-        set dt_overlay 0
-        #set dt_overlay [hsi get_property CONFIG.dt_overlay [get_os]]
-        if {$dt_overlay} {
-                set RpRm [get_rp_rm_for_drv $drv_handle]
-                regsub -all { } $RpRm "" RpRm
-                if {[llength $RpRm]} {
-                        set bus_node "overlay2_$RpRm"
-                } else  {
-                        set bus_node "overlay2"
-                }
-        } else {
-                set bus_node "amba_pl: amba_pl"
-        }
+
+        set bus_node "amba_pl: amba_pl"
         ai_engine_generate_aie_array_device_info ${node} ${drv_handle} ${bus_node}
         set ip [hsi get_cells -hier $drv_handle]
         set unit_addr [get_baseaddr ${ip} no_prefix]

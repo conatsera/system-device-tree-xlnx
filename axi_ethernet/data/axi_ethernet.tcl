@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -24,7 +24,6 @@
         global dtsi_fname
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
-        set dt_overlay [get_user_config $common_file -dt_overlay]
         set bus_node [detect_bus_name $drv_handle]
 
         set node [get_node $drv_handle]
@@ -72,11 +71,7 @@
         set eth_node ""
         for {set core 0} {$core < $num_cores} {incr core} {
                 if {$ip_name == "xxv_ethernet"  && $core != 0} {
-                    if {$dt_overlay} {
-                         set bus_node "overlay2"
-                    } else {
-                        set bus_node "amba_pl: amba_pl"
-                    }
+                    set bus_node "amba_pl: amba_pl"
                     set dts_file "pl.dtsi"
                 set ipmem_len [llength $ip_mem_handles]
                 if {$ipmem_len > 1} {
