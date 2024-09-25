@@ -193,12 +193,7 @@ proc gen_frmbuf_rd_node {ip drv_handle hdmi_port_node dts_file} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
-	if {$dt_overlay} {
-		set bus_node "amba"
-	} else {
-		set bus_node "amba_pl: amba_pl"
-	}
+	set bus_node "amba_pl: amba_pl"
 	set pl_display [create_node -n "drm-pl-disp-drv$drv_handle" -l "v_pl_disp$drv_handle" -p $bus_node -d $dts_file]
 	add_prop $pl_display "compatible" "xlnx,pl-disp" string $dts_file 1
 	add_prop $pl_display "dmas" "$ip 0" reference $dts_file 1

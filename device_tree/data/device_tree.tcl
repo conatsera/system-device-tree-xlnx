@@ -362,7 +362,6 @@ proc set_dt_param args {
                                 -xsa {set env(xsa) [Pop args 1]}
 				-rm_xsa {set env(rm_xsa) [Pop args 1]}
                                 -board_dts {set env(board) [Pop args 1]}
-                                -dt_overlay {set env(dt_overlay) [Pop args 1]}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
                                 -dir {set env(dir) [Pop args 1]}
@@ -400,8 +399,6 @@ proc get_dt_param args {
                } -board -
                  -board_dts {
                        if {[catch {set val $env(board)} msg ]} {}
-               } -dt_overlay {
-                       if {[catch {set val $env(dt_overlay)} msg ]} {}
                } -mainline_kernel {
                        if {[catch {set val $env(kernel)} msg ]} {}
                } -kernel_ver {
@@ -2484,11 +2481,7 @@ proc gen_xppu {drv_handle} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
 	set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-	if {[string match -nocase $ip "axi_noc"] && $dt_overlay} {
-		return
-	}
 	set node [get_node $drv_handle]
 	set baseaddr [get_baseaddr $drv_handle noprefix]
 	set xppu [dict create]
@@ -3913,11 +3906,7 @@ proc gen_power_domains {drv_handle} {
 
         set path $env(REPO)
         set common_file "$path/device_tree/data/config.yaml"
-        set dt_overlay [get_user_config $common_file -dt_overlay]
         set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $ip "axi_noc"] && $dt_overlay} {
-                return
-        }
         set node [get_node $drv_handle]
         set baseaddr [get_baseaddr $drv_handle noprefix]
         set node_id [dict create]

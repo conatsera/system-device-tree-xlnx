@@ -176,12 +176,7 @@ proc gen_frmbuf_rd_node {ip drv_handle port0_node dtsi_file} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
-        if {$dt_overlay} {
-                set bus_node "amba"
-        } else {
-                set bus_node "amba_pl: amba_pl"
-        }
+	set bus_node "amba_pl: amba_pl"
         set pl_disp [create_node -n "drm-pl-disp-drv" -l "v_pl_disp$drv_handle" -p $bus_node -d $dtsi_file]
         add_prop $pl_disp "compatible" "xlnx,pl-disp" string $dtsi_file 1
 	add_prop $pl_disp "dmas" "$ip 0" reference $dtsi_file 1
@@ -272,12 +267,7 @@ proc gen_xfmc_node {drv_handle dts_file} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set dt_overlay [get_user_config $common_file -dt_overlay]
-        if {$dt_overlay} {
-                set bus_node "amba"
-        } else {
-                set bus_node "amba_pl: amba_pl"
-        }
+	set bus_node "amba_pl: amba_pl"
         set pl_disp [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]
         add_prop $pl_disp "compatible" "xilinx-vfmc" string $dts_file 1
 }
