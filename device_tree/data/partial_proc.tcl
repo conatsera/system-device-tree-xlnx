@@ -305,8 +305,12 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	global rp_region_dict
 	global is_rm_design
 	global is_bridge_en
+	global pl_ps_irq1
+	global pl_ps_irq0
 	global env
 
+	set pl_ps_irq1 0
+	set pl_ps_irq0 0
 	set is_rm_design 1
 	set path $env(REPO)
 	if {[catch {set path $env(REPO)} msg]} {
