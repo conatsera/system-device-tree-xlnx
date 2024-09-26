@@ -24,6 +24,11 @@
 
 	set tx_max_gt_line_rate [hsi get_property CONFIG.Tx_Max_GT_Line_Rate [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,tx-max-gt-line-rate" $tx_max_gt_line_rate string $dts_file 1
+	if {$rx_max_gt_line_rate > 5.94 || $tx_max_gt_line_rate > 5.94 } {
+		pldt append $node compatible "\ \, \"xlnx,v-hdmi-gt-controller-1.0\""
+	} else {
+		pldt append $node compatible "\ \, \"xlnx,hdmi-gt-controller-1.0\""
+	}
 
 	set afreq  0
 	set rfreq  0
