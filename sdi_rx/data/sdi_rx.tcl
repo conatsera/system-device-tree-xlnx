@@ -18,38 +18,30 @@ proc sdi_rx_generate {drv_handle} {
 	if {$node == 0} {
 		return
 	}
-
-	set line_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
-	switch $line_rate {
+        set dtsi_file [set_drv_def_dts $drv_handle]
+        set compatible [get_comp_str $drv_handle]
+        pldt append $node compatible "\ \, \"xlnx,v-smpte-uhdsdi-rx-ss\""
+	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
+	switch $sdiline_rate {
 		"3G_SDI" {
-			add_prop "${node}" "xlnx,line-rate" 0 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 0 int $dts_file 1
 		}
 		"6G_SDI" {
-			add_prop "${node}" "xlnx,line-rate" 1 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 1 int $dts_file 1
 		}
 		"12G_SDI_8DS" {
-			add_prop "${node}" "xlnx,line-rate" 2 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 2 int $dts_file 1
 		}
 		"12G_SDI_16DS" {
-			add_prop "${node}" "xlnx,line-rate" 3 int $dts_file 1
-		}
-		"3GSDI" {
-			add_prop "${node}" "xlnx,line-rate" 0 int $dts_file 1
-		}
-		"6GSDI" {
-			add_prop "${node}" "xlnx,line-rate" 1 int $dts_file 1
-		}
-		"12GSDI8DS" {
-			add_prop "${node}" "xlnx,line-rate" 2 int $dts_file 1
-		}
-		"12GSDI16DS" {
-			add_prop "${node}" "xlnx,line-rate" 3 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 3 int $dts_file 1
 		}
 		default {
-			add_prop "${node}" "xlnx,line-rate" 4 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 4 int $dts_file 1
 		}
 	}
 
+        set line_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,line-rate"  $line_rate string $dts_file 1
 	set edh [hsi get_property CONFIG.C_INCLUDE_RX_EDH_PROCESSOR [hsi get_cells -hier $drv_handle]]
 	if {$edh == "true"} {
 		add_prop "${node}" "xlnx,include-edh" 1 int $dts_file 1
