@@ -20,24 +20,30 @@ proc sdi_txss_generate {drv_handle} {
 	}
 	sdi_tx_add_hier_instances $drv_handle
 
-	set line_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
-	switch $line_rate {
+        set dtsi_file [set_drv_def_dts $drv_handle]
+        set compatible [get_comp_str $drv_handle]
+        pldt append $node compatible "\ \, \"xlnx,sdi-tx\""
+
+	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
+	switch $sdiline_rate {
 		"3G_SDI" {
-			add_prop "${node}" "xlnx,line-rate" 0 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 0 int $dts_file 1
 		}
 		"6G_SDI" {
-			add_prop "${node}" "xlnx,line-rate" 1 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 1 int $dts_file 1
 		}
 		"12G_SDI_8DS" {
-			add_prop "${node}" "xlnx,line-rate" 2 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 2 int $dts_file 1
 		}
 		"12G_SDI_16DS" {
-			add_prop "${node}" "xlnx,line-rate" 3 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 3 int $dts_file 1
 		}
 		default {
-			add_prop "${node}" "xlnx,line-rate" 4 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 4 int $dts_file 1
 		}
 	}
+	set line_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,line-rate"  $line_rate string $dts_file 1
 	set Isstd_352 [hsi get_property CONFIG.C_TX_INSERT_C_STR_ST352 [hsi get_cells -hier $drv_handle]]
 	if {$Isstd_352 == "flase"} {
 		add_prop "${node}" "xlnx,Isstd_352" 0 int $dts_file 1
