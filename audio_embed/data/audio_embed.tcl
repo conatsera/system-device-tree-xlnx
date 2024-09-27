@@ -20,25 +20,26 @@
                 return
         }
 
-	set line_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
-	switch $line_rate {
+	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
+	switch $sdiline_rate {
 		"3G_SDI" {
-			add_prop "${node}" "xlnx,line-rate" 0 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 0 int $dts_file 1
 		}
 		"6G_SDI" {
-			add_prop "${node}" "xlnx,line-rate" 1 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 1 int $dts_file 1
 		}
 		"12G_SDI_8DS" {
-			add_prop "${node}" "xlnx,line-rate" 2 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 2 int $dts_file 1
 		}
 		"12G_SDI_16DS" {
-			add_prop "${node}" "xlnx,line-rate" 3 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 3 int $dts_file 1
 		}
 		default {
-			add_prop "${node}" "xlnx,line-rate" 4 int $dts_file 1
+			add_prop "${node}" "xlnx,sdiline-rate" 4 int $dts_file 1
 		}
 	}
-
+        set line_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,line-rate" $line_rate string $dts_file 1
         pldt append $node compatible "\ \, \"xlnx,v-uhdsdi-audio-2.0\""
         set connected_extract_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "SDI_EXTRACT_ANC_DS_IN"]
         if {[llength $connected_extract_ip] != 0} {
