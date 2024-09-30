@@ -239,6 +239,7 @@
         add_prop $node "xlnx,phyaddr" $phyaddr hexint "pl.dtsi" 1
         add_prop $node "xlnx,rxmem" $rxmem hexint "pl.dtsi" 1
         add_prop $node "xlnx,speed-1-2p5" "1000" int "pl.dtsi" 1
+        add_prop $node "max-speed" "1000" int "pl.dtsi" 1
         }
 
         set is_nobuf 0
@@ -249,6 +250,7 @@
                     set is_nobuf 1
                     add_prop $node "xlnx,speed-1-2p5" "2500" int "pl.dtsi" 1
                     pldt append $node compatible "\ \, \"xlnx,axi-2_5-gig-ethernet-1.0\""
+                    add_prop $node "max-speed" "2500" int "pl.dtsi" 1
                 }
             }
         }
