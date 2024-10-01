@@ -13,17 +13,17 @@
 # GNU General Public License for more details.
 #
 
-    proc hdmi_tx_ss_generate {drv_handle} {
-        set node [get_node $drv_handle]
-        set dts_file [set_drv_def_dts $drv_handle]
-        if {$node == 0} {
-                return
-        }
+proc hdmi_tx_ss_generate {drv_handle} {
+	set node [get_node $drv_handle]
+	set dts_file [set_drv_def_dts $drv_handle]
+	if {$node == 0} {
+		return
+	}
 	hdmitxss_add_hier_instances $drv_handle
 	set compatible [get_comp_str $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,v-hdmi-tx-ss-3.1\""
 
-        set highaddr [hsi get_property CONFIG.C_HIGHADDR  [hsi get_cells -hier $drv_handle]]
+	set highaddr [hsi get_property CONFIG.C_HIGHADDR  [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,highaddr" $highaddr hexint $dts_file 1
 
 	set freq [get_clk_pin_freq  $drv_handle "s_axi_cpu_aclk"]
@@ -154,7 +154,7 @@ proc hdmi_tx_ss_update_endpoints {drv_handle} {
 				if {![llength $axis_sw_nm]} {
 					set inip [get_in_connect_ip $inip $master_intf]
 				}
-				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+				if {![string_is_empty $inip] && [string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
 					gen_frmbuf_rd_node $inip $drv_handle $hdmi_port_node $dts_file
 				}
 			}
@@ -185,7 +185,7 @@ proc hdmi_tx_ss_update_endpoints {drv_handle} {
 			update_axis_switch_endpoints $inip $hdmi_port_node $drv_handle
 		}
 	}
-    }
+}
 
 proc gen_frmbuf_rd_node {ip drv_handle hdmi_port_node dts_file} {
 	set frmbuf_rd_node [create_node -n "endpoint" -l encoder$drv_handle -p $hdmi_port_node -d $dts_file]

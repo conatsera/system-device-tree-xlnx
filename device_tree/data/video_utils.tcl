@@ -183,7 +183,7 @@ proc get_axis_switch_in_connect_ip {ip intfpins} {
 			if {[llength $cip]} {
 				set ipname [hsi get_property IP_NAME $cip]
 				puts "ipname:$ipname"
-				set ip_mem_handles [get_ip_mem_ranges $cip]
+				set ip_mem_handles [hsi::get_mem_ranges $cip]
 				if {[llength $ip_mem_handles]} {
 					break
 				} else {
@@ -309,80 +309,14 @@ proc gen_broad_remoteendpoint_port6 {drv_handle value} {
                 set port_node [create_node -n "port" -l axis_broad_port$count$ip -u $count -p $ports_node -d $dts_file]
                 add_prop "$port_node" "reg" $count int $dts_file
                 set axis_node [create_node -n "endpoint" -l axis_broad_out$count$ip -p $port_node -d $dts_file]
-                if {$count <= $count-1} {
-                    gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
-                }
+                gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
                 add_prop "$axis_node" "remote-endpoint" $connectip$ip reference $dts_file
-                if {$count <= $count-1} {
-                    gen_broad_remoteendpoint_port$count $ip $connectip$ip
-                }
+                gen_broad_remoteendpoint_port$count $ip $connectip$ip
                 append inputip " " $connectip
                 append outip " " $connectip$ip
             }
-        }
-        if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
-            gen_broad_frmbuf_wr_node $inputip $outip $ip $count $dts_file
-        }
-
-        if {[llength $ip]} {
-            set axis_broad_ip [hsi::get_property IP_NAME $ip]
-            # broad_ip means broadcaster input ip is connected to another ip
-            set broad_ip [get_broad_in_ip $ip]
-            set validate_ip 1
-            if {[llength $broad_ip]} {
-                if { [hsi get_property IP_NAME $broad_ip] in { "v_proc_ss" "ISPPipeline_accel" } } {
-            # set validate ip is 0 when axis_broadcaster input ip is
-            # connect to v_proc_ss or ISPPipeline_accel to skip the below checks
-                    set validate_ip 0
-                }
-            }
-            # add unit_addr and ip_type check when axis_broadcaster input ip is connected with other ips
-            if {$validate_ip} {
-                set unit_addr [get_baseaddr ${ip} no_prefix]
-                if { ![string equal $unit_addr "-1"] } {
-                    break
-                }
-                set ip_type [get_property IP_TYPE $ip]
-                if {[string match -nocase $ip_type "BUS"]} {
-                    break
-                }
-            }
-            set label $ip
-            set bus_node [detect_bus_name $ip]
-            set dts_file [set_drv_def_dts $ip]
-            set rt_node [create_node -n "axis_broadcaster$ip" -l ${label} -u 0 -d ${dts_file} -p $bus_node]
-            if {[llength $axis_broad_ip]} {
-                set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-                set inip [get_in_connect_ip $ip $intf]
-                if {[llength $inip]} {
-                    set inipname [hsi get_property IP_NAME $inip]
-                    set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange"
-                    if {[lsearch  -nocase $valid_mmip_list $inipname] >= 0} {
-                        set ports_node [create_node -n "ports" -l axis_broadcaster_ports$ip -p $rt_node -d $dts_file]
-                        add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
-                        add_prop "$ports_node" "#size-cells" 0 int $dts_file 1
-                        set port_node [create_node -n "port" -l axis_broad_port0$ip -u 0 -p $ports_node -d $dts_file]
-                        add_prop "$port_node" "reg" 0 int $dts_file
-                        if {[llength $inip]} {
-                            set axis_broad_in_end ""
-                            set axis_broad_remo_in_end ""
-                            if {[dict exists $end_mappings $inip]} {
-                                set axis_broad_in_end [dict get $end_mappings $inip]
-                                dtg_verbose "drv:$ip inend:$axis_broad_in_end"
-                            }
-                            if {[dict exists $remo_mappings $inip]} {
-                                set axis_broad_remo_in_end [dict get $remo_mappings $inip]
-                                dtg_verbose "drv:$ip inremoend:$axis_broad_remo_in_end"
-                            }
-                            if {[llength $axis_broad_remo_in_end]} {
-                                set axisinnode [create_node -n "endpoint" -l $axis_broad_remo_in_end -p $port_node -d $dts_file]
-                            }
-                            if {[llength $axis_broad_in_end]} {
-                                add_prop "$axisinnode" "remote-endpoint" $axis_broad_in_end reference $dts_file 1
-                            }
-                        }
-                    }
-                }
+            if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+                gen_broad_frmbuf_wr_node $inputip $outip $ip $count
             }
         }
     }
@@ -560,55 +494,16 @@ proc gen_axis_switch {ip} {
 	set num_mi [hsi get_property CONFIG.NUM_MI [hsi::get_cells -hier $ip]]
 	add_prop "$switch_node" "xlnx,num-mi-slots" $num_mi int $dts
 	add_prop "$switch_node" "compatible" "$compatible" string $dts
-        if {[string match -nocase [hsi get_property IP_NAME $ip] "axis_switch"]} {
-            set axis_ip [hsi get_property IP_NAME $ip]
-            set dts_file [set_drv_def_dts $ip]
-            set unit_addr [get_baseaddr ${ip} no_prefix]
-            if { ![string equal $unit_addr ""] } {
-                return
-            }
-            set label $ip
-            set bus_node [detect_bus_name $ip]
-            set dev_type [hsi get_property IP_NAME [hsi::get_cells -hier [hsi::get_cells -hier $ip]]]
-            if {[llength $axis_ip]} {
-                set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-                set inip [get_in_connect_ip $ip $intf]
-                set node [get_node $ip]
-                if {[llength $inip]} {
-                    set inipname [hsi get_property IP_NAME $inip]
-                    set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange"
-                    if {[lsearch -nocase $valid_mmip_list $inipname] >= 0} {
-                        set ports_node [create_node -n "ports" -l axis_switch_ports$ip -p $node -d $dts_file]
-                        add_prop "$ports_node" "#address-cells" 1 int $dts_file
-                        add_prop "$ports_node" "#size-cells" 0 int $dts_file
-                        set port_node [create_node -n "port" -l axis_switch_port0$ip -u 0 -p $ports_node -d $dts_file]
-                        add_prop "$port_node" "reg" 0 int $dts_file
-                        if {[llength $inip]} {
-                            set axis_switch_in_end ""
-                            set axis_switch_remo_in_end ""
-                            if {[info exists axis_switch_in_end_mappings] && [dict exists $axis_switch_in_end_mappings $inip]} {
-                                set axis_switch_in_end [dict get $axis_switch_in_end_mappings $inip]
-                                dtg_verbose "drv:$ip inend:$axis_switch_in_end"
-                            }
-                            if {[info exists axis_switch_in_remo_mappings] && [dict exists $axis_switch_in_remo_mappings $inip]} {
-                                set axis_switch_remo_in_end [dict get $axis_switch_in_remo_mappings $inip]
-                                dtg_verbose "drv:$ip inremoend:$axis_switch_remo_in_end"
-                            }
-                            if {[llength $axis_switch_remo_in_end]} {
-                                set axisinnode [create_node -n "endpoint" -l $axis_switch_remo_in_end -p $port_node -d $dts_file]
-                            }
-                            if {[llength $axis_switch_in_end]} {
-                                add_prop "$axisinnode" "remote-endpoint" $axis_switch_in_end reference $dts_file
-                            }
 
-                        }
-                    }
-                }
-            }
-        }
 	set count 0
 	foreach intf $master_intf {
 	       set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
+               # Get next out IP if slice connected
+               if {[llength $connectip] && \
+                        [string match -nocase [hsi get_property IP_NAME $connectip] "axis_register_slice"]} {
+                        set intf "M_AXIS"
+                        set connectip [get_connected_stream_ip [hsi get_cells -hier $connectip] "$intf"]
+                }
 	       set len [llength $connectip]
                if {$len > 1} {
                        for {set i 0 } {$i < $len} {incr i} {
@@ -731,13 +626,14 @@ proc get_endpoint_mapping {inip mappings} {
 }
 
 proc add_endpoint_mapping {drv_handle port_node in_end remo_in_end} {
+	set dts_file [set_drv_def_dts $drv_handle]
 	#Add the endpoint/remote-endpoint for given drv_handle
 	if {[regexp -nocase $drv_handle "$remo_in_end" match]} {
 		if {[llength $remo_in_end]} {
-			set node [create_node -n "endpoint" -l $remo_in_end -p $port_node]
+			set node [create_node -n "endpoint" -l $remo_in_end -p $port_node -d $dts_file]
 		}
 		if {[llength $in_end]} {
-			add_prop "$node" "remote-endpoint" $in_end reference
+			add_prop "$node" "remote-endpoint" $in_end reference $dts_file
 		}
 	}
 }
