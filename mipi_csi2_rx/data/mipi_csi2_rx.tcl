@@ -92,7 +92,7 @@
                     gen_remoteendpoint $drv_handle "$outip$drv_handle"
             }
                    if {[string match -nocase [hsi get_property IP_NAME $outip] "axis_switch"]} {
-                           set ip_mem_handles [get_ip_mem_ranges $outip]
+                           set ip_mem_handles [hsi::get_mem_ranges $outip]
                            if {[llength $ip_mem_handles]} {
                                    set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
                                    gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
@@ -119,13 +119,16 @@
                             set connectip [get_connect_ip $ip $intfpins $dts_file]
                             if {[llength $connectip]} {
                                     if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_switch"]} {
-                                            set ip_mem_handles [get_ip_mem_ranges $connectip]
+                                            set ip_mem_handles [hsi::get_mem_ranges $connectip]
                                             if {[llength $ip_mem_handles]} {
                                                     set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
                                                     gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
                                                     add_prop "$mipi_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
                                                     gen_axis_switch_in_remo_endpoint $drv_handle "$connectip$drv_handle"
                                             }
+                                    } elseif {[string match -nocase [hsi get_property IP_NAME $connectip] "ISPPipeline_accel"]} {
+                                                set isppipeline_node [create_node -n "endpoint" -l isppipeline_in$connectip -p $port_node -d $dts_file]
+                                                add_prop "$isppipeline_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
                                     } else {
 
                                     set csi_rx_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]

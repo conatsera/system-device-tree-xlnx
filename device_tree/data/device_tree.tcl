@@ -307,6 +307,9 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "pmc_trng" "trngpsx"
 
 	dict set ::sdtgen::namespacelist "asu" "asu"
+	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
+	dict set ::sdtgen::namespacelist "axis_broadcaster" "axis_broadcaster"
+	dict set ::sdtgen::namespacelist "ISPPipeline_accel" "isppipeline"
 }
 
 proc Pop {varname {nth 0}} {
@@ -1554,7 +1557,7 @@ Generates system device tree based on args given in:
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip2 1
 		}
-		if { $skip2 == 0 } {
+		if { $skip2 == 0 || $ip_name in {"axis_switch" "axis_broadcaster"}} {
 			if { [dict exists $::sdtgen::namespacelist $ip_name] } {
 				set drvname [dict get $::sdtgen::namespacelist $ip_name]
 				source [file join $path $drvname "data" "${drvname}.tcl"]
@@ -1641,7 +1644,9 @@ Generates system device tree based on args given in:
 			}
 		}
 		global set osmap
-		unset osmap
+		if {[info exists osmap]} {
+			unset osmap
+		}
 		
 	} else {
 		delete_tree systemdt root
@@ -2385,6 +2390,9 @@ proc update_alias {} {
 	set design_pluarts ""
 	set design_coresight ""
 	foreach drv_handle $all_drivers {
+		if {$drv_handle == "generic"} {
+			continue
+		}
 		set ip_name  [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 		if {[lsearch $valid_pluarts $ip_name] >= 0} {
 			lappend design_pluarts $drv_handle
@@ -2411,6 +2419,9 @@ proc update_alias {} {
 	}
 
 	foreach drv_handle $all_drivers {
+		if {$drv_handle == "generic"} {
+			continue
+		}
 		if {[lsearch $design_pluarts $drv_handle] >= 0 || [lsearch $design_coresight $drv_handle] >= 0} {
 			continue
 		}

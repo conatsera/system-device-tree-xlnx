@@ -114,7 +114,44 @@
 
 	framebuf_wr_gen_gpio_reset $drv_handle $node $dts_file
 
+        set frmbuf_inips [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
+        foreach inip $frmbuf_inips {
+                if {[string match -nocase [hsi get_property IP_NAME $inip] "v_mix"] } {
+                        set ports_node [create_node -n "ports" -l frmbuf_wr_ports$drv_handle -p $node -d $dts_file]
+                        add_prop "$ports_node" "#address-cells" 1 int $dts_file
+                        add_prop "$ports_node" "#size-cells" 0 int $dts_file
+                        set port0_node [create_node -n "port" -l frmbuf_wr$drv_handle -u 0 -p $ports_node -d $dts_file]
+                        add_prop "$port0_node" "reg" 0 int $dts_file
+                        set frmbuf_crtc [create_node -n "endpoint" -l v_frmbuf_wr$drv_handle -p $port0_node -d $dts_file]
+                        add_prop "$frmbuf_crtc" "remote-endpoint" "mixer_out$inip" reference $dts_file
+                } elseif {[string match -nocase [hsi get_property IP_NAME $inip] "ISPPipeline_accel"] } {
+                        framebuf_wr_gen_frmbuf_node $inip $drv_handle $dts_file
+                }
+        }
+
     }
+
+proc framebuf_wr_gen_frmbuf_node {ip drv_handle dts_file} {
+        set proctype [get_hw_family]
+        set bus_node [detect_bus_name $drv_handle]
+        set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
+        add_prop $vcap "compatible" "xlnx,video" string $dts_file
+        add_prop $vcap "dmas" "$ip 0" reference $dts_file
+        add_prop $vcap "dma-names" "port0" string $dts_file
+        set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
+        add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
+        add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
+        if {$proctype == "zynq"} {
+                #Workaround for issue (TBF)
+                set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -p $vcap_ports_node -d $dts_file]
+        } else {
+                set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dts_file]
+        }
+        add_prop "$vcap_port_node" "reg" 0 int $dts_file
+        add_prop "$vcap_port_node" "direction" input string $dts_file
+        set vcap_in_node [create_node -n "endpoint" -l $drv_handle$ip -p $vcap_port_node -d $dts_file]
+        add_prop "$vcap_in_node" "remote-endpoint" $ip$drv_handle reference $dts_file
+}
 
 
     proc framebuf_wr_gen_gpio_reset {drv_handle node dts_file} {
