@@ -912,7 +912,7 @@
 			set reg "0x0 $base 0x0 $size"
                 }
         }
-        add_prop $node "reg" $reg hexint "pl.dtsi"
+        add_prop $node "reg" $reg hexlist "pl.dtsi"
         set label [split $node ":"]
         set label [lindex $label 0]
         set design_handles [hsi::get_cells -hier]
