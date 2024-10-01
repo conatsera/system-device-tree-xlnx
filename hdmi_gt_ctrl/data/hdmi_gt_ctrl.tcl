@@ -37,35 +37,43 @@
         switch $transceiver {
                         "GTXE2" {
                                 add_prop "${node}" "xlnx,transceiver" 1 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 1 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE2" {
                                 add_prop "${node}" "xlnx,transceiver" 2 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 2 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTPE2" {
                                 add_prop "${node}" "xlnx,transceiver" 3 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 3 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "vid_phy_axi4lite_aclk"]
                         }
                         "GTHE3" {
                                 add_prop "${node}" "xlnx,transceiver" 4 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 4 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTHE4" {
                                 add_prop "${node}" "xlnx,transceiver" 5 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 5 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTYE4" {
                                 add_prop "${node}" "xlnx,transceiver" 6 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 6 hexint $dts_file 1
 				set rfreq [get_clk_pin_freq  $drv_handle "drpclk"]
                         }
                         "GTYE5" {
                                 add_prop "${node}" "xlnx,transceiver" 7 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 7 hexint $dts_file 1
 				set afreq [ get_clk_pin_freq  $drv_handle "axi4lite_aclk"]
 				set rfreq [ get_clk_pin_freq  $drv_handle "axi4lite_aclk"]
                         }
                         "GTYP" {
                                 add_prop "${node}" "xlnx,transceiver" 8 hexint $dts_file 1
+                                add_prop "${node}" "xlnx,transceiver-type" 8 hexint $dts_file 1
 				set afreq [ get_clk_pin_freq  $drv_handle "axi4lite_aclk"]
 				set rfreq [ get_clk_pin_freq  $drv_handle "axi4lite_aclk"]
                         }
@@ -107,13 +115,13 @@
         set gt_direction [hsi get_property CONFIG.C_GT_DIRECTION [hsi get_cells -hier $drv_handle]]
         switch $gt_direction {
                         "SIMPLEX_TX" {
-                                add_prop "${node}" "xlnx,gt-direction" $gt_direction  stringlist $dts_file 1
+                                add_prop "${node}" "xlnx,gt-direction" 1 hexint $dts_file 1
                         }
                         "SIMPLEX_RX" {
-                                add_prop "${node}" "xlnx,gt-direction" $gt_direction  stringlist $dts_file 1
+                                add_prop "${node}" "xlnx,gt-direction" 2 hexint $dts_file 1
                         }
                         "DUPLEX" {
-                                add_prop "${node}" "xlnx,gt-direction" $gt_direction  stringlist $dts_file 1
+                                add_prop "${node}" "xlnx,gt-direction" 3 hexint $dts_file 1
                         }
         }
 	# Get the number of Rx and Tx channels
