@@ -130,19 +130,19 @@ proc dp_rxss14_generate {drv_handle} {
 			set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
 			set dp_rx_node [create_node -n "endpoint" -l dprx_out$drv_handle -p $port0_node -d $dts_file]
 			gen_endpoint $drv_handle "dprx_out$drv_handle"
-			add_prop  "$dp_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
+			add_prop  "$dp_rx_node" "remote-endpoint" $ip reference $dts_file
 			gen_remoteendpoint $drv_handle $ip$drv_handle
 			if {[string match -nocase [hsi::get_property IP_NAME $ip] "v_frmbuf_wr"]} {
 				gen_frmbuf_wr_node $ip $drv_handle $ports_node $dts_file
 			}
 		} else {
-			set connectip [get_connect_ip $ip $intfpins]
+			set connectip [get_connect_ip $ip $intfpins $dtsi_file]
 			if {[llength $connectip]} {
-				set sdi_rx_node [create_node -n "endpoint" -l dprx_out$drv_handle -p $port0_node $dts_file]
+				set sdi_rx_node [create_node -n "endpoint" -l dprx_out$drv_handle -p $port0_node -d $dts_file]
 				gen_endpoint $drv_handle "dprx_out$drv_handle"
 				add_prop  "$dp_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
 				gen_remoteendpoint $drv_handle $connectip$drv_handle
-				if {[string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+				if {[string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
 					gen_frmbuf_wr_node $connectip $drv_handle $ports_node $dts_file
 				}
 			}
