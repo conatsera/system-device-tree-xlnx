@@ -142,6 +142,7 @@ proc dp_txss14_generate {drv_handle} {
 	set inip ""
 #	set axis_sw_nm ""
 	foreach inip $dptxip {
+		set intfpins [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $inip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 		if {[llength $inip]} {
 			set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $dptxip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
 			set ip_mem_handles [hsi::get_mem_ranges $inip]
@@ -150,19 +151,19 @@ proc dp_txss14_generate {drv_handle} {
 				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
 					gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file				}
 			} else {
-				set connectip [get_connect_ip $ip $intfpins]
+				set connectip [get_connect_ip $inip $intfpins $dtsi_file]
 				if {[llength $connectip]} {
-					set dp_tx_node [create_node -n "endpoint" -l dptx_out$drv_handle -p $port0_node]
+					set dp_tx_node [create_node -n "endpoint" -l dptx_out$drv_handle -p $port0_node -d $dtsi_file]
 					gen_endpoint $drv_handle "dptx_out$drv_handle"
-					if {[string match -nocase [get_property IP_NAME $ip] "v_mix"]} {
-						add_prop "$dp_tx_node" "remote-endpoint" "mixer_crtc$connectip" reference
+					if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_mix"]} {
+						add_prop "$dp_tx_node" "remote-endpoint" "mixer_crtc$connectip" reference $dtsi_file
 						gen_remoteendpoint $drv_handle "mixer_crtc$connectip"
 					} else {
-						add_prop "$dp_tx_node" "remote-endpoint" $connectip$drv_handle reference
+						add_prop "$dp_tx_node" "remote-endpoint" $connectip reference $dtsi_file
 						gen_remoteendpoint $drv_handle $connectip$drv_handle
 					}
-					if {[string match -nocase [get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [get_property IP_NAME $connectip] "v_frmbuf_rd"]} {
-					gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file					}
+					if {[string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"] || [string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_rd"]} {
+						gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file					}
 				}
 			}
 		}
