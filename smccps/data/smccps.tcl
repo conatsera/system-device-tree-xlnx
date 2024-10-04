@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -19,7 +19,8 @@
         set dts_file [set_drv_def_dts $drv_handle]
         set reg [get_baseaddr [hsi::get_cells -hier $handle]]
         add_prop $node "flashbase" $reg int $dts_file
-        set bus_width [hsi get_property CONFIG.C_NAND_WIDTH [hsi::get_cells -hier $handle]]
+        set nand_handle [hsi::get_cells -hier -filter {IP_NAME==ps7_nand}]
+        set bus_width [get_ip_property $nand_handle CONFIG.C_NAND_WIDTH]
         add_prop $node "nand-bus-width" $bus_width int $dts_file
     }
 
