@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -104,7 +104,7 @@
         }
         set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "S_AXIS_DATA"]
         if {[llength $connected_ip] != 0} {
-                set index [lsearch [hsi get_cells -hier] $connected_ip]
+                set index [lsearch [hsi get_mem_ranges $connected_ip] $connected_ip]
                 if {$index != -1 } {
                         add_prop "$node" "xlnx,snd-pcm" $connected_ip reference $dts_file 1
                 }
@@ -113,7 +113,7 @@
         }
         set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_DATA"]
         if {[llength $connect_ip] != 0} {
-                set index [lsearch [hsi get_cells -hier] $connect_ip]
+                set index [lsearch [hsi get_mem_ranges $connected_ip] $connect_ip]
                 if {$index != -1 } {
                         add_prop "$node" "xlnx,snd-pcm" $connect_ip reference $dts_file 1
                 }
