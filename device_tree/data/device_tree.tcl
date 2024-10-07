@@ -695,6 +695,7 @@ proc gen_afi_node {} {
 					set index [lsearch $pl_clk_buf_props $prop]
 					set clk_num [expr {71 + $index}]
 					set clocking_node [create_node -n "clocking${index}" -l "clocking${index}" -p $amba_pl_node -d $dts]
+					add_prop "${clocking_node}" "status" "okay" string $dts 1
 					add_prop "${clocking_node}" "compatible" "xlnx,fclk" string $dts 1
 					add_prop "${clocking_node}" "clocks" "zynqmp_clk $clk_num" reference $dts 1
 					add_prop "${clocking_node}" "clock-output-names" "fabric_clk" string $dts 1
