@@ -30,7 +30,7 @@ proc vproc_ss_generate {drv_handle} {
 	if {$topology == 0} {
 		#scaler
 		set name [hsi get_property NAME [hsi::get_cells -hier $drv_handle]]
-		pldt append $node compatible "\ \, \"xlnx,vpss-scaler-2.2\"\ \, \"xlnx,v-vpss-scaler-2.2\"\ \, \"xlnx,vpss-scaler\""
+		pldt append $node compatible "\ \, \"xlnx,v-vpss-scaler-2.2\""
 		set ip [hsi::get_cells -hier $drv_handle]
 		set csc_enable_window [hsi get_property CONFIG.C_CSC_ENABLE_WINDOW [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,csc-enable-window" $csc_enable_window string $dts_file
@@ -42,7 +42,7 @@ proc vproc_ss_generate {drv_handle} {
 		add_prop "${node}" "xlnx,enable-interlaced" $interlace boolean $dts_file
 		set v_scaler_taps [hsi get_property CONFIG.C_V_SCALER_TAPS [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,v-scaler-taps" $v_scaler_taps int $dts_file
-
+		add_prop "${node}" "xlnx,num-vert-taps" $v_scaler_taps int $dts_file
 		set madi [hsi get_property CONFIG.C_DEINT_MOTION_ADAPTIVE [hsi::get_cells -hier $drv_handle]]
 		add_prop "${node}" "xlnx,deint-motion-adaptive" $madi boolean $dts_file
 		set csc_enable_422 [hsi get_property CONFIG.C_CSC_ENABLE_422 [hsi::get_cells -hier $drv_handle]]
@@ -138,7 +138,7 @@ proc vproc_ss_generate {drv_handle} {
 		#CSC
 		set name [hsi::get_property NAME [hsi::get_cells -hier $drv_handle]]
 		set compatible [get_comp_str $drv_handle]
-		pldt append $node compatible "\ \, \"xlnx,vpss-scaler-2.2\"\ \, \"xlnx,vpss-csc\"\ \, \"xlnx,v-vpss-csc\""
+		pldt append $node compatible "\ \, \"xlnx,v-vpss-csc\""
 		#set compatible [append compatible " " "xlnx,vpss-csc xlnx,v-vpss-csc"]
 		set ip [hsi::get_cells -hier $drv_handle]
 		set topology [hsi::get_property CONFIG.C_TOPOLOGY [hsi::get_cells -hier $drv_handle]]
