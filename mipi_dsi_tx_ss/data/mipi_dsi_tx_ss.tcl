@@ -23,6 +23,8 @@
 	set compatible [get_comp_str $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,dsi\""
 	set dphy_en_reg_if [hsi get_property CONFIG.DPHY_EN_REG_IF [hsi::get_cells -hier $drv_handle]]
+	set dsi_num_lanes [hsi get_property CONFIG.DSI_LANES [hsi::get_cells -hier $drv_handle]]
+	add_prop "$node" "xlnx,dsi-num-lanes" $dsi_num_lanes int $dts_file 1
         if  {[string match -nocase "true" $dphy_en_reg_if]} {
                 add_prop "${node}" "xlnx,dphy-en-reg-if" 1 int $dts_file 1
         } elseif {[string match -nocase "false" $dphy_en_reg_if]} {
