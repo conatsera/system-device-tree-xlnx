@@ -6363,12 +6363,21 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 				set rt_node [get_node $drv_handle]
 			} else {
 				switch $dev_type {
-					"psv_fpd_smmutcu" {
-						set dev_type "psv_fpd_maincci"
+					"psv_fpd_smmutcu" { set dev_type "psv_fpd_maincci" }
+					"axi_intc" { set dev_type "interrupt-controller" }
+					"axi_cdma" - "axi_dma" - "axi_vdma" { set dev_type "dma" }
+					"axi_ethernet" - "axi_ethernet_buffer" - "axi_10g_ethernet" - "xxv_ethernet" - "usxgmii" - "ethernet_1_10_25g" - "axi_ethernetlite" {
+						set dev_type "ethernet"
 					}
-					"axi_intc" {
-						set dev_type "interrupt-controller"
+					"axi_gpio" { set dev_type "gpio" }
+					"axi_iic" { set dev_type "i2c" }
+					"axi_pcie" - "axi_pcie3" - "qdma" - "xdma" - "pcie_dma_versal" {
+						set dev_type "axi-pcie"
 					}
+					"axi_timebase_wdt" { set dev_type "watchdog" }
+					"sdfec" { set dev_type "sd-fec" }
+					"mdm" - "axi_uartlite" - "axi_uart16550" { set dev_type "serial" }
+					"axi_timer" { set dev_type "timer" }
 				}
 				set t [get_ip_property $drv_handle IP_NAME]
 				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
