@@ -7187,6 +7187,13 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set sink_pins [get_sink_pins "$intr_pin"]
 	                set sink_periph [::hsi::get_cells -of_objects $sink_pins]
 	                set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
+                        # When xlconcate connected via util_reduced_logic(OR) there is only one
+                        # possiblity to get the interrupt so dont treat it as concat to assign the single
+                        # interrupt number for all ip's connected to xlconcate
+			if {[llength $connected_ip] && [string match -nocase "$connected_ip" "util_reduced_logic"]} {
+				set concat_block 0
+			}
+
 	                while {[llength $connected_ip]} {
 				if {![string match -nocase "$connected_ip" "xlconcat"]} {
 					break
@@ -7269,40 +7276,23 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			    return $ret
 			}
 		}
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq0"] == 0} {
-		set ret 84
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq1"] == 0} {
-		set ret 85
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq2"] == 0} {
-		set ret 86
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq3"] == 0} {
-		set ret 87
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq4"] == 0} {
-		set ret 88
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq5"] == 0} {
-		set ret 89
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq6"] == 0} {
-		set ret 90
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq7"] == 0} {
-		set ret 91
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq8"] == 0} {
-		set ret 92
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq9"] == 0} {
-		set ret 93
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq10"] == 0} {
-		set ret 94
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq11"] == 0} {
-		set ret 95
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq12"] == 0} {
-		set ret 96
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq13"] == 0} {
-		set ret 97
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq14"] == 0} {
-		set ret 98
-	} elseif { [string compare -nocase "$sink_pin" "pl_ps_irq15"] == 0} {
-		set ret 99
+	} elseif {[regexp "^pl_ps_irq.*" "$sink_pin" match] && \
+			[expr [string trim "$sink_pin" "pl_ps_irq"] <= 15]} {
+		if {$concat_block == "0"} {
+			set intr_index [string trim "$sink_pin" "pl_ps_irq"]
+			set ret [expr 84 + $intr_index]
+		} else {
+			set ret [expr 84 + $number]
+		}
+	} elseif {[regexp "^pl_psx_irq.*" "$sink_pin" match] && \
+			[expr [string trim "$sink_pin" "pl_psx_irq"] <= 15]} {
+		if {$concat_block == "0"} {
+			set intr_index [string trim "$sink_pin" "pl_psx_irq"]
+			set ret [expr 104 + $intr_index]
+		} else {
+			set ret [expr 104 + $number]
+		}
 	} else {
-
 	    set sink_periph [hsi::get_cells -of_objects $sink_pin]
 	    if {[llength $sink_periph] == 0 } {
 		break
