@@ -169,6 +169,10 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 		if {[llength $ip]} {
 			set intfpins [hsi get_intf_pins -of_objects [hsi get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 			set ip_mem_handles [hsi get_mem_ranges $ip]
+		        if {[string match -nocase [hsi get_property IP_NAME $ip] "axi_vdma"]} {
+                               #puts "VDMA use case is not supported for SDT linux flow with mipi csi2 rx IP"
+                                break
+                        }
 			if {[llength $ip_mem_handles]} {
 				set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
 				set csi_rx_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
