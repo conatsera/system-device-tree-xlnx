@@ -115,7 +115,7 @@
         set connect_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "M_AXIS_DATA"]
         if {[llength $connect_ip] != 0} {
                 set index [lsearch [hsi get_mem_ranges $connected_ip] $connect_ip]
-                if {$index != -1 } {
+                if {$index != -1 || $index != 0} {
                         add_prop "$node" "xlnx,snd-pcm" $connect_ip reference $dts_file 1
                 }
         } else {
