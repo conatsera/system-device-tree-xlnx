@@ -37,7 +37,7 @@ proc isppipeline_gen_reset_gpio {drv_handle node dts_file} {
 							break
 						}
 					}
-					if {$proc_type == "zynqmp"] } {
+					if {$proc_type == "zynqmp"} {
 						if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
 							set gpio [expr $gpio + 78]
 							add_prop "$node" "reset-gpios" "gpio $gpio 0" reference $dts_file
