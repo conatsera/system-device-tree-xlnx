@@ -2,34 +2,34 @@
 /*
  * dts file for Xilinx Versal a2197 RevA System Controller
  *
- * (C) Copyright 2021-2022 Xilinx, Inc.
+ * (C) Copyright 2019-2022 Xilinx, Inc.
  * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
  *
- * Michal Simek <michal.simek@xilinx.com>
+ * Michal Simek <michal.simek@amd.com>
  */
+
 #include "include/dt-bindings/gpio/gpio.h"
 #include "include/dt-bindings/phy/phy.h"
 
 / {
 	model = "Versal System Controller on a2197 Processor Char board RevA"; /* Tenzing */
 	compatible = "xlnx,zynqmp-p-a2197-00-revA", "xlnx,zynqmp-a2197-revA",
-				"xlnx,zynqmp-a2197", "xlnx,zynqmp";
+		     "xlnx,zynqmp-a2197", "xlnx,zynqmp";
 
 	aliases {
-                ethernet0 = &gem0;
-                i2c0 = &i2c0;
-                i2c1 = &i2c1;
-                mmc0 = &sdhci0;
-                mmc1 = &sdhci1;
-                nvmem0 = &eeprom;
-                rtc0 = &rtc;
-                serial0 = &uart0;
-                serial1 = &uart1;
-                serial2 = &dcc;
-                usb0 = &usb0;
-                usb1 = &usb1;
-        };
-
+		ethernet0 = &gem0;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		mmc0 = &sdhci0;
+		mmc1 = &sdhci1;
+		nvmem0 = &eeprom;
+		rtc0 = &rtc;
+		serial0 = &uart0;
+		serial1 = &uart1;
+		serial2 = &dcc;
+		usb0 = &usb0;
+		usb1 = &usb1;
+	};
 
 	ref_clk: ref-clk {
 		status = "okay";
@@ -61,13 +61,13 @@
 		clocks = <&si570_hsdp>;
 	};
 
-	si5332_1: si5332_1 { /* clk0_sgmii - u142 */
+	si5332_1: si5332-1 { /* clk0_sgmii - u142 */
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
-		clock-frequency = <33333333>; /* FIXME */
+		clock-frequency = <125000000>;
 	};
 
-	si5332_2: si5332_2 { /* clk1_usb - u142 */
+	si5332_2: si5332-2 { /* clk1_usb - u142 */
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <27000000>;
@@ -77,9 +77,13 @@
 &sdhci0 { /* emmc MIO 13-23 - with some settings  16GB */
 	non-removable;
 	disable-wp;
+	no-sd;
+	no-sdio;
+	cap-mmc-hw-reset;
 	bus-width = <8>;
 	xlnx,mio-bank = <0>;
 };
+
 
 &sdhci1 { /* sd1 MIO45-51 cd in place */
 	no-1-8-v;
@@ -88,6 +92,7 @@
 };
 
 &psgtr {
+	status = "okay";
 	/* sgmii, usb3 */
 	clocks = <&si5332_1>, <&si5332_2>;
 	clock-names = "ref0", "ref1";
@@ -97,9 +102,13 @@
 	phy-handle = <&phy0>;
 	phy-mode = "sgmii"; /* DTG generates this properly  1512 */
 	is-internal-pcspma;
-	/* phy-reset-gpios = <&gpio 142 GPIO_ACTIVE_LOW>; */
-	phy0: ethernet-phy@0 {
-		reg = <0>;
+	mdio: mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		/* reset-gpios = <&gpio 142 GPIO_ACTIVE_LOW>; */
+		phy0: ethernet-phy@0 {
+			reg = <0>;
+		};
 	};
 };
 
@@ -142,9 +151,6 @@
 		  "", "", "", ""; /* 170 - 173 */
 };
 
-
-/* TODO sysctrl via J239 */
-/* TODO samtec J212G/H via J242 */
 &i2c0 { /* MIO 34-35 - can't stay here */
 	clock-frequency = <400000>;
 	i2c-mux@74 { /* u33 */
@@ -159,7 +165,7 @@
 			reg = <0>;
 			/* On connector J98 */
 			reg_vcc_fmc: tps544@7 { /* u80 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x7>;
 				regulator-name = "reg_vcc_fmc";
 				regulator-min-microvolt = <1800000>;
@@ -167,15 +173,15 @@
 				/* enable-gpio = <&gpio0 23 0x4>; optional */
 			};
 			reg_vcc_ram: tps544@8 { /* u83 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x8>;
 			};
 			reg_vcc_pslp: tps544@9 { /* u85 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x9>;
 			};
 			reg_vcc_psfp: tps544@a { /* u86 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0xa>;
 			};
 			reg_vccint: tps53681@60 { /* u70 - FIXME name - don't know what it does - also vcc_io_soc */
@@ -188,7 +194,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <1>;
-			/* FIXME check alerts comming to SC */
+			/* FIXME check alerts coming to SC */
 			vcc_fmc: ina226@42 { /* u81 */
 				compatible = "ti,ina226";
 				reg = <0x42>;
@@ -216,75 +222,75 @@
 			reg = <2>;
 			/* On connector J104 */
 			reg_vccaus: tps544@d { /* u88 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0xd>;
 			};
 			reg_vccaux_fmc: tps544@e { /* u90 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0xe>;
 			};
 			reg_vcco_500: tps544@f { /* u93 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0xf>;
 			};
 			reg_vcco_501: tps544@10 { /* u95 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x10>;
 			};
 			reg_vcco_502: tps544@11 { /* u97 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x11>;
 			};
 			reg_vcco_503: tps544@12 { /* u99 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x12>;
 			};
 			reg_vcc1v8: tps544@13 { /* u101 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x13>;
 			};
 			reg_vcc3v3: tps544@14 { /* u102 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x14>;
 			};
 			reg_vcc1v2_ddr4: tps544@15 { /* u104 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x15>;
 			};
 			reg_vcc1v1_lp4: tps544@16 { /* u106 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x16>;
 			};
 			reg_vcc1_1V8_lp4: tps544@17 { /* u108 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x17>;
 			};
 			reg_vadj_fmc: tps544@19 { /* u109 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x19>;
 			};
 			reg_mgtyavcc: tps544@1a { /* u111 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x1a>;
 			};
 			reg_mgtyavtt: tps544@1b { /* u114 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x1b>;
 			};
 			reg_mgtyvccaux: tps544@1c { /* u115 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x1c>;
 			};
 			reg_util_1v13: tps544@1d { /* u117 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x1d>;
 			};
 			reg_util_1v8: tps544@1e { /* u118 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x1e>;
 			};
 			reg_util_2v5: tps544@1f { /* u119 - FIXME name - don't know what it does */
-				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus - wiring is missing */
+				compatible = "ti,tps544b25"; /* Documentation/hwmon/pmbus.rst - wiring is missing */
 				reg = <0x1f>;
 			};
 		};
@@ -292,7 +298,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <3>;
-			/* FIXME check alerts comming to SC */
+			/* FIXME check alerts coming to SC */
 			vccaux: ina226@40 { /* u89 */
 				compatible = "ti,ina226";
 				reg = <0x40>;
@@ -366,8 +372,7 @@
 			vcc_bat: ina226@4e { /* u12 */
 				compatible = "ti,ina226";
 				reg = <0x4e>;
-				/* 10 ohm real value - setup 1ohm because of driver limitation */
-				shunt-resistor = <1000000>;
+				shunt-resistor = <10000000>; /* 10 ohm */
 			};
 		};
 		i2c@4 { /* LP_I2C_SM */
@@ -381,8 +386,6 @@
 	};
 };
 
-/* TODO sysctrl via J239 */
-/* TODO samtec J212G/H via J242 */
 &i2c1 { /* i2c1 MIO 36-37 */
 	clock-frequency = <400000>;
 
@@ -403,19 +406,59 @@
 			#size-cells = <0>;
 			reg = <0>;
 			/* Use for storing information about SC board */
-			eeprom: eeprom@54 { /* u34 - m24128 16kB FIXME addr */
+			eeprom: eeprom@54 { /* u34 - m24128 16kB */
 				compatible = "st,24c128", "atmel,24c128";
 				reg = <0x54>;
 			};
-			si570_ref_clk: clock-generator@60 { /* u32 */
+			si570_ref_clk: clock-generator@5d { /* u32 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x60>; /* 570JAC000900DG */
+				reg = <0x5d>;	/* 570JAC000900DG */
 				temperature-stability = <50>;
 				factory-fout = <33333333>;
 				clock-frequency = <33333333>;
 				clock-output-names = "ref_clk";
 				silabs,skip-recall;
+			};
+			/* Connection via Samtec J212D */
+			/* Use for storing information about X-PRC card */
+			x_prc_eeprom: eeprom@52 { /* x-prc-01-revA u120, x-prc-02-revA u16 */
+				compatible = "atmel,24c02";
+				reg = <0x52>;
+			};
+
+			/* Use for setting up certain features on X-PRC card */
+			x_prc_tca9534: gpio@22 { /* x-prc-01-revA u121, x-prc-02-revA u17 */
+				compatible = "nxp,pca9534";
+				reg = <0x22>;
+				gpio-controller; /* IRQ not connected */
+				#gpio-cells = <2>;
+				gpio-line-names = "sw4_1", "sw4_2", "sw4_3", "sw4_4",
+						  "", "", "", "";
+				gtr-sel0 {
+					gpio-hog;
+					gpios = <0 0>;
+					input; /* FIXME add meaning */
+					line-name = "sw4_1";
+				};
+				gtr-sel1 {
+					gpio-hog;
+					gpios = <1 0>;
+					input; /* FIXME add meaning */
+					line-name = "sw4_2";
+				};
+				gtr-sel2 {
+					gpio-hog;
+					gpios = <2 0>;
+					input; /* FIXME add meaning */
+					line-name = "sw4_3";
+				};
+				gtr-sel3 {
+					gpio-hog;
+					gpios = <3 0>;
+					input; /* FIXME add meaning */
+					line-name = "sw4_4";
+				};
 			};
 		};
 		i2c@1 { /* FMCP1_IIC */
@@ -439,7 +482,7 @@
 			si570_ddr_dimm1: clock-generator@60 { /* u2 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x60>;
+				reg = <0x60>;	/* 570BAB000299DG */
 				temperature-stability = <50>;
 				factory-fout = <200000000>;
 				clock-frequency = <200000000>;
@@ -454,7 +497,7 @@
 			si570_ddr_dimm2: clock-generator@60 { /* u3 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x60>;
+				reg = <0x60>;	/* 570BAB000299DG */
 				temperature-stability = <50>;
 				factory-fout = <200000000>;
 				clock-frequency = <200000000>;
@@ -469,7 +512,7 @@
 			si570_lpddr4: clock-generator@60 { /* u4 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x60>; /* FIXME addr */
+				reg = <0x60>;	/* 570BAB000299DG */
 				temperature-stability = <50>;
 				factory-fout = <200000000>;
 				clock-frequency = <200000000>;
@@ -480,10 +523,10 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <6>;
-			si570_hsdp: clock-generator@5d { /* u5 */
+			si570_hsdp: clock-generator@60 { /* u5 */
 				#clock-cells = <0>;
 				compatible = "silabs,si570";
-				reg = <0x5d>; /* FIXME addr */
+				reg = <0x60>;	/* 570JAC000900DG */
 				temperature-stability = <50>;
 				factory-fout = <156250000>;
 				clock-frequency = <156250000>;
@@ -513,6 +556,7 @@
 	snps,dis_u3_susphy_quirk;
 	maximum-speed = "super-speed";
 };
+
 
 &dwc3_1 {
 	/delete-property/ phy-names ;

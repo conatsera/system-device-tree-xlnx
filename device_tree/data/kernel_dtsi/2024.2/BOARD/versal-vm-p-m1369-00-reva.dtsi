@@ -2,7 +2,7 @@
 /*
  * dts file for Xilinx Versal
  *
- * (C) Copyright 2019-2022 Xilinx, Inc.
+ * (C) Copyright 2024-2022 Xilinx, Inc.
  * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * Michal Simek <michal.simek@amd.com>
@@ -10,10 +10,10 @@
 
 
 / {
-	compatible = "xlnx,versal-vc-p-a2197-00-revA",
-		     "xlnx,versal-vc-p-a2197-00",
-		     "xlnx,versal-vc-p-a2197", "xlnx,versal";
-	model = "Xilinx Versal A2197 Processor board revA";
+	compatible = "xlnx,versal-vm-p-m1369-00-revA",
+		     "xlnx,versal-vm-p-m1369-00",
+		     "xlnx,versal-vm-p-m1369", "xlnx,versal";
+	model = "Xilinx Versal m1369 Processor board revA";
 
 	aliases {
 		serial2 = &dcc;
