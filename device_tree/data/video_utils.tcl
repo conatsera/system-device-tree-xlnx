@@ -316,7 +316,7 @@ proc gen_broad_remoteendpoint_port6 {drv_handle value} {
                 append outip " " $connectip$ip
             }
             if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
-                gen_broad_frmbuf_wr_node $inputip $outip $ip $count
+                gen_broad_frmbuf_wr_node $inputip $outip $ip $count $dts_file
             }
         }
     }
