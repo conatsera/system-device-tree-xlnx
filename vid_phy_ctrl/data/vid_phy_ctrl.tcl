@@ -50,8 +50,18 @@
         set transceiver_width [hsi get_property CONFIG.Transceiver_Width [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,transceiver-width" $transceiver_width int $dts_file
         }
-        set use_gt_ch4_hdmi [hsi get_property CONFIG.C_Use_GT_CH4_HDMI [hsi::get_cells -hier $drv_handle]]
-        
+        set rx_primitive [hsi get_property CONFIG.C_Rx_Clk_Primitive [hsi get_cells -hier $drv_handle]]
+        if {[llength $rx_primitive]} {
+            add_prop "${node}" "xlnx,rx-clk-primitive" $rx_primitive hexint $dts_file 1
+        }
+        set tx_primitive [hsi get_property CONFIG.C_Tx_Clk_Primitive [hsi get_cells -hier $drv_handle]]
+        if {[llength $tx_primitive]} {
+            add_prop "${node}" "xlnx,tx-clk-primitive" $tx_primitive hexint $dts_file 1
+        }
+        set use_gt_ch4_hdmi [hsi get_property CONFIG.C_Use_GT_CH4_HDMI [hsi get_cells -hier $drv_handle]]
+        if {[llength $use_gt_ch4_hdmi]} {
+                add_prop "${node}" "xlnx,use-gt-ch4-hdmi" $use_gt_ch4_hdmi int $dts_file 1
+        }
 
         set Rx_No_Of_Channels [hsi get_property CONFIG.C_Rx_No_Of_Channels [hsi::get_cells -hier $drv_handle]]
 	for {set ch 0} {$ch < $Rx_No_Of_Channels} {incr ch} {
