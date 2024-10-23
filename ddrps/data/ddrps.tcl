@@ -34,7 +34,7 @@
 			set a53 1
 		}
 		set proc_addr_list ""
-		set proc_mem_map [hsi::get_mem_ranges -of_objects $procc]
+		set proc_mem_map [hsi::get_mem_ranges -of_objects $procc -filter MEM_TYPE==MEMORY]
 		set index [lsearch $proc_mem_map $slave]
 
 		# Check if there is any memory bank is mapped to the current processor
