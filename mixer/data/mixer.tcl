@@ -120,8 +120,6 @@
                                                         add_prop $mixer_node0 "dmas" "$connected_ip 0" reference $dts_file
                                                         add_prop $mixer_node0 "dma-names" "dma0" string $dts_file
                                                         add_prop "$mixer_node0" "xlnx,layer-streaming" "" boolean $dts_file
-                                                        set layer0_video_format [hsi get_property CONFIG.VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                                                        mixer_gen_video_format $layer0_video_format $mixer_node0 $drv_handle $max_data_width $dts_file
                                                 } else {
                                                         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connected_ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
                                                         set inip [get_in_connect_ip $connected_ip $master_intf]
@@ -130,10 +128,11 @@
                                                         }
                                                         add_prop $mixer_node0 "dma-names" "dma0" string $dts_file
                                                         add_prop "$mixer_node0" "xlnx,layer-streaming" "" boolean $dts_file
-                                                        set layer0_video_format [hsi get_property CONFIG.VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                                                        mixer_gen_video_format $layer0_video_format $mixer_node0 $drv_handle $max_data_width $dts_file
+
                                                 }
                                         }
+                                        set layer0_video_format [hsi get_property CONFIG.VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
+                                        mixer_gen_video_format $layer0_video_format $mixer_node0 $drv_handle $max_data_width $dts_file
                                 }
                         }
                         "1" {
