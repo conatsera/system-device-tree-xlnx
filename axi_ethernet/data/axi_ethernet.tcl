@@ -59,7 +59,7 @@
             pldt append $node compatible "\ \, \"xlnx,axi-ethernet-1.00.a\""
         }
         set num_cores 1
-        if {$ip_name == "xxv_ethernet"} {
+        if {$ip_name == "xxv_ethernet" || $ip_name == "ethernet_1_10_25g"} {
             set ip_mem_handles [hsi::get_mem_ranges [hsi::get_cells -hier $drv_handle]]
             set num 0
             axi_ethernet_generate_reg_property $node $ip_mem_handles $num
@@ -70,7 +70,7 @@
         set connected_ip ""
         set eth_node ""
         for {set core 0} {$core < $num_cores} {incr core} {
-                if {$ip_name == "xxv_ethernet"  && $core != 0} {
+                if {(($ip_name == "xxv_ethernet") || (($ip_name == "ethernet_1_10_25g")))  && $core != 0} {
                     set bus_node "amba_pl: amba_pl"
                     set dts_file "pl.dtsi"
                 set ipmem_len [llength $ip_mem_handles]
@@ -84,7 +84,8 @@
                     axi_ethernet_generate_reg_property $eth_node $ip_mem_handles $core
                 }
             }
-        if {$hasbuf == "true" || $hasbuf == "" && $ip_name != "axi_10g_ethernet" && $ip_name != "ten_gig_eth_mac" && $ip_name != "xxv_ethernet" && $ip_name != "usxgmii"} {
+        if {$hasbuf == "true" || $hasbuf == "" && $ip_name != "axi_10g_ethernet" && $ip_name != "ten_gig_eth_mac"
+            && $ip_name != "xxv_ethernet" && $ip_name != "ethernet_1_10_25g" && $ip_name != "usxgmii"} {
             foreach n "AXI_STR_RXD m_axis_rxd" {
                 set intf [hsi::get_intf_pins -of_objects $eth_ip ${n}]
                 if {[string_is_empty ${intf}] != 1} {
@@ -129,7 +130,7 @@
                 }
             }
     
-            if {$ip_name == "xxv_ethernet" || $ip_name == "usxgmii"} {
+            if {$ip_name == "xxv_ethernet" || $ip_name == "ethernet_1_10_25g" || $ip_name == "usxgmii"} {
                 foreach n "AXI_STR_RXD axis_rx_0" {
                     set intf [hsi::get_intf_pins -of_objects $eth_ip ${n}]
                     if {[string_is_empty ${intf}] != 1} {
@@ -209,7 +210,7 @@
                 add_cross_property $connected_ip $ip_prop $drv_handle "xlnx,include-dre" $node boolean
             }
             add_prop $node xlnx,rxmem "$rxethmem" hexint $dts_file
-            if {$ip_name == "xxv_ethernet"  && $core != 0} {
+            if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) && $core != 0} {
                 set intf [hsi::get_intf_pins -of_objects $eth_ip "axis_rx_${core}"]
                 if {[llength $intf] && [llength $eth_node]} {
                         set connected_ip [axi_ethernet_get_connectedip $intf]
@@ -301,7 +302,7 @@
 		}
             }
         }
-        if {$ip_name == "xxv_ethernet" && $core != 0 && [llength $eth_node]} {
+        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))  && $core != 0 && [llength $eth_node]} {
             append new_label "_" mdio
             set mdionode [create_node -l "$new_label" -n mdio -p $eth_node -d $dts_file]
             add_prop $mdionode "#address-cells" 1 int $dts_file
@@ -388,7 +389,8 @@
 				set i [expr 0x$i]
 		    }
 		    add_prop $node "xlnx,channel-ids" $id intlist "pl.dtsi"
-		if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
+		if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
+            && $core!= 0 && [llength $eth_node]} {
 			add_prop $eth_node "xlnx,num-queues" $numqueues stringlist $dts_file
 			add_prop $eth_node "xlnx,channel-ids" $id stringlist $dts_file
 		}
@@ -430,7 +432,8 @@
             set default_dts "pl.dtsi"
             set nodep [get_node $drv_handle]
                 if {![string_is_empty $intr_parent]} {
-                    if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
+                    if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
+                        && $core!= 0 && [llength $eth_node]} {
                         add_prop "${eth_node}" "interrupts" $intr_val intlist $dts_file
                         add_prop "${eth_node}" "interrupt-parent" $intr_parent reference $dts_file
                         add_prop "${eth_node}" "interrupt-names" $intr_names noformating $dts_file
@@ -466,11 +469,11 @@
                         set trimvar [string trimleft $trimvar "\""]
                         append temp "$trimvar "
                     }
-                    if {$ip_name == "xxv_ethernet" && $core == 0} {
+                    if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) && $core == 0} {
                         add_prop "${nodep}" "zclocks" $eth_clks reference "pl.dtsi"
                         set_drv_prop $drv_handle "zclock-names" $temp $node stringlist
                     }
-                    if {$ip_name == "xxv_ethernet" && $core != 0} {
+                    if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))&& $core != 0} {
                         set eth_clks [pldt get $nodep zclocks]
                         set eth_clk_names [pldt get $nodep zclock-names]
                         set eth_clks [string trimright $eth_clks ">"]
@@ -530,7 +533,7 @@
                 append clk  "$eth_clks>," " $clks"
                 set clks [string trimright $clks ">"]
                 set null ""
-                if {$ip_name == "xxv_ethernet"  && $core== 0} {
+                if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))  && $core== 0} {
                             if {[llength $dclk]} {  
                                 append clknames "$core_clk_0 " "$dclk " "$axi_aclk_0"
                             } else {
@@ -546,7 +549,8 @@
                             }
                             set clknames1 ""
                         }
-                        if {$ip_name == "xxv_ethernet" && $core == 1 && [llength $eth_node]} {
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
+                             && $core == 1 && [llength $eth_node]} {
                             if {[llength $dclk]} {
                                 append clknames1 "$core_clk_1 " "$dclk " "$axi_aclk_1"
                             } else {
@@ -568,7 +572,8 @@
                             set clk_names1 ""
                             set clkvals1 ""
                         }
-                        if {$ip_name == "xxv_ethernet" && $core == 2 && [llength $eth_node]} {
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
+                             && $core == 2 && [llength $eth_node]} {
                             if {[llength $dclk]} {
                                 append clknames2 "$core_clk_2 " "$dclk " "$axi_aclk_2"
                             } else {
@@ -591,7 +596,8 @@
                             set clk_names2 ""
                             set clkvals2 ""
                         }
-                        if {$ip_name == "xxv_ethernet" && $core == 3 && [llength $eth_node]} {
+                        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) &&
+                            $core == 3 && [llength $eth_node]} {
                             if {[llength $dclk]} {
                                 append clknames3 "$core_clk_3 " "$dclk " "$axi_aclk_3"
                             } else {
@@ -617,7 +623,8 @@
                     }
                 }
             }
-        if {$ip_name == "xxv_ethernet"  && $core!= 0 && [llength $eth_node]} {
+        if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g")) &&
+            $core!= 0 && [llength $eth_node]} {
                 axi_ethernet_gen_drv_prop_eth_ip $drv_handle $eth_node
         }
         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
