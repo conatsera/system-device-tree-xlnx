@@ -310,6 +310,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
 	dict set ::sdtgen::namespacelist "axis_broadcaster" "axis_broadcaster"
 	dict set ::sdtgen::namespacelist "ISPPipeline_accel" "isppipeline"
+	dict set ::sdtgen::namespacelist "hdmi_acr_ctrl" "hdmi_ctrl"
+	dict set ::sdtgen::namespacelist "dfx_axi_shutdown_manager" "dfx_axi_shutdown_manager"
 }
 
 proc Pop {varname {nth 0}} {
