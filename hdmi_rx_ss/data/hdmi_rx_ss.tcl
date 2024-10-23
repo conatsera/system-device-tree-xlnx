@@ -110,10 +110,11 @@
 					append phys  "${link_data0_inst}rxphy_lane0 0 1 1 0"
 				}
 			}
-		} else {
-			dtg_warning "connected stream of LINK_DATA0_IN is NULL...check the design"
 		}
+	} else {
+		dtg_warning "connected stream of LINK_DATA0_IN is NULL...check the design"
 	}
+
 	if {[llength $link_data1]} {
 		set ip_mem_handles [hsi::get_mem_ranges $link_data1]
 		if {[llength $ip_mem_handles]} {
@@ -127,10 +128,11 @@
 					append phys  " <&${link_data1_inst}rxphy_lane1 0 1 1 0"
 				}
 			}
-		} else {
-			dtg_warning "Connected stream of LINK_DATA1_IN is NULL...check the design"
 		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA1_IN is NULL...check the design"
 	}
+
 	if {[llength $link_data2]} {
 		set ip_mem_handles [hsi::get_mem_ranges $link_data2]
 		if {[llength $ip_mem_handles]} {
@@ -144,10 +146,11 @@
 					append phys " <&${link_data2_inst}rxphy_lane2 0 1 1 0"
 				}
 			}
-		} else {
-			dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
 		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
 	}
+
 	if {[llength $link_data3]} {
 		set ip_mem_handles [hsi::get_mem_ranges $link_data3]
 		if {[llength $ip_mem_handles]} {
@@ -157,10 +160,11 @@
 				append phy_names " " "hdmi-phy3"
 				append phys " <&${link_data3_inst}rxphy_lane3 0 1 1 0"
 			}
-		} else {
-			dtg_warning "Connected stream of LINK_DATA3_IN is NULL...check the design"
 		}
+	} else {
+		dtg_warning "Connected stream of LINK_DATA3_IN is NULL...check the design"
 	}
+
 	if {![string match -nocase $phy_names ""]} {
 		add_prop "$node" "phy-names" $phy_names stringlist $dts_file 1
 	}
