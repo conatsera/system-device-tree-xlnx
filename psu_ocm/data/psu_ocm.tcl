@@ -51,7 +51,7 @@
                         lappend proc_addr_list "$base $high"
                         incr index
                 }
-                if {$proc_ip_name in {"psu_cortexr5" "psv_cortexr5" "psx_cortexr52" "cortexr52" microblaze" "microblaze_riscv"}} {
+                if {$proc_ip_name in {"psu_cortexr5" "psv_cortexr5" "psx_cortexr52" "cortexr52" "microblaze" "microblaze_riscv"}} {
                         set_memmap "${drv_handle}_memory" $procc [psu_ocm_get_union_reg_prop $proc_addr_list $name $32_bit_format]
                 }
                 if {$proc_ip_name in {"psu_cortexa53" "psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
