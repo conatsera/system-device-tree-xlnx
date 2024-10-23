@@ -45,7 +45,7 @@ proc hdmi_tx_ss_generate {drv_handle} {
 			if {[llength $ip_mem_handles]} {
 				set link_data_inst $connected_stream
 				set link_data [hsi::get_property IP_NAME $connected_stream]
-				if {[string match -nocase $link_data "vid_phy_controller"] || [string match -nocase $link_data "hdmi_gt_controller"]} {
+				if {[string match -nocase $link_data "vid_phy_controller"] || [string match -nocase $link_data "hdmi_gt_controller"] || [string match -nocase $link_data "v_hdmi_phy1"]} {
 					set index [lsearch $links $stream_name]
 					append phy_names " hdmi-phy$index"
 					switch $index {
