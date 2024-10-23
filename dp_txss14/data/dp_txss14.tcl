@@ -106,12 +106,13 @@ proc dp_txss14_generate {drv_handle} {
 				if {[string match -nocase $link_data "vid_phy_controller"]} {
 					set index [lsearch $links $stream_name]
 					append phy_names " dp-phy$index"
-					switch $index {
-						0 {append phys "${link_data_inst}txphy_lane$index 0 1 1 1>,"}
-						1 {append phys " <&${link_data_inst}txphy_lane$index 0 1 1 1>,"}
-						2 {append phys " <&${link_data_inst}txphy_lane$index 0 1 1 1>, "}
-						3 {append phys " <&${link_data_inst}txphy_lane$index 0 1 1 1"}
-
+					if {$index == 0} {
+						set phys "${link_data_inst}txphy_lane$index 0 1 1 0"
+					} else {
+						append phys " <&${link_data_inst}txphy_lane$index 0 1 1 0"
+					}
+					if {$index != [expr {[llength $lst] - 1}]} {
+						append phys ">,"
 					}
 				}
 			}
