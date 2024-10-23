@@ -202,7 +202,7 @@
                         set periph [hsi::get_cells -of_objects $pin]
                         if {[llength $periph]} {
                             set ip [hsi::get_property IP_NAME $periph]
-                            if {[string match -nocase $ip "versal_cips"]} {
+                            if { $ip in { "versal_cips" "ps_wizard" }} {
                                 # As versal has only bank0 for MIOs
                                 set gpio [expr $gpio + 26]
                                 add_prop "$node" "reset-gpios" "gpio0 $gpio 1" reference $dts_file
@@ -227,3 +227,135 @@
         }
     }
 
+
+proc scene_change_detector_update_endpoints {drv_handle} {
+        set memory_scd [hsi get_property CONFIG.MEMORY_BASED [hsi get_cells -hier $drv_handle]]
+        if {$memory_scd == 1} {
+                #memory scd
+                return
+        }
+        set node [get_node $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {[string_is_empty $node]} {
+                return
+        }
+
+        global end_mappings
+        global remo_mappings
+
+        global port1_broad_end_mappings
+        global port2_broad_end_mappings
+        global port3_broad_end_mappings
+        global port4_broad_end_mappings
+
+        global broad_port1_remo_mappings
+        global broad_port2_remo_mappings
+        global broad_port3_remo_mappings
+        global broad_port4_remo_mappings
+
+
+        set scd_ports_node [create_node node -n "scd" -l scd_ports$drv_handle -p $node -d $dts_file]
+        add_prop "$scd_ports_node" "#address-cells" 1 int $dts_file
+        add_prop "$scd_ports_node" "#size-cells" 0 int $dts_file
+        set port_node [create_node -n "port" -l scd_port0$drv_handle -u 0 -p $scd_ports_node -d $dts_file]
+        add_prop "$port_node" "reg" 0 int $dts_file
+
+        set scd_inip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "S_AXIS_VIDEO"]
+        if {![llength $scd_inip]} {
+                dtg_warning "$drv_handle pin S_AXIS_VIDEO is not connected...check your design"
+        }
+        set broad_ip [get_broad_in_ip $scd_inip]
+        if {[llength $broad_ip]} {
+        if {[string match -nocase [hsi get_property IP_NAME $broad_ip] "axis_broadcaster"]} {
+                set scd_in_end ""
+                set scd_remo_in_end ""
+                if {[info exists port1_broad_end_mappings] && [dict exists $port1_broad_end_mappings $broad_ip]} {
+                        set scd_in_end [dict get $port1_broad_end_mappings $broad_ip]
+                }
+                if {[info exists broad_port1_remo_mappings] && [dict exists $broad_port1_remo_mappings $broad_ip]} {
+                        set scd_remo_in_end [dict get $broad_port1_remo_mappings $broad_ip]
+                }
+                if {[info exists port2_broad_end_mappings] && [dict exists $port2_broad_end_mappings $broad_ip]} {
+                        set scd_in1_end [dict get $port2_broad_end_mappings $broad_ip]
+                }
+                if {[info exists broad_port2_remo_mappings] && [dict exists $broad_port2_remo_mappings $broad_ip]} {
+                        set scd_remo_in1_end [dict get $broad_port2_remo_mappings $broad_ip]
+                }
+                if {[info exists port3_broad_end_mappings] && [dict exists $port3_broad_end_mappings $broad_ip]} {
+                        set scd_in2_end [dict get $port3_broad_end_mappings $broad_ip]
+                }
+                if {[info exists broad_port3_remo_mappings] && [dict exists $broad_port3_remo_mappings $broad_ip]} {
+                        set scd_remo_in2_end [dict get $broad_port3_remo_mappings $broad_ip]
+                }
+                if {[info exists port4_broad_end_mappings] && [dict exists $port4_broad_end_mappings $broad_ip]} {
+                        set scd_in3_end [dict get $port4_broad_end_mappings $broad_ip]
+                }
+                if {[info exists broad_port4_remo_mappings] && [dict exists $broad_port4_remo_mappings $broad_ip]} {
+                        set scd_remo_in3_end [dict get $broad_port4_remo_mappings $broad_ip]
+                }
+                if {[info exists scd_remo_in_end] && [regexp -nocase $drv_handle "$scd_remo_in_end" match]} {
+                        if {[llength $scd_remo_in_end]} {
+                                set scd_node [create_node -n "endpoint" -l $scd_remo_in_end -p $port_node -d $dts_file]
+                        }
+                        if {[llength $scd_in_end]} {
+                                add_prop "$scd_node" "remote-endpoint" $scd_in_end reference $dts_file
+                        }
+                }
+                if {[info exists scd_remo_in1_end] && [regexp -nocase $drv_handle "$scd_remo_in1_end" match]} {
+                        if {[llength $scd_remo_in1_end]} {
+                                set scd_node [create_node -n "endpoint" -l $scd_remo_in1_end -p $port_node -d $dts_file]
+                        }
+                        if {[llength $scd_in1_end]} {
+                                add_prop "$scd_node" "remote-endpoint" $scd_in1_end reference $dts_file
+                        }
+                }
+                if {[info exists scd_remo_in2_end] && [regexp -nocase $drv_handle "$scd_remo_in2_end" match]} {
+                        if {[llength $scd_remo_in2_end]} {
+                                set scd_node [create_node -n "endpoint" -l $scd_remo_in2_end -p $port_node -d $dts_file]
+                        }
+                        if {[llength $scd_in2_end]} {
+                                add_prop "$scd_node" "remote-endpoint" $scd_in2_end reference $dts_file
+                        }
+                }
+                if {[info exists scd_remo_in3_end] && [regexp -nocase $drv_handle "$scd_remo_in3_end" match]} {
+                        if {[llength $scd_remo_in3_end]} {
+                                set scd_node [create_node -n "endpoint" -l $scd_remo_in3_end -p $port_node -d $dts_file]
+                        }
+                        if {[llength $scd_in3_end]} {
+                                add_prop "$scd_node" "remote-endpoint" $scd_in3_end reference $dts_file
+                        }
+                }
+                return
+        }
+        }
+        foreach inip $scd_inip {
+                if {[llength $inip]} {
+                        set master_intf [::hsi::get_intf_pins -of_objects [hsi get_cells -hier $inip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+                        set ip_mem_handles [hsi get_mem_ranges $inip]
+                        if {[llength $ip_mem_handles]} {
+                                set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
+                        } else {
+                                if {[string match -nocase [hsi get_property IP_NAME $inip] "system_ila"]} {
+                                        continue
+                                }
+                                set inip [get_in_connect_ip $inip $master_intf]
+                        }
+                        if {[llength $inip]} {
+                                set scd_in_end ""
+                                set scd_remo_in_end ""
+                                if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
+                                        set scd_in_end [dict get $end_mappings $inip]
+                                }
+                                if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
+                                        set scd_remo_in_end [dict get $remo_mappings $inip]
+                                }
+                                if {[llength $scd_remo_in_end]} {
+                                        set scd_node [create_node -n "endpoint" -l $scd_remo_in_end -p $port_node -d $dts_file]
+                                }
+                                if {[llength $scd_in_end]} {
+                                        add_prop "$scd_node" "remote-endpoint" $scd_in_end reference $dts_file
+                                }
+                        }
+                }
+        }
+}

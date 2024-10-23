@@ -88,14 +88,20 @@ proc demosaic_update_endpoints {drv_handle} {
 
 	global end_mappings
 	global remo_mappings
-	global set port1_end_mappings
-	global set port2_end_mappings
-	global set port3_end_mappings
-	global set port4_end_mappings
-	global set axis_port1_remo_mappings
-	global set axis_port2_remo_mappings
-	global set axis_port3_remo_mappings
-	global set axis_port4_remo_mappings
+	global port1_end_mappings
+	global port2_end_mappings
+	global port3_end_mappings
+	global port4_end_mappings
+	global axis_port1_remo_mappings
+	global axis_port2_remo_mappings
+	global axis_port3_remo_mappings
+	global axis_port4_remo_mappings
+
+	global port1_broad_end_mappings
+	global broad_port1_remo_mappings
+	global port2_broad_end_mappings
+	global broad_port2_remo_mappings
+
 
 	set ports_node [create_node -n "ports" -l demosaic_ports$drv_handle -p $node -d $dts_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dts_file 1
