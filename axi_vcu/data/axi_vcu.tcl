@@ -93,7 +93,7 @@
                                                 set ip [hsi get_property IP_NAME $periph]
                                                 set proc_type [get_hw_family]
                                                 if {[string match -nocase $proc_type "versal"] } {
-                                                        if {[string match -nocase $ip "versal_cips"]} {
+                                                        if {$ip in { "versal_cips" "ps_wizard" }} {
                                                                 # As in versal there is only bank0 for MIOs
                                                                 set gpio [expr $gpio + 26]
                                                                 add_prop $node "reset-gpios" "gpio0 $gpio 0" reference $dts_file
