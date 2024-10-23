@@ -164,13 +164,15 @@
                             set intf "Din"
                             set in1_pin [::hsi::get_pins -of_objects $periph -filter "NAME==$intf"]
                             set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $periph] $in1_pin]]
-                            set per [::hsi::get_cells -of_objects $sink_pins]
-                            if {[string match -nocase [hsi get_property IP_NAME $per] "axis_clock_converter"]} {
-                                set pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $per] "s_axis_tdata"]]
-                                if {[llength $pins]} {
-                                    set txfifo [hsi get_cells -of_objects $pins]
-                                    if {[llength $txfifo]} {
-                                        set_drv_prop $drv_handle axififo-connected "$txfifo" $node reference
+                            if {[llength $sink_pins]} {
+                                set per [::hsi::get_cells -of_objects $sink_pins]
+                                if {[string match -nocase [hsi get_property IP_NAME $per] "axis_clock_converter"]} {
+                                    set pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $per] "s_axis_tdata"]]
+                                    if {[llength $pins]} {
+                                        set txfifo [hsi get_cells -of_objects $pins]
+                                        if {[llength $txfifo]} {
+                                            set_drv_prop $drv_handle axififo-connected "$txfifo" $node reference
+                                        }
                                     }
                                 }
                             }
@@ -188,13 +190,15 @@
                         set sink_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $periph] $in1_pin]]
                         if {[llength $sink_pins]} {
                             set per [::hsi::get_cells -of_objects $sink_pins]
-                            if {[string match -nocase [hsi get_property IP_NAME $per] "axis_dwidth_converter"]} {
-                                set con_ip [get_connected_stream_ip [hsi get_cells -hier $per] "M_AXIS"]
-                                if {[llength $con_ip]} {
-                                    if {[string match -nocase [hsi get_property IP_NAME $con_ip] "axis_clock_converter"]} {
-                                        set rxtsfifo_ip [get_connected_stream_ip [hsi get_cells -hier $con_ip] "M_AXIS"]
-                                        if {[llength $rxtsfifo_ip]} {
-                                            set_drv_prop $drv_handle xlnx,rxtsfifo "$rxtsfifo_ip" $node reference
+                            if {[llength $per]} {
+                                if {[string match -nocase [hsi get_property IP_NAME $per] "axis_dwidth_converter"]} {
+                                    set con_ip [get_connected_stream_ip [hsi get_cells -hier $per] "M_AXIS"]
+                                    if {[llength $con_ip]} {
+                                        if {[string match -nocase [hsi get_property IP_NAME $con_ip] "axis_clock_converter"]} {
+                                            set rxtsfifo_ip [get_connected_stream_ip [hsi get_cells -hier $con_ip] "M_AXIS"]
+                                            if {[llength $rxtsfifo_ip]} {
+                                                set_drv_prop $drv_handle xlnx,rxtsfifo "$rxtsfifo_ip" $node reference
+                                            }
                                         }
                                     }
                                 }
