@@ -21,7 +21,6 @@ proc sdi_tx_generate {drv_handle} {
 
         set dtsi_file [set_drv_def_dts $drv_handle]
         set compatible [get_comp_str $drv_handle]
-        pldt append $node compatible "\ \, \"xlnx,sdi-tx\""
 	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
 	switch $sdiline_rate {
 		"3G_SDI" {
