@@ -24,12 +24,12 @@ proc gen_reset_gpio {drv_handle node} {
 			    add_prop $node "reset-gpios" "$sink_periph 0 1" reference $default_dts
 			}
 			if {[string match -nocase $sink_ip "xlslice"]} {
-				set gpio [get_property CONFIG.DIN_FROM $sink_periph]
+				set gpio [hsi get_property CONFIG.DIN_FROM $sink_periph]
 				set pins [get_pins -of_objects [get_nets -of_objects [get_pins -of_objects $sink_periph "Din"]]]
 				foreach pin $pins {
 					set periph [::hsi::get_cells -of_objects $pin]
 					if {[llength $periph]} {
-						set ip [get_property IP_NAME $periph]
+						set ip [hsi get_property IP_NAME $periph]
 						if { $ip in { "versal_cips" "ps_wizard" }} {
 							# As in versal there is only bank0 for MIOs
 							set gpio [expr $gpio + 26]
