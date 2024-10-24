@@ -108,7 +108,6 @@
                 }
 
         }
-        scene_change_detector_add_handles $drv_handle
         scene_change_detector_gen_gpio_reset $drv_handle $node $dts_file
     }
 
@@ -157,22 +156,6 @@
         }
     }
 
-    proc scene_change_detector_add_handles {drv_handle} {
-            set node [get_node $drv_handle]
-            set dts_file [set_drv_def_dts $drv_handle]
-            set prop [hsi get_property CONFIG.MEMORY_BASED [hsi::get_cells -hier $drv_handle]]
-            if {$prop == 0} {
-                set tpg [hsi::get_cells -hier -filter {IP_NAME==v_tpg}]
-                if {$tpg != ""} {
-                        add_prop "$node" "tpg-connected" $tpg reference $dts_file
-                }
-                set frmbufwr [hsi::get_cells -hier -filter {IP_NAME==v_frmbuf_wr}]
-                if {$frmbufwr != ""} {
-                        add_prop "$node" "frmbuf-wr-connected" $frmbufwr reference $dts_file
-                }
-            }
-                
-    }
     proc scene_change_detector_gen_frmbuf_node {ip drv_handle dts_file} {
     set bus_node [detect_bus_name $drv_handle]
     set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]

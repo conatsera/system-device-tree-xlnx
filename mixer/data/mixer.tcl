@@ -639,7 +639,6 @@
         add_prop "$mixer_node1" "xlnx,logo-width" $logo_width int $dts_file
         set logo_height [hsi get_property CONFIG.MAX_LOGO_ROWS [hsi::get_cells -hier $drv_handle]]
         add_prop "$mixer_node1" "xlnx,logo-height" $logo_height int $dts_file
-#        mixer_add_handles $drv_handle
 	mixer_gen_gpio_reset $drv_handle $node $dts_file
     }
 
@@ -739,24 +738,6 @@
             if {![string match -nocase $vid_formats ""]} {
                     add_prop "$node" "xlnx,vformat" $vid_formats stringlist $dts_file
             }
-    }
-
-    proc mixer_add_handles {drv_handle} {
-            set node [get_node $drv_handle]
-            set dts_file [set_drv_def_dts $drv_handle]
-            set tpg [hsi::get_cells -hier -filter {IP_NAME==v_tpg}]
-            if {$tpg != ""} {
-                add_prop "$node" "tpg-connected" $tpg reference $dts_file
-            }
-            set frmbufwr [hsi::get_cells -hier -filter {IP_NAME==v_frmbuf_wr}]
-            if {$frmbufwr != ""} {
-                add_prop "$node" "frmbuf-wr-connected" $frmbufwr reference $dts_file
-            }
-            set vtc [hsi::get_cells  -hier -filter {IP_NAME==v_tc}]
-            if {$vtc != ""} {
-                add_prop "$node" "vtc-connected" $vtc reference $dts_file
-            }
-        
     }
 
     proc mixer_gen_gpio_reset {drv_handle node dts_file} {
