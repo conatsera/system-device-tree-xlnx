@@ -555,7 +555,7 @@ proc gen_ddrmc_node {} {
 	if {[llength $ddrmc]} {
 		set i 0
 		foreach mc $ddrmc {
-			set ddrmc_node [add_or_get_dt_node -n &mc$i -d $dts_file]
+			set ddrmc_node [create_node -n &mc$i -d $dts_file -p root]
 			if { [hsi get_property CONFIG.MC_ECC $mc] } {
 				add_prop "${ddrmc_node}" "status" "okay" string ${dts_file}
 			}
@@ -606,7 +606,7 @@ proc gen_sata_laneinfo {} {
 	lset freq 0 $i
 	lset freq 1 $j
 	set dts_file "pcw.dtsi"
-	set sata_node [create_node -n "&psu_sata" -d $dts_file]
+	set sata_node [create_node -n "&sata" -d $dts_file -p root]
 	set hsi_version [get_hsi_version]
 	set ver [split $hsi_version "."]
 	set version [lindex $ver 0]
@@ -1100,7 +1100,7 @@ proc gen_zynqmp_ccf_clk {} {
 	foreach periph $periph_list {
 		set zynq_ultra_ps [hsi get_property IP_NAME $periph]
 		if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
-			set avail_param [hsi list_property i::get_cells -hier $periph]]
+			set avail_param [hsi list_property [hsi::get_cells -hier $periph]]
 			if {[lsearch -nocase $avail_param "CONFIG.PSU__PSS_REF_CLK__FREQMHZ"] >= 0} {
 				set freq [hsi get_property CONFIG.PSU__PSS_REF_CLK__FREQMHZ [hsi::get_cells -hier $periph]]
 				if {[string match -nocase $freq "33.333"]} {
@@ -1202,7 +1202,7 @@ proc gen_versal_clk {} {
 proc gen_opp_freq {} {
 	set default_dts "pcw.dtsi"
 	set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
-	set periph_list [get_cells -hier]
+	set periph_list [hsi get_cells -hier]
 	set opp_freq ""
 	set add_opp_prop ""
 	foreach periph $periph_list {
