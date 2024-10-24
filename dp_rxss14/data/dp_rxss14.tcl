@@ -35,11 +35,15 @@ proc dp_rxss14_generate {drv_handle} {
         set hdcp_enable [hsi get_property CONFIG.HDCP_ENABLE [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $hdcp_enable "1"]} {
                add_prop "${node}" "xlnx,hdcp-enable" $hdcp_enable boolean $dts_file 1
+	} else {
+		pldt unset $node "xlnx,hdcp-enable"
 	}
         set hdcp22_enable [hsi get_property CONFIG.HDCP22_ENABLE [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $hdcp22_enable "1"]} {
                add_prop "${node}" "xlnx,hdcp22-enable" $hdcp22_enable boolean $dts_file 1
-        }
+        } else {
+		pldt unset $node "xlnx,hdcp22-enable"
+	}
 	if {[string match -nocase $hdcp_enable "1"] || [string match -nocase $hdcp22_enable "1"]} {
                 add_prop "${node}" "xlnx,hdcp-authenticate" 0x1 int $dts_file
                 add_prop "${node}" "xlnx,hdcp-encrypt" 0x1 int $dts_file
