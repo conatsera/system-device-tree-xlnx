@@ -1973,6 +1973,55 @@ proc get_clock_frequency {ip_handle portname} {
 	return $clk
 }
 
+proc gen_fixed_factor_clk_node {misc_clk_node clk_freq dts_file} {
+	set zynq_periph [hsi get_cells -hier -filter {IP_NAME == zynq_ultra_ps_e}]
+	set pl0_clk_val [hsi get_property CONFIG.C_PL_CLK0_BUF [hsi get_cells -hier $zynq_periph]]
+	set pl1_clk_val [hsi get_property CONFIG.C_PL_CLK1_BUF [hsi get_cells -hier $zynq_periph]]
+	set pl2_clk_val [hsi get_property CONFIG.C_PL_CLK2_BUF [hsi get_cells -hier $zynq_periph]]
+	set pl3_clk_val [hsi get_property CONFIG.C_PL_CLK3_BUF [hsi get_cells -hier $zynq_periph]]
+	set parent_freq ""
+	set div ""
+	set mult ""
+	if {[string match -nocase $pl0_clk_val "true"]} {
+		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL0_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
+		set parent_freq [expr $parent_freq * 1000000]
+		set clock_name "zynqmp_clk 71"
+	} elseif {[string match -nocase $pl1_clk_val "true"]} {
+		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL1_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
+		set parent_freq [expr $parent_freq * 1000000]
+		set clock_name "zynqmp_clk 72"
+	} elseif {[string match -nocase $pl2_clk_val "true"]} {
+		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL2_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
+		set parent_freq [expr $parent_freq * 1000000]
+		set clock_name "zynqmp_clk 73"
+	} elseif {[string match -nocase $pl3_clk_val "true"]} {
+		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL3_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
+		set parent_freq [expr $parent_freq * 1000000]
+		set clock_name "zynqmp_clk 74"
+	}
+
+	if {![string equal $parent_freq ""]} {
+		if {$parent_freq >= $clk_freq} {
+			set div [expr round($parent_freq / $clk_freq)]
+			set mult 1
+		} elseif {$parent_freq < $clk_freq} {
+			set mult [expr round($clk_freq / $parent_freq)]
+			set div 1
+		}
+	}
+	if {![string equal $div ""] && ![string equal $mult ""]} {
+		add_prop "${misc_clk_node}" "compatible" "fixed-factor-clock" stringlist $dts_file 1
+		add_prop "${misc_clk_node}" "#clock-cells" 0 int $dts_file 1
+		add_prop "${misc_clk_node}" "clocks" $clock_name reference $dts_file 1
+		add_prop "${misc_clk_node}" "clock-div" $div int $dts_file 1
+		add_prop "${misc_clk_node}" "clock-mult" $mult int $dts_file 1
+	} else {
+		add_prop "${misc_clk_node}" "compatible" "fixed-clock" stringlist $dts_file 1
+		add_prop "${misc_clk_node}" "#clock-cells" 0 int $dts_file 1
+		add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int $dts_file 1
+	}
+}
+
 proc set_drv_property args {
 	set drv_handle [lindex $args 0]
 	set dts_file [set_drv_def_dts $drv_handle]
@@ -3813,9 +3862,7 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 							-d ${dts_file} -p ${bus_node}]
 						# create the node and assuming reg 0 is taken by cpu
 						set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
-						add_prop "${misc_clk_node}" "compatible" "fixed-clock" stringlist $dts_file 1
-						add_prop "${misc_clk_node}" "#clock-cells" 0 int $dts_file 1
-						add_prop "${misc_clk_node}" "clock-frequency" $clk_freq int $dts_file 1
+						gen_fixed_factor_clk_node ${misc_clk_node} ${clk_freq} $dts_file
 						if {[string match -nocase $iptype "can"] || [string match -nocase $iptype "vcu"] || [string match -nocase $iptype "canfd"]} {
 							set clocks [lindex $clk_refs 0]
 							append clocks ">, <&[lindex $clk_refs 1]"
@@ -4569,9 +4616,13 @@ proc gen_clk_property {drv_handle} {
 
 					set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 					set updat [lappend updat misc_clk_${bus_clk_cnt}]
-					add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
-					add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
-					add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
+					if {[string match -nocase $proctype "zynqmp"]} {
+						gen_fixed_factor_clk_node ${misc_clk_node} ${clk_freq} $dts_file
+					} else {
+						add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
+						add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
+						add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
+					}
 				}
 			}
 			if {![string match -nocase $axi "0"]} {
@@ -4786,9 +4837,13 @@ proc gen_clk_property {drv_handle} {
 					-d ${dts_file} -p ${bus_node}]
 				}
 				if {[catch {set compatible [pldt get $misc_clk_node "compatible"]} msg]} {
-				add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
-				add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
-				add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
+					if {[string match -nocase $proctype "zynqmp"]} {
+						gen_fixed_factor_clk_node ${misc_clk_node} ${clk_freq} $dts_file
+					} else {
+						add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
+						add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
+						add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
+					}
 				}
 				set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 				if {[llength $rp_info] != 0} {
