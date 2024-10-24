@@ -323,9 +323,15 @@ proc gen_broad_remoteendpoint_port7 {drv_handle value} {
                 set port_node [create_node -n "port" -l axis_broad_port$count$ip -u $count -p $ports_node -d $dts_file]
                 add_prop "$port_node" "reg" $count int $dts_file
                 set axis_node [create_node -n "endpoint" -l axis_broad_out$count$ip -p $port_node -d $dts_file]
-                gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
                 add_prop "$axis_node" "remote-endpoint" $connectip$ip reference $dts_file
-                gen_broad_remoteendpoint_port$count $ip $connectip$ip
+                set addbroadip "1"
+                if {[hsi get_property IP_NAME $connectip] in { "v_scenechange" "v_frmbuf_wr" }} {
+                        set addbroadip ""
+                }
+                if {[llength $addbroadip]} {
+                        gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
+                        gen_broad_remoteendpoint_port$count $ip $connectip$ip
+                }
                 append inputip " " $connectip
                 append outip " " $connectip$ip
             }
