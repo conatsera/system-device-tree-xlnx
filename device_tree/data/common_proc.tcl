@@ -5284,7 +5284,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 			}
 			set ip_name $intc
 			set intc_name [hsi get_property IP_NAME $intc]
-			if {[string match -nocase $proctype "zynqmp"] || [string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype]} {
+			if {$proctype in {"zynqmp" "versal" "microblaze" "microblaze_riscv"}} {
 				if {[llength $intc] > 1} {
 					foreach intr_cntr $intc {
 						if { [is_ip_interrupting_current_proc $intr_cntr] } {
