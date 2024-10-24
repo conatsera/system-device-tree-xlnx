@@ -133,7 +133,7 @@
 		set ip_mem_handles [hsi::get_mem_ranges $link_data3]
 		if {[llength $ip_mem_handles]} {
 			set link_data3_inst $link_data3
-			set link_data3 [get_property IP_NAME $link_data3]
+			set link_data3 [hsi get_property IP_NAME $link_data3]
 			if {[string match -nocase $link_data3 "vid_phy_controller"] || [string match -nocase $link_data3 "hdmi_gt_controller"] || [string match -nocase $link_data3 "v_hdmi_phy1"]} {
 				append phy_names " " "hdmi-phy3"
 				append phys " <&${link_data3_inst}rxphy_lane3 0 1 1 0"
