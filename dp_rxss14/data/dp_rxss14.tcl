@@ -20,7 +20,8 @@ proc dp_rxss14_generate {drv_handle} {
 	dp_rx_add_hier_instances $drv_handle
 
 	set compatible [get_comp_str $drv_handle]
-	pldt append $node compatible "\ \, \"xlnx,v-dp-rxss-3.1\""
+	pldt append $node compatible "\ \, \"xlnx,v-dp-rxss-3.1\" "
+	pldt append $node compatible "\ \, \"xlnx,v-dp-rxss-3.0\" "
 
         set dts_file [set_drv_def_dts $drv_handle]
         set audio_channels [hsi get_property CONFIG.AUDIO_CHANNELS [hsi::get_cells -hier $drv_handle]]
@@ -74,8 +75,8 @@ proc dp_rxss14_generate {drv_handle} {
 	}
 	set freq [get_clk_pin_freq  $drv_handle "S_AXI_ACLK"]
 	add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dts_file
-	set reg_names "dp_base"
-	append reg-names "$reg_names"
+
+	lappend reg_names "dp_base" "edid_base"
 	add_prop "$node" "reg-names" $reg_names stringlist $dts_file 1
 
 	set hdcp_keymngmt [hsi get_cells -hier -filter {IP_NAME == "hdcp_keymngmt_blk"}]
