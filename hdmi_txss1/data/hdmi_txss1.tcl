@@ -77,7 +77,7 @@
                         set link_data3 [hsi get_property IP_NAME $link_data3]
                         if {[string match -nocase $link_data3 "v_hdmi_phy1"] || [string match -nocase $link_data3 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy3"
-                                append phys " <&${link_data3_inst}txphy_lane2 0 1 1 1"
+                                append phys " <&${link_data3_inst}txphy_lane3 0 1 1 1"
                         }
                 }
         } else {
