@@ -20,6 +20,8 @@
         set qspi_mode [get_ip_param_value $slave "C_QSPI_MODE"]
 
         set ipname [hsi get_cells -hier -filter {IP_NAME == "pspmc" || IP_NAME == "pmcps" || IP_NAME == "ps_wizard"}]
+        #for versal-net setting spi-max-frequency to 40MHZ if fbclk disabled in design
+        set psxwizard [hsi get_cells -hier -filter {IP_NAME == "psx_wizard"}]
         if {[llength $ipname]} {
             set fbclk [hsi get_property CONFIG.PMC_QSPI_FBCLK [hsi get_cells -hier $ipname]]
                    if {[regexp "ENABLE 0" $fbclk matched]} {
@@ -36,14 +38,7 @@
                        }
                        add_prop $node qspi-fbclk 1 int $dts_file
                    }
-	} else {
-                       add_prop $node qspi-fbclk 0 int $dts_file
-	}
-
-
-        #for versal-net setting spi-max-frequency to 40MHZ if fbclk disabled in design
-        set psxwizard [hsi get_cells -hier -filter {IP_NAME == "psx_wizard"}]
-        if {[llength $psxwizard]} {
+	} elseif {[llength $psxwizard]} {
                 set psx_pmcx_config [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $psxwizard]]
                 if {[llength $psx_pmcx_config]} {
                         set qspi_fbclk ""
@@ -60,10 +55,7 @@
                 }
         } else {
                add_prop $node qspi-fbclk 0 int $dts_file
-        }
-
-
-
+	}
 
         set is_stacked 0
         if { $qspi_mode == 2} {
