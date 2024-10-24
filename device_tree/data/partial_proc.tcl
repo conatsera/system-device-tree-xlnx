@@ -393,7 +393,11 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 				set dts "pl.dtsi"
 				set amba_pl_node [create_node -n "amba_pl" -l "amba_pl" -d ${dts} -p root]
 				set pr_node [create_node -n "fpga_PR$fpga_inst" -d ${dts} -p root]
-				add_prop $pr_node "firmware-name" $firmware_name string ${dts} 1
+				if {[is_zynqmp_platform $proctype]} {
+					add_prop $pr_node "firmware-name" "$firmware_name.bin" string ${dts} 1
+				} else {
+					add_prop $pr_node "firmware-name" $firmware_name string ${dts} 1
+				}
 				if {$is_bridge_en} {
 					set connectip [dict get $rp_region_dict "rp$fpga_inst"]
 					add_prop "${pr_node}" "fpga-bridges" "$connectip" reference $dts 1
