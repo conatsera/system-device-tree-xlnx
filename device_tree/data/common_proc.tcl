@@ -7537,3 +7537,45 @@ proc gen_domain_data { drv_handle } {
 		}
 	}
 }
+
+# Function to generate the reg property format with baseaddr and highaddr.
+proc gen_reg_property_format {base high {bit_format 64}} {
+	set size [format 0x%x [expr {${high} - ${base} + 1}]]
+	# When both base and size are 64 bit
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+		set temp $base
+		set temp [string trimleft [string trimleft $temp 0] x]
+		set len [string length $temp]
+		set rem [expr {${len} - 8}]
+		set high_base "0x[string range $temp $rem $len]"
+		set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+		set low_base [format 0x%08x $low_base]
+		if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+			set temp $size
+			set temp [string trimleft [string trimleft $temp 0] x]
+			set len [string length $temp]
+			set rem [expr {${len} - 8}]
+			set high_size "0x[string range $temp $rem $len]"
+			set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+			set low_size [format 0x%08x $low_size]
+			set reg "$low_base $high_base $low_size $high_size"
+		} else {
+			set reg "$low_base $high_base 0x0 $size"
+		}
+	# When base has 32 bit and size has 64 bit
+	} elseif {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+		set temp $size
+		set temp [string trimleft [string trimleft $temp 0] x]
+		set len [string length $temp]
+		set rem [expr {${len} - 8}]
+		set high_size "0x[string range $temp $rem $len]"
+		set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+		set low_size [format 0x%08x $low_size]
+		set reg "0x0 $base $low_size $high_size"
+	} elseif { $bit_format == 32 } {
+		set reg "${base} ${size}"
+	} else {
+		set reg "0x0 $base 0x0 $size"
+	}
+	return $reg
+}
