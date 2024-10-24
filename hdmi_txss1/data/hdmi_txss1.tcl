@@ -27,10 +27,10 @@
             add_prop "${node}" "xlnx,vid-interface" $vid_interface int $dts_file 1
         set phy_names ""
 	set phys ""
-	set link_data0 [get_connected_stream_ip [get_cells -hier $drv_handle] "LINK_DATA0_OUT"]
-	set link_data1 [get_connected_stream_ip [get_cells -hier $drv_handle] "LINK_DATA1_OUT"]
-	set link_data2 [get_connected_stream_ip [get_cells -hier $drv_handle] "LINK_DATA2_OUT"]
-	set link_data3 [get_connected_stream_ip [get_cells -hier $drv_handle] "LINK_DATA3_OUT"]
+	set link_data0 [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "LINK_DATA0_OUT"]
+	set link_data1 [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "LINK_DATA1_OUT"]
+	set link_data2 [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "LINK_DATA2_OUT"]
+	set link_data3 [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "LINK_DATA3_OUT"]
         if {[llength $link_data0]} {
                 set ip_mem_handles [hsi::get_mem_ranges $link_data0]
                 if {[llength $ip_mem_handles]} {

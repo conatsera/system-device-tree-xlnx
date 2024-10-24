@@ -237,7 +237,7 @@ proc scene_change_detector_update_endpoints {drv_handle} {
         global broad_port4_remo_mappings
 
 
-        set scd_ports_node [create_node node -n "scd" -l scd_ports$drv_handle -p $node -d $dts_file]
+        set scd_ports_node [create_node -n "scd" -l scd_ports$drv_handle -p $node -d $dts_file]
         add_prop "$scd_ports_node" "#address-cells" 1 int $dts_file
         add_prop "$scd_ports_node" "#size-cells" 0 int $dts_file
         set port_node [create_node -n "port" -l scd_port0$drv_handle -u 0 -p $scd_ports_node -d $dts_file]
