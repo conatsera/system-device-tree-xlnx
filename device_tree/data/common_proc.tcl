@@ -5908,12 +5908,6 @@ proc gen_compatible_property {drv_handle} {
 	} else {
 		set node [get_node $drv_handle]
 		set_drv_prop_if_empty $drv_handle compatible $comp_prop $node stringlist
-		if {[string match -nocase $ip_name "dfx_axi_shutdown_manager"]} {
-			pldt append $node compatible "\ \, \"xlnx,dfx-axi-shutdown-manager\""
-		}
-		if {[string match -nocase $ip_name "dfx_decoupler"]} {
-			pldt append $node compatible "\ \, \"xlnx,pr-decoupler\""
-		}
 		if {[lsearch -nocase $tcm_addresses $unit_addr] >= 0} {
 			pcwdt append $node compatible "\ \, \"mmio-sram\""
 		}
