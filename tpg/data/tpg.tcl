@@ -183,7 +183,7 @@ proc tpg_update_endpoints {drv_handle} {
 
     proc tpg_gen_frmbuf_node {ip drv_handle dts_file} {
             set bus_node [detect_bus_name $drv_handle]
-            set vcap [create_node -n "vcap_sdirx$drv_handle" -p $bus_node -d $dts_file]
+            set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
             add_prop $vcap "compatible" "xlnx,video" string $dts_file
             add_prop $vcap "dmas" "$ip 0" reference $dts_file
             add_prop $vcap "dma-names" "port0" string $dts_file
