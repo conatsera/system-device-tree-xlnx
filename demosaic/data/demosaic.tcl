@@ -109,7 +109,6 @@ proc demosaic_update_endpoints {drv_handle} {
 
 	set port_node [create_node -n "port" -l demosaic_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
 	add_prop "$port_node" "reg" 0 int $dts_file 1
-	add_prop "$port_node" "xlnx,cfa-pattern" rggb string $dts_file 1
 
 	set demo_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
 	set len [llength $demo_inip]
