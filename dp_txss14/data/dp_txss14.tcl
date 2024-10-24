@@ -68,13 +68,17 @@ proc dp_txss14_generate {drv_handle} {
 		add_prop "${node}" "xlnx,hdcp1x-keymgmt"  [lindex $hdcp_keymngmt 1] reference $dtsi_file
 	}
         set hdcp_enable [hsi get_property CONFIG.HDCP_ENABLE [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $hdcp_enable "1"]} {
+	if {[string match -nocase $hdcp_enable "1"]} {
                add_prop "${node}" "xlnx,hdcp-enable" $hdcp_enable boolean $dtsi_file 1
-        }
+        } else {
+		pldt unset $node "xlnx,hdcp-enable"
+	}
         set hdcp22_enable [hsi get_property CONFIG.HDCP22_ENABLE [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $hdcp22_enable "1"]} {
+	if {[string match -nocase $hdcp22_enable "1"]} {
                add_prop "${node}" "xlnx,hdcp22-enable" $hdcp22_enable boolean $dtsi_file 1
-        }
+        } else {
+		pldt unset $node "xlnx,hdcp22-enable"
+	}
         if {[string match -nocase $hdcp_enable "1"] || [string match -nocase $hdcp22_enable "1"]} {
                 add_prop "${node}" "xlnx,hdcp-authenticate" 0x1 int $dtsi_file 1
                 add_prop "${node}" "xlnx,hdcp-encrypt" 0x1 int $dtsi_file 1
