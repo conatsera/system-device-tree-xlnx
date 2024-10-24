@@ -76,8 +76,25 @@ proc dp_rxss14_generate {drv_handle} {
 	set freq [get_clk_pin_freq  $drv_handle "S_AXI_ACLK"]
 	add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dts_file
 
+	set edid_ip [hsi get_cells -hier -filter IP_NAME==vid_edid]
+	if {[llength $edid_ip]} {
+		set baseaddr_dp_rx [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $drv_handle]]
+		set highaddr_dp_rx [hsi get_property CONFIG.C_HIGHADDR [hsi get_cells -hier $drv_handle]]
+		set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $edid_ip]]
+		set highaddr [hsi get_property CONFIG.C_HIGHADDR [hsi get_cells -hier $edid_ip]]
+		set reg_val_0 [gen_reg_property_format $baseaddr_dp_rx $highaddr_dp_rx]
+		set updat [lappend updat $reg_val_0]
+		set reg_val_1 [gen_reg_property_format $baseaddr $highaddr]
+		set updat [lappend updat $reg_val_1]
+		set reg_val [lindex $updat 0]
+		append reg_val ">, <[lindex $updat 1]"
+		add_prop $node reg "$reg_val" hexlist $dts_file 1
+	}
+
 	lappend reg_names "dp_base" "edid_base"
 	add_prop "$node" "reg-names" $reg_names stringlist $dts_file 1
+	set phy_names "dp-phy0 dp-phy1 dp-phy2 dp-phy3"
+	add_prop "${node}" "phy-names" $phy_names stringlist $dts_file 1
 
 	set hdcp_keymngmt [hsi get_cells -hier -filter {IP_NAME == "hdcp_keymngmt_blk"}]
 	if {[llength $hdcp_keymngmt]} {
@@ -128,18 +145,22 @@ proc dp_rxss14_generate {drv_handle} {
 	add_prop  "$ports_node" "#size-cells" 0 int $dts_file
 	set port0_node [create_node -n "port" -u 0 -l dprx_port$drv_handle -p $ports_node -d $dts_file]
 	add_prop  "$port0_node" "reg" 0 int $dts_file
+	add_prop "$port0_node" "xlnx,video-format" 0 int $dts_file
+	add_prop "$port0_node" "xlnx,video-width" 8 int $dts_file
 	set dprxip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video_stream1"]
 	foreach ip $dprxip {
 		set intfpins [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 		set ip_mem_handles [hsi::get_mem_ranges $ip]
 		if {[llength $ip_mem_handles]} {
-			set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
 			set dp_rx_node [create_node -n "endpoint" -l dprx_out$drv_handle -p $port0_node -d $dts_file]
 			gen_endpoint $drv_handle "dprx_out$drv_handle"
-			add_prop  "$dp_rx_node" "remote-endpoint" $ip reference $dts_file
-			gen_remoteendpoint $drv_handle $ip$drv_handle
 			if {[string match -nocase [hsi::get_property IP_NAME $ip] "v_frmbuf_wr"]} {
+				add_prop  "$dp_rx_node" "remote-endpoint" $ip$drv_handle reference $dts_file
+				gen_remoteendpoint $drv_handle $ip$drv_handle
 				gen_frmbuf_wr_node $ip $drv_handle $ports_node $dts_file
+			} else {
+				add_prop  "$dp_rx_node" "remote-endpoint" $ip reference $dts_file
+				gen_remoteendpoint $drv_handle $ip$drv_handle
 			}
 		} else {
 			set connectip [get_connect_ip $ip $intfpins $dtsi_file]
@@ -158,13 +179,6 @@ proc dp_rxss14_generate {drv_handle} {
 }
 
 proc gen_frmbuf_wr_node {outip drv_handle port0_node dtsi_file} {
-	set frmbuf_wr_node [create_node -n "endpoint" -l dprx_out$drv_handle -p $port0_node -d $dtsi_file]
-	add_prop "$frmbuf_wr_node" "remote-endpoint" $outip$drv_handle reference $dtsi_file 1
-	global env
-	set path $env(REPO)
-	set path $env(REPO)
-	set common_file "$path/device_tree/data/config.yaml"
-	set bus_node "amba_pl: amba_pl"
         set bus_node [detect_bus_name $drv_handle]
         set vcap [create_node -n "vcap_dprx$drv_handle" -p $bus_node -d $dtsi_file]
         add_prop $vcap "compatible" "xlnx,video" string $dtsi_file
