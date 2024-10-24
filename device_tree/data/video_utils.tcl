@@ -30,12 +30,14 @@ global set port3_broad_end_mappings [dict create]
 global set port4_broad_end_mappings [dict create]
 global set port5_broad_end_mappings [dict create]
 global set port6_broad_end_mappings [dict create]
+global set port7_broad_end_mappings [dict create]
 global set broad_port1_remo_mappings [dict create]
 global set broad_port2_remo_mappings [dict create]
 global set broad_port3_remo_mappings [dict create]
 global set broad_port4_remo_mappings [dict create]
 global set broad_port5_remo_mappings [dict create]
 global set broad_port6_remo_mappings [dict create]
+global set broad_port7_remo_mappings [dict create]
 global set axis_switch_in_end_mappings [dict create]
 global set axis_switch_port1_end_mappings [dict create]
 global set axis_switch_port2_end_mappings [dict create]
@@ -173,6 +175,12 @@ proc gen_broad_endpoint_port6 {drv_handle value} {
         set val [dict get $port6_broad_end_mappings $drv_handle]
 }
 
+proc gen_broad_endpoint_port7 {drv_handle value} {
+        global port7_broad_end_mappings
+        dict append port7_broad_end_mappings $drv_handle $value
+        set val [dict get $port7_broad_end_mappings $drv_handle]
+}
+
 proc get_axis_switch_in_connect_ip {ip intfpins} {
        puts "get_axis_switch_in_connect_ip:$ip $intfpins"
        global connectip ""
@@ -260,6 +268,12 @@ proc gen_broad_remoteendpoint_port6 {drv_handle value} {
         global broad_port6_remo_mappings
         dict append broad_port6_remo_mappings $drv_handle $value
         set val [dict get $broad_port6_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port7 {drv_handle value} {
+        global broad_port7_remo_mappings
+        dict append broad_port7_remo_mappings $drv_handle $value
+        set val [dict get $broad_port7_remo_mappings $drv_handle]
 }
 
     proc gen_broadcaster {ip dts_file} {
