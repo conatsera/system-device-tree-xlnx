@@ -5489,7 +5489,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 		}
 	}
 	set ip_name  [get_ip_property $drv_handle IP_NAME]
-	if {$ip_name == "xxv_ethernet" || $ip_name == "ddr4" || $ip_name == "psu_acpu_gic" || $ip_name == "mrmac" || $ip_name == "axi_noc"} {
+	if {$ip_name in {"xxv_ethernet" "ddr4" "psu_acpu_gic" "mrmac" "dcmac" "axi_noc"} {
 		return
 	}
 
