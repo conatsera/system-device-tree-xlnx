@@ -188,6 +188,8 @@ proc gen_frmbuf_rd_node {ip drv_handle port0_node dtsi_file} {
 	add_prop $pl_disp "dmas" "$ip 0" reference $dtsi_file 1
         add_prop $pl_disp "dma-names" "dma0" string $dtsi_file 1
         add_prop $pl_disp "xlnx,vformat" "YUYV" string $dtsi_file 1
+        add_prop $pl_display "#address-cells" 1 int $dts_file 1
+        add_prop $pl_display "#size-cells" 0 int $dts_file 1
 	set pl_port_node [create_node -n "port" -l pl_disp_port -u 0 -p $pl_disp -d $dtsi_file]
 	add_prop "$pl_port_node" "reg" 0 int $dtsi_file 1
         set pl_disp_crtc_node [create_node -n "endpoint" -l $ip$drv_handle -p $pl_port_node -d $dtsi_file]

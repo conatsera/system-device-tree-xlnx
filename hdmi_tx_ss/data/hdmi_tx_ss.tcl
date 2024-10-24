@@ -250,6 +250,8 @@ proc gen_frmbuf_rd_node {ip drv_handle hdmi_port_node dts_file} {
 	add_prop $pl_display "dma-names" "dma0" string $dts_file 1
 #	add_prop "${pl_display}" "/* Fill the field xlnx,vformat based on user requirement */" "" comment
 	add_prop $pl_display "xlnx,vformat" "YUYV" string $dts_file 1
+	add_prop $pl_display "#address-cells" 1 int $dts_file 1
+        add_prop $pl_display "#size-cells" 0 int $dts_file 1
 	set pl_display_port_node [create_node -n "port" -l pl_display_port$drv_handle -u 0 -p $pl_display -d $dts_file]
 	add_prop "$pl_display_port_node" "reg" 0 int $dts_file 1
 	set pl_disp_crtc_node [create_node -n "endpoint" -l $ip$drv_handle -p $pl_display_port_node -d $dts_file]
