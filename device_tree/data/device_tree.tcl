@@ -531,11 +531,20 @@ proc gen_dev_conf {} {
 
 proc gen_edac_node {} {
 	set dts_file "pcw.dtsi"
-	set edac_node [add_or_get_dt_node -n &xilsem_edac -d $dts_file]
+	set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
 	set pspmc [hsi get_cells -hier -filter {IP_NAME == "pspmc"}]
+	set psxwizard [hsi get_cells -hier -filter {IP_NAME == "psx_wizard"}]
 	if {[llength $pspmc]} {
 		if { [hsi get_property CONFIG.SEM_MEM_SCAN $pspmc] || [hsi get_property CONFIG.SEM_NPI_SCAN $pspmc] } {
 			add_prop "${edac_node}" "status" "okay" string $dts_file
+		}
+	# put status=okay in edac node for versal-net when any of the CIPS parameters "CONFIG.SEM_MEM_SCAN" or "CONFIG.SEM_NPI_SCAN" are enabled in the design
+	} elseif {[llength $psxwizard]} {
+		set psx_pmcx_config [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $psxwizard]]
+		if {[llength $psx_pmcx_config]} {
+			if {[dict exists $psx_pmcx_config "SEM_MEM_SCAN"] || [dict exists $psx_pmcx_config "SEM_NPI_SCAN"]} {
+				add_prop "${edac_node}" "status" "okay" string $dts_file
+			}
 		}
 	}
 }
@@ -1702,7 +1711,6 @@ Generates system device tree based on args given in:
 			gen_zocl_node $proctype
 		}
 	}
-
     	if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
 		if {[string match -nocase $kernel_ver "none"]} {
 			gen_sata_laneinfo
