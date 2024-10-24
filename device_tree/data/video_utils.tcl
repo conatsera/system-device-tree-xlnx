@@ -356,12 +356,12 @@ proc gen_broad_remoteendpoint_port7 {drv_handle value} {
             incr j
         }
         append dmasip "<&$ip 0>"
-        add_prop $vcap "dmas" "$dmasip" string $dts_file
+        add_prop $vcap "dmas" "$dmasip" noformating $dts_file 1
         set prt ""
         for {set i 0} {$i < $count} {incr i} {
             append prt " " "port$i"
         }
-        add_prop $vcap "dma-names" $prt stringlist $dts_file
+        add_prop $vcap "dma-names" $prt stringlist $dts_file 1
         set vcap_ports_node [create_node -n "ports" -l "vcap_portsaxis_broad_out1$drv_handle" -p $vcap -d $dts_file]
         add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
         add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file

@@ -108,7 +108,7 @@ proc dp_rxss14_generate {drv_handle} {
 					} else {
 						append phys " <&${link_data_inst}rxphy_lane$index 0 1 1 0"
 					}
-					if {$index != [expr {[llength $lst] - 1}]} {
+					if {$index != [expr {[llength $links] - 1}]} {
 						append phys ">,"
 					}
 				}
