@@ -13,7 +13,10 @@
 # GNU General Public License for more details.
 #
 
-    proc pr_decoupler_generate {drv_handle} {
-    }
-
-
+proc pr_decoupler_generate {drv_handle} {
+        set node [gen_peripheral_nodes $drv_handle]
+        if {$node == 0} {
+            return
+        }
+        pldt append $node compatible "\ \, \"xlnx,pr-decoupler\""
+}
