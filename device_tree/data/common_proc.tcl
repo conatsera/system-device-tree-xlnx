@@ -4571,31 +4571,6 @@ proc gen_clk_property {drv_handle} {
 				if {[llength $clk_pl]} {
 					set num [regexp -all -inline -- {[0-9]+} $clk_pl]
 				}
-				if {[is_zynqmp_platform $proctype]} {
-					switch $num {
-						"0" {
-							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk0" -d $def_dts -p root]
-							add_prop $fclk_node "status" "okay" string $def_dts
-
-						}
-						"1" {
-							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk1" -d $def_dts -p root]
-							add_prop $fclk_node "status" "okay" string $def_dts
-						}
-						"2" {
-							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk2" -d $def_dts -p root]
-							add_prop $fclk_node "status" "okay" string $def_dts
-						}
-						"3" {
-							set def_dts "pcw.dtsi"
-							set fclk_node [create_node -n "&fclk3" -d $def_dts -p root]
-							add_prop $fclk_node "status" "okay" string $def_dts
-						}
-					}
-				}
 				set dts_file "pl.dtsi"
 				set bus_node [add_or_get_bus_node $drv_handle $dts_file]
 				set clk_freq [get_clock_frequency [hsi::get_cells -hier $drv_handle] "$clk"]
