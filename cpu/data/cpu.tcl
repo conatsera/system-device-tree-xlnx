@@ -105,11 +105,52 @@
 		}
 		add_prop $node "xlnx,exceptions-in-delay-slots"  "$delayslotexception" int "pl.dtsi"
 	}
+	gen_mb_interrupt_property $drv_handle
+	gen_drv_prop_from_ip $drv_handle
+	generate_mb_ccf_node $drv_handle
 
-
-        gen_mb_interrupt_property $drv_handle
-        gen_drv_prop_from_ip $drv_handle
-        generate_mb_ccf_node $drv_handle
+	# Speical handling for xlnx,memory-ip-list
+	set valid_mem_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $drv_handle] -filter {IS_INSTRUCTION == true && IS_DATA == true && MEM_TYPE == "MEMORY"}]
+	if {$valid_mem_list != ""} {
+		foreach element $valid_mem_list {
+			# Append the string and add the result to the modified list
+			lappend modified_mem_list "${element}_memory"
+		}
+		add_prop $node "xlnx,memory-ip-list" $modified_mem_list stringlist "pl.dtsi"
+	} else {
+		set valid_inst_mem_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $drv_handle] -filter {IS_INSTRUCTION == true && MEM_TYPE == "MEMORY"}]
+		set valid_data_mem_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $drv_handle] -filter {IS_DATA == true && MEM_TYPE == "MEMORY"}]
+		set valid_inst_mem_addr_list [hsi get_property BASE_VALUE [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $drv_handle] -filter {IS_INSTRUCTION == true && MEM_TYPE == "MEMORY"}]]
+		set valid_data_mem_addr_list [hsi get_property BASE_VALUE  [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $drv_handle] -filter {IS_DATA == true && MEM_TYPE == "MEMORY"}]]
+		set common_indices [list]
+		for {set idx1 0} {$idx1 < [llength $valid_inst_mem_addr_list]} {incr idx1} {
+			# Get the element from list1
+			set element1 [lindex $valid_inst_mem_addr_list $idx1]
+			# Check if the element is in the second list
+			set idx2 [lsearch $valid_data_mem_addr_list $element1]
+			# If the element is found in both lists
+			if {$idx2 != -1} {
+				# Append the element and its indices from both lists
+				lappend common_indices [list $element1 $idx1 $idx2]
+			}
+		}
+		set valid_mem_list {}
+		foreach entry $common_indices {
+			if {[llength $entry] == 3} {
+				foreach {element idx1 idx2} $entry {
+					lappend valid_mem_list [lindex $valid_inst_mem_list $idx1]
+					lappend valid_mem_list [lindex $valid_data_mem_list $idx2]
+				}
+			}
+		}
+		if {$valid_mem_list != ""} {
+			foreach element $valid_mem_list {
+				# Append the memory string as common code is adding memory string
+				lappend modified_mem_list "${element}_memory"
+			}
+			add_prop $node "xlnx,memory-ip-list" $modified_mem_list stringlist "pl.dtsi"
+		}
+	}
     }
 
     proc cpu_check_64bit {base} {
