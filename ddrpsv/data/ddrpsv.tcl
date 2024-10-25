@@ -110,7 +110,7 @@
 
         if { $ip_name == "axi_noc2" } {
                 set supported_block_names { \
-                        "C*_DDR_CH0_LEGACY*" "C*_DDR_CH0_MED*" "C*_DDR_CH0_HIGH0*" "C*_DDR_CH0_HIGH1*" "C*_DDR_CH1*" "C*_DDR_CH1A*" "C*_DDR_CH2*" \
+                        "C*_DDR_CH0_LEGACY*" "C*_DDR_CH0_MED*" "C*_DDR_CH0_HIGH_0*" "C*_DDR_CH0_HIGH_1*" "C*_DDR_CH0_HIGH0*" "C*_DDR_CH0_HIGH1*" "C*_DDR_CH1*" "C*_DDR_CH1A*" "C*_DDR_CH2*" \
                         "C*_DDR_CH2A*" "C*_DDR_CH3*" "C*_DDR_CH3A*" "C*_DDR_CH4*" \
                 }
         } else {
