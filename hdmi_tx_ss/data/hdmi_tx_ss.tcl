@@ -46,7 +46,7 @@ proc hdmi_tx_ss_generate {drv_handle} {
                 if {[llength $ip_mem_handles]} {
 			set link_data0_inst $link_data0
                         set link_data0 [hsi get_property IP_NAME $link_data0]
-                        if {[string match -nocase $link_data0 "vid_phy_controller"] || [string match -nocase $link_data0 "hdmi_gt_controller"] || [string match -nocase $link_data0 "v_hdmi_phy1"]} {
+                        if {[string match -nocase $link_data0 "vid_phy_controller"] || [string match -nocase $link_data0 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy0"
                                 if {[llength $link_data1]} {
 					append phys  "${link_data0_inst}txphy_lane0 0 1 1 1>,"
@@ -54,9 +54,9 @@ proc hdmi_tx_ss_generate {drv_handle} {
 					append phys  "${link_data0_inst}txphy_lane0 0 1 1 1"
 				}
                         }
-                }
-        } else {
-                dtg_warning "connected stream of LINK_DATA0_IN is NULL...check the design"
+                } else {
+			dtg_warning "connected stream of LINK_DATA0_IN is NULL...check the design"
+		}
         }
 
         if {[llength $link_data1]} {
@@ -64,7 +64,7 @@ proc hdmi_tx_ss_generate {drv_handle} {
                 if {[llength $ip_mem_handles]} {
 			set link_data1_inst $link_data1
                         set link_data1 [hsi get_property IP_NAME $link_data1]
-                        if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"] || [string match -nocase $link_data1 "v_hdmi_phy1"]} {
+                        if {[string match -nocase $link_data1 "vid_phy_controller"] || [string match -nocase $link_data1 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy1"
                                 if {[llength $link_data2]} {
 					append phys  " <&${link_data1_inst}txphy_lane1 0 1 1 1>,"
@@ -72,9 +72,9 @@ proc hdmi_tx_ss_generate {drv_handle} {
 					append phys  " <&${link_data1_inst}txphy_lane1 0 1 1 1"
 				}
                         }
-                }
-        } else {
-                dtg_warning "Connected stream of LINK_DATA1_IN is NULL...check the design"
+                } else {
+			dtg_warning "Connected stream of LINK_DATA1_IN is NULL...check the design"
+		}
         }
         set link_data2 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA2_OUT"]
         if {[llength $link_data2]} {
@@ -82,7 +82,7 @@ proc hdmi_tx_ss_generate {drv_handle} {
                 if {[llength $ip_mem_handles]} {
 			set link_data2_inst $link_data2
                         set link_data2 [hsi get_property IP_NAME $link_data2]
-                        if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"] || [string match -nocase $link_data2 "v_hdmi_phy1"]} {
+                        if {[string match -nocase $link_data2 "vid_phy_controller"] || [string match -nocase $link_data2 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy2"
                                 if {[llength $link_data3]} {
 					append phys  " <&${link_data2_inst}txphy_lane2 0 1 1 1>,"
@@ -90,9 +90,9 @@ proc hdmi_tx_ss_generate {drv_handle} {
 					append phys  " <&${link_data2_inst}txphy_lane2 0 1 1 1"
 				}
                         }
-                }
-        } else {
-                dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
+                } else {
+			dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
+		}
         }
         set link_data3 [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "LINK_DATA3_OUT"]
         if {[llength $link_data3]} {
@@ -100,13 +100,13 @@ proc hdmi_tx_ss_generate {drv_handle} {
                 if {[llength $ip_mem_handles]} {
 			set link_data3_inst $link_data3
                         set link_data3 [hsi get_property IP_NAME $link_data3]
-                        if {[string match -nocase $link_data3 "vid_phy_controller"] || [string match -nocase $link_data3 "hdmi_gt_controller"] || [string match -nocase $link_data3 "v_hdmi_phy1"]} {
+                        if {[string match -nocase $link_data3 "vid_phy_controller"] || [string match -nocase $link_data3 "hdmi_gt_controller"]} {
                                 append phy_names " " "hdmi-phy3"
                                 append phys " <&${link_data3_inst}txphy_lane3 0 1 1 1"
                         }
-                }
-        } else {
-                dtg_warning "Connected stream of LINK_DATA2_IN is NULL...check the design"
+                } else {
+			dtg_warning "Connected stream of LINK_DATA3_IN is NULL...check the design"
+		}
         }
 
 	if {![string match -nocase $phy_names ""]} {
