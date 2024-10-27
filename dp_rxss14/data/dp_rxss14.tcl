@@ -190,7 +190,7 @@ proc gen_frmbuf_wr_node {outip drv_handle port0_node dtsi_file} {
 	set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -u 0 -p $vcap_ports_node -d $dtsi_file]
         add_prop "$vcap_port_node" "reg" 0 int $dtsi_file 1
         add_prop "$vcap_port_node" "direction" input string $dtsi_file 1
-        set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_ports_node -d $dtsi_file]
+        set vcap_in_node [create_node -n "endpoint" -l $outip$drv_handle -p $vcap_port_node -d $dtsi_file]
         add_prop "$vcap_in_node" "remote-endpoint" dprx_out$drv_handle reference $dtsi_file
 }
 
