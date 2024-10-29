@@ -152,22 +152,9 @@
         # Check ddrpsv_number_of_memory_regions API for more details on the regions.
         set num_of_known_regions [llength $supported_block_names]
 
-        # List that contains base_address of each DDR region (C0_DDR_LOW(0-3), C0_DDR_CH(1-3))
-        global base_addr_list
-        set base_addr_list [lrepeat $num_of_known_regions 0]
-
-        # List that contains high_address of each DDR region (C0_DDR_LOW(0-3), C0_DDR_CH(1-3))
-        global high_addr_list
-        set high_addr_list [lrepeat $num_of_known_regions 0]
-
-        global overall_base_addr_list
-        set overall_base_addr_list [lrepeat $num_of_known_regions 0]
-
-        global overall_high_addr_list
-        set overall_high_addr_list [lrepeat $num_of_known_regions 0]
-
         # Need a dictionary to gather system level data using processor level data
         set global_map_dict [dict create]
+        global set ddr_addr_list [dict create]
 
         # list all the processors available in the design
         set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
@@ -180,6 +167,7 @@
                 for {set index 0} {$index < $num_of_known_regions} {incr index} {
                         # region_accessed base_addr high_addr
                         dict set global_map_dict "$procc" $index "0 0 0"
+                        dict set ddr_addr_list "$procc" $index ""
                 }
 
                 # Get all the NOC memory instances mapped to the particular processor
@@ -208,20 +196,29 @@
                 }
 
 
-                set region_accessed [ddrpsv_addr_params $mapped_periph_list $interface_block_names $region_accessed $supported_block_names]
+                set region_accessed [ddrpsv_addr_params $mapped_periph_list $interface_block_names $region_accessed $supported_block_names $procc]
 
 
                 # Generate reg_property available for the processor, combining all the regions
                 set updat ""
+                set addr_list ""
+
                 for {set index 0} {$index < $num_of_known_regions} {incr index} {
-                        if {[lindex $region_accessed $index]} {
-                                set base_value [lindex $base_addr_list $index]
-                                set base_value [ddrpsv_check_tcm_overlapping $procc $base_value]
-                                set high_value [lindex $high_addr_list $index]
-                                dict set global_map_dict "$procc" "$index" "1 $base_value $high_value"
-                                set reg_val [ddrpsv_generate_reg_property $base_value $high_value]
-                                set updat [lappend updat $reg_val]
-                        }
+                    if {[lindex $region_accessed $index]} {
+                        lappend addr_list [dict get $ddr_addr_list $procc $index]
+                        dict set global_map_dict "$procc" "$index" "1 $addr_list"
+                    }
+                }
+
+                set addr_list [ddrpsv_get_sorted_list $addr_list]
+
+                set num_of_regions [llength $addr_list]
+                for {set i 0} {$i < $num_of_regions} {set i [expr $i+2]} {
+                    set base_value [lindex $addr_list $i]
+                    set base_value [ddrpsv_check_tcm_overlapping $procc $base_value]
+                    set high_value [lindex $addr_list [expr $i+1]]
+                    set reg_val [ddrpsv_generate_reg_property $base_value $high_value]
+                    set updat [lappend updat $reg_val]
                 }
 
                 set len [llength $updat]
@@ -250,55 +247,75 @@
         }
 
         # Get the system level memory reg
-        set ov_update ""
         set global_node_base_addr ""
-
-        # A flag to get base_address of the memory node
-        set first_region_access 0
-
+        set ov_update ""
 
         for {set index 0} {$index < $num_of_known_regions} {incr index} {
                 # Flag to check the first access of the current region among diff procs and set the first base_addr for that region
                 # Also to differentiate the actually read 0 and default 0
                 set curr_region_access 0
-                set base_addr ""
-                set high_addr ""
+                set adrlist ""
                 foreach procc $proclist {
-                        set curr_base_addr [lindex [dict get $global_map_dict $procc $index] 1]
-                        set curr_high_addr [lindex [dict get $global_map_dict $procc $index] 2]
                         if {[lindex [dict get $global_map_dict $procc $index] 0]} {
-                                if { !$curr_region_access } {
-                                        set base_addr $curr_base_addr
-                                        set high_addr $curr_high_addr
-                                        set curr_region_access 1
-                                } else {
-                                        if { [string compare $curr_base_addr $base_addr] < 0 } {
-                                                set base_addr $curr_base_addr
-                                        }
-                                        if { [string compare $curr_high_addr $base_addr] > 0 } {
-                                                set high_addr $curr_high_addr
-                                        }
-                                }
+                        set proc_reg_list [dict get $global_map_dict $procc $index]
+                        set count [llength $proc_reg_list]
+                        set count [expr [expr $count-1]/2]
+                        for {set i 0} { $i <= $count} {set i [expr $i+2]} {
+                            set curr_region_access 1
+                            set curr_base_addr [lindex [dict get $global_map_dict $procc $index] [expr $i+1]]
+                            set curr_high_addr [lindex [dict get $global_map_dict $procc $index] [expr $i+2]]
+                            lappend adrlist $curr_base_addr
+                            lappend adrlist $curr_high_addr
                         }
+                    }
                 }
                 if {$curr_region_access} {
-                        set ov_update [lappend ov_update [ddrpsv_generate_reg_property $base_addr $high_addr]]
-                        if { !$first_region_access } {
-                                set global_node_base_addr $base_addr
-                                set first_region_access 1
-                        }
+                    set ov_update [ddrpsv_get_sorted_list $adrlist]
                 }
         }
 
         if {[llength $ov_update]} {
-                set memory_node [create_node -n memory -l "${label}" -u [regsub -all {^0x} ${global_node_base_addr} {}] -p root -d "system-top.dts"]
-                add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
-                add_prop "${memory_node}" "device_type" "memory" string $dts_file
-                add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
-                add_prop "${memory_node}" "memory_type" "memory" string $dts_file
-                add_prop "${memory_node}" "reg" [join $ov_update ">, <"] hexlist $dts_file
+            set global_node_base_addr [lindex $ov_update 0]
+            set tmplist ""
+            for {set i 0} {$i < [llength $ov_update]} {set i [expr $i+2]} {
+                lappend tmplist [ddrpsv_generate_reg_property [lindex $ov_update $i] [lindex $ov_update $i+1]]
+            }
+            set ov_update $tmplist
+            set memory_node [create_node -n memory -l "${label}" -u [regsub -all {^0x} ${global_node_base_addr} {}] -p root -d "system-top.dts"]
+            add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
+            add_prop "${memory_node}" "device_type" "memory" string $dts_file
+            add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
+            add_prop "${memory_node}" "memory_type" "memory" string $dts_file
+            add_prop "${memory_node}" "reg" [join $ov_update ">, <"] hexlist $dts_file
         }
+    }
 
+    proc ddrpsv_get_sorted_list {adrlist} {
+        set base_addr ""
+        set sorted_list ""
+        set adrlist [join $adrlist]
+        for {set i 0} {$i < [llength $adrlist]} {set i [expr $i+2]} {
+            lappend base_addr [lindex $adrlist $i]
+        }
+        set base_addr [lsort -integer $base_addr]
+        set high "0x0"
+        for {set i 0} {$i < [llength $base_addr]} {incr i} {
+            if { [scan [lindex $base_addr $i] %lx] < [scan $high %lx] } {
+                continue
+            }
+            lappend sorted_list [lindex $base_addr $i]
+            set high [scan [lindex $adrlist [expr [lsearch $adrlist [lindex $base_addr $i]]+1]] %lx]
+            for {set j 0} {$j < [llength $adrlist]} {set j [expr $j+2]} {
+                set tlo [scan [lindex $adrlist $j] %lx]
+                set thi [scan [lindex $adrlist [expr $j+1]] %lx]
+                if {$high >= $tlo && $high <= $thi} {
+                    set high $thi
+                }
+            }
+            set high [format 0x%lx $high]
+            lappend sorted_list $high
+        }
+        return $sorted_list
     }
 
     proc ddrpsv_generate_reg_property {base high} {
@@ -452,33 +469,30 @@
         return [hsi get_property HIGH_VALUE [lindex ${mapped_periph_list} $index]]
     }
 
-    proc ddrpsv_handle_address_details { index mapped_periph_list is_ddr_region_accessed ddr_region_id } {
+    proc ddrpsv_handle_address_details { index mapped_periph_list is_ddr_region_accessed ddr_region_id procc } {
         #Variables to hold base address and high address of each DDR region
-        global base_addr_list
-        global high_addr_list
+        global ddr_addr_list
 
         # Get the base address of the passed DDR region i.e. mapped_periph_list[index]
         set temp [ddrpsv_get_base_addr $mapped_periph_list $index]
 
-        # If the DDR region is accessed for the first time OR
-        # If the base address found is less than the address present in the list for this DDR region,
-        # replace the address in the list with the new address found.
-        if { $is_ddr_region_accessed == 0 || ([scan $temp %lx] < [scan [lindex $base_addr_list $ddr_region_id] %lx])} {
-                lset base_addr_list $ddr_region_id $temp
+        if {$is_ddr_region_accessed == 0} {
+            dict set ddr_addr_list $procc $ddr_region_id "$temp"
+        } else {
+            set test "[dict get $ddr_addr_list $procc $ddr_region_id]"
+            set test [lappend test $temp]
+            dict set ddr_addr_list $procc $ddr_region_id "$test"
         }
 
         # Get the High address of the passed DDR region i.e. mapped_periph_list[index]
         set temp [ddrpsv_get_high_addr $mapped_periph_list $index]
 
-        # If the DDR region is accessed for the first time OR
-        # If the high address found is greater than the address present in the list for this DDR region,
-        # replace the address in the list with the new address found.
-        if { $is_ddr_region_accessed == 0 || ([scan $temp %lx] > [scan [lindex $high_addr_list $ddr_region_id] %lx])} {
-                lset high_addr_list $ddr_region_id $temp
-        }
+        set t1 "[dict get $ddr_addr_list $procc $ddr_region_id]"
+        set t1 [lappend t1 $temp]
+        dict set ddr_addr_list $procc $ddr_region_id "$t1"
     }
 
-    proc ddrpsv_addr_params {mapped_periph_list interface_block_names region_accessed supported_block_names} {
+    proc ddrpsv_addr_params {mapped_periph_list interface_block_names region_accessed supported_block_names procc} {
         # Loop variable to go over all the interface blocks
         set i 0
 
@@ -498,7 +512,7 @@
                         if {[string match $entry $block_name]} {
                                 set ddr_region_id [lsearch -exact $supported_block_names $entry]
                                 if {$ddr_region_id >= 0} {
-                                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id
+                                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id $procc
                                         lset region_accessed $ddr_region_id 1
                                         break
                                 }
