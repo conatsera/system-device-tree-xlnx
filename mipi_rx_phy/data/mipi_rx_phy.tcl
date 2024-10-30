@@ -19,7 +19,6 @@
         if {$node == 0} {
                 return
         }
-        pldt append $node compatible "\ \, \"xlnx,dsi\""
         set phy_mode [hsi get_property CONFIG.C_PHY_MODE [hsi::get_cells -hier $drv_handle]]
         puts "phy_mode = $phy_mode"
         if {[string match -nocase $phy_mode "dphy"]} {
