@@ -531,11 +531,11 @@ proc gen_dev_conf {} {
 
 proc gen_edac_node {} {
 	set dts_file "pcw.dtsi"
-	set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
 	set pspmc [hsi get_cells -hier -filter {IP_NAME == "pspmc"}]
 	set psxwizard [hsi get_cells -hier -filter {IP_NAME == "psx_wizard"}]
 	if {[llength $pspmc]} {
 		if { [hsi get_property CONFIG.SEM_MEM_SCAN $pspmc] || [hsi get_property CONFIG.SEM_NPI_SCAN $pspmc] } {
+			set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
 			add_prop "${edac_node}" "status" "okay" string $dts_file
 		}
 	# put status=okay in edac node for versal-net when any of the CIPS parameters "CONFIG.SEM_MEM_SCAN" or "CONFIG.SEM_NPI_SCAN" are enabled in the design
@@ -543,6 +543,7 @@ proc gen_edac_node {} {
 		set psx_pmcx_config [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $psxwizard]]
 		if {[llength $psx_pmcx_config]} {
 			if {[dict exists $psx_pmcx_config "SEM_MEM_SCAN"] || [dict exists $psx_pmcx_config "SEM_NPI_SCAN"]} {
+				set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
 				add_prop "${edac_node}" "status" "okay" string $dts_file
 			}
 		}
@@ -555,8 +556,8 @@ proc gen_ddrmc_node {} {
 	if {[llength $ddrmc]} {
 		set i 0
 		foreach mc $ddrmc {
-			set ddrmc_node [create_node -n &mc$i -d $dts_file -p root]
 			if { [hsi get_property CONFIG.MC_ECC $mc] } {
+				set ddrmc_node [create_node -n &mc$i -d $dts_file -p root]
 				add_prop "${ddrmc_node}" "status" "okay" string ${dts_file}
 			}
 			incr i
@@ -1094,8 +1095,11 @@ proc gen_board_info {} {
 }
 
 proc gen_zynqmp_ccf_clk {} {
-	set default_dts "pcw.dts"
-	set ccf_node [create_node -n "&pss_ref_clk" -d $default_dts -p root]
+	set ps_wrapper [hsi get_cells -hier -filter {IP_NAME==zynq_ultra_ps_e}]
+	if {[llength $ps_wrapper] == 0} {
+		return
+	}
+	set default_dts "pcw.dtsi"
 	set periph_list [hsi::get_cells -hier]
 	foreach periph $periph_list {
 		set zynq_ultra_ps [hsi get_property IP_NAME $periph]
@@ -1107,12 +1111,12 @@ proc gen_zynqmp_ccf_clk {} {
 					return
 				} else {
 					dtg_warning "Frequency $freq used instead of 33.333"
+					set ccf_node [create_node -n "&pss_ref_clk" -d $default_dts -p root]
 					add_prop ${ccf_node} "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
 				}
 			}
 		}
 	}
-       set ccf_node [create_node -n "&video_clk" -d $default_dts -p root]
        set periph_list [hsi::get_cells -hier]
        foreach periph $periph_list {
                set zynq_ultra_ps [hsi get_property IP_NAME $periph]
@@ -1124,6 +1128,7 @@ proc gen_zynqmp_ccf_clk {} {
                                        return
                                } else {
                                        dtg_warning "Frequency $freq used instead of 27.00"
+                                       set ccf_node [create_node -n "&video_clk" -d $default_dts -p root]
                                        add_prop "${ccf_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                }
                        }
@@ -1133,9 +1138,11 @@ proc gen_zynqmp_ccf_clk {} {
 }
 
 proc gen_versal_clk {} {
+	set ps_wrapper [hsi get_cells -hier -filter {IP_NAME==ps_wizard || IP_NAME==versal_cips || IP_NAME==pspmc}]
+	if {[llength $ps_wrapper] == 0} {
+		return
+	}
        set default_dts "pcw.dtsi"
-       set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
-       set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
        set periph_list [hsi::get_cells -hier]
        foreach periph $periph_list {
                set versal_ps [hsi get_property IP_NAME $periph]
@@ -1146,6 +1153,7 @@ proc gen_versal_clk {} {
 					set freq [dict get $ps_wizard_params PMC_REF_CLK_FREQMHZ]
 					if {![string match -nocase $freq "33.333"]} {
 						dtg_warning "Frequency $freq used instead of 33.333"
+						set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
 						add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
 					}
 				}
@@ -1153,6 +1161,7 @@ proc gen_versal_clk {} {
 					set freq [dict get $ps_wizard_params PMC_PL_ALT_REF_CLK_FREQMHZ]
 					if {![string match -nocase $freq "33.333"]} {
 						dtg_warning "Frequency $freq used instead of 33.333"
+						set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
 						add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
 					}
 				}
@@ -1166,6 +1175,7 @@ proc gen_versal_clk {} {
                                        set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
                                        if {![string match -nocase $freq "33.333"]} {
                                                dtg_warning "Frequency $freq used instead of 33.333"
+                                               set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
                                                add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                        }
                                }
@@ -1173,6 +1183,7 @@ proc gen_versal_clk {} {
                                        set freq [hsi get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
                                        if {![string match -nocase $freq "33.333"]} {
                                                dtg_warning "Frequency $freq used instead of 33.333"
+                                               set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
                                                add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                        }
                                }
@@ -1184,6 +1195,7 @@ proc gen_versal_clk {} {
                                set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
                                if {![string match -nocase $freq "33.333"]} {
                                        dtg_warning "Frequency $freq used instead of 33.333"
+                                       set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
                                        add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                }
                        }
@@ -1191,6 +1203,7 @@ proc gen_versal_clk {} {
                                set freq [hsi get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
                                if {![string match -nocase $freq "33.333"]} {
                                        dtg_warning "Frequency $freq used instead of 33.333"
+                                       set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
                                        add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                }
                        }
@@ -1201,7 +1214,6 @@ proc gen_versal_clk {} {
 
 proc gen_opp_freq {} {
 	set default_dts "pcw.dtsi"
-	set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
 	set periph_list [hsi get_cells -hier]
 	set opp_freq ""
 	set add_opp_prop ""
@@ -1231,6 +1243,7 @@ proc gen_opp_freq {} {
 				if {$opp_freq == ""} {
 					return
 				}
+				set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
 				# Remove default opps
 				add_prop "$cpu_opp_table" "/delete-node/ opp00" "" boolean $default_dts
 				add_prop "$cpu_opp_table" "/delete-node/ opp01" "" boolean $default_dts
@@ -1261,6 +1274,7 @@ proc gen_opp_freq {} {
 					return
 				}
 			}
+			set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
 			# Remove default opps
 			add_prop "$cpu_opp_table" "/delete-node/ opp00" "" boolean $default_dts
 			add_prop "$cpu_opp_table" "/delete-node/ opp01" "" boolean $default_dts
@@ -1291,6 +1305,7 @@ proc gen_opp_freq {} {
 			if {$opp_freq == ""} {
 				return
 			}
+			set cpu_opp_table [create_node -n "&cpu_opp_table" -d $default_dts -p root]
 			# Remove default opps
 			add_prop "$cpu_opp_table" "/delete-node/ opp-1066000000" "" boolean $default_dts
 			add_prop "$cpu_opp_table" "/delete-node/ opp-1866000000" "" boolean $default_dts
@@ -1335,76 +1350,98 @@ proc gen_opp_freq {} {
 }
 
 proc gen_zynqmp_pinctrl {} {
+	set ps_wrapper [hsi get_cells -hier -filter IP_NAME==zynq_ultra_ps_e]
+	global env
+	if {[llength $ps_wrapper] == 0} {
+		return
+	}
        set default_dts "pcw.dtsi"
-       set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
        set periph_list [hsi::get_cells -hier]
-       foreach periph $periph_list {
+       foreach periph $ps_wrapper {
                set zynq_ultra_ps [hsi get_property IP_NAME $periph]
                if {[string match -nocase $zynq_ultra_ps "zynq_ultra_ps_e"] } {
                        set avail_param [hsi list_property [hsi::get_cells -hier $periph]]
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__UART1__PERIPHERAL__IO"] >= 0} {
                                set uart1_io [hsi get_property CONFIG.PSU__UART1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
                                if {[string match -nocase $uart1_io "EMIO"]} {
-                                       set pinctrl_uart1_default [create_node -n "uart1-default" -d $default_dts -p $pinctrl_node]
-                                       add_prop "$pinctrl_uart1_default" "/delete-node/ mux" "" boolean $default_dts
-                                       add_prop "$pinctrl_uart1_default" "/delete-node/ conf" "" boolean $default_dts
-                                       add_prop "$pinctrl_uart1_default" "/delete-node/ conf-rx" "" boolean $default_dts
-                                       add_prop "$pinctrl_uart1_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                               	       dtg_warning "EMIO support for UART1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
+                               	       # FIXME : Add the support with DTG as reference
+                               	       # set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
+                                       # set pinctrl_uart1_default [create_node -n "uart1-default" -d $default_dts -p $pinctrl_node]
+                                       # add_prop "$pinctrl_uart1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       # add_prop "$pinctrl_uart1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       # add_prop "$pinctrl_uart1_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       # add_prop "$pinctrl_uart1_default" "/delete-node/ conf-tx" "" boolean $default_dts
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__UART0__PERIPHERAL__IO"] >= 0} {
                                set uart0_io [hsi get_property CONFIG.PSU__UART0__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
                                if {[string match -nocase $uart0_io "EMIO"]} {
-                                       set pinctrl_uart0_default [create_node -n "uart0-default" -d $default_dts -p $pinctrl_node]
-                                       add_prop "$pinctrl_uart0_default" "/delete-node/ mux" "" boolean $default_dts
-                                       add_prop "$pinctrl_uart0_default" "/delete-node/ conf" "" boolean $default_dts
-                                       add_prop "$pinctrl_uart0_default" "/delete-node/ conf-rx" "" boolean $default_dts
-                                       add_prop "$pinctrl_uart0_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                               	       dtg_warning "EMIO support for UART0 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
+                               	       # FIXME : Add the support with DTG as reference
+                               	       # set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
+                                       # set pinctrl_uart0_default [create_node -n "uart0-default" -d $default_dts -p $pinctrl_node]
+                                       # add_prop "$pinctrl_uart0_default" "/delete-node/ mux" "" boolean $default_dts
+                                       # add_prop "$pinctrl_uart0_default" "/delete-node/ conf" "" boolean $default_dts
+                                       # add_prop "$pinctrl_uart0_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       # add_prop "$pinctrl_uart0_default" "/delete-node/ conf-tx" "" boolean $default_dts
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__CAN1__PERIPHERAL__IO"] >= 0} {
                                set can1_io [hsi get_property CONFIG.PSU__CAN1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
                                if {[string match -nocase $can1_io "EMIO"]} {
-                                       set pinctrl_can1_default [create_node -n "can1-default" -d $default_dts -p $pinctrl_node]
-                                       add_prop "$pinctrl_can1_default" "/delete-node/ mux" "" boolean $default_dts
-                                       add_prop "$pinctrl_can1_default" "/delete-node/ conf" "" boolean $default_dts
-                                       add_prop "$pinctrl_can1_default" "/delete-node/ conf-rx" "" boolean $default_dts
-                                       add_prop "$pinctrl_can1_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                               	       dtg_warning "EMIO support for CAN1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
+                               	       # FIXME : Add the support with DTG as reference
+                               	       # set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
+                                       # set pinctrl_can1_default [create_node -n "can1-default" -d $default_dts -p $pinctrl_node]
+                                       # add_prop "$pinctrl_can1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       # add_prop "$pinctrl_can1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       # add_prop "$pinctrl_can1_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       # add_prop "$pinctrl_can1_default" "/delete-node/ conf-tx" "" boolean $default_dts
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__SD1__PERIPHERAL__IO"] >= 0} {
                                set sd1_io [hsi get_property CONFIG.PSU__SD1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
                                if {[string match -nocase $sd1_io "EMIO"]} {
-                                       set pinctrl_sdhci1_default [create_node -n "sdhci1-default" -d $default_dts -p $pinctrl_node]
-                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux" "" boolean $default_dts
-                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf" "" boolean $default_dts
-                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf-cd" "" boolean $default_dts
-                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux-cd" "" boolean $default_dts
-                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf-wp" "" boolean $default_dts
-                                       add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux-wp" "" boolean $default_dts
+                               	       dtg_warning "EMIO support for SD1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
+                               	       # FIXME : Add the support with DTG as reference
+                               	       # set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
+                                       # set pinctrl_sdhci1_default [create_node -n "sdhci1-default" -d $default_dts -p $pinctrl_node]
+                                       # add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       # add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       # add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf-cd" "" boolean $default_dts
+                                       # add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux-cd" "" boolean $default_dts
+                                       # add_prop "$pinctrl_sdhci1_default" "/delete-node/ conf-wp" "" boolean $default_dts
+                                       # add_prop "$pinctrl_sdhci1_default" "/delete-node/ mux-wp" "" boolean $default_dts
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__ENET3__PERIPHERAL__IO"] >= 0} {
                                set gem3_io [hsi get_property CONFIG.PSU__ENET3__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
                                if {[string match -nocase $gem3_io "EMIO"]} {
-                                       set pinctrl_gem3_default [create_node -n "gem3-default" -d $default_dts -p $pinctrl_node]
-                                       add_prop "$pinctrl_gem3_default" "/delete-node/ mux" "" boolean $default_dts
-                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf" "" boolean $default_dts
-                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf-rx" "" boolean $default_dts
-                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf-tx" "" boolean $default_dts
-                                       add_prop "$pinctrl_gem3_default" "/delete-node/ conf-mdio" "" boolean $default_dts
-                                       add_prop "$pinctrl_gem3_default" "/delete-node/ mux-mdio" "" boolean $default_dts
+                               	       dtg_warning "EMIO support for ENET3 PERIPHERAL is not yet available in SDT. Please manually edit the device tree."
+                               	       # FIXME : Add the support with DTG as reference
+                               	       # set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
+                                       # set pinctrl_gem3_default [create_node -n "gem3-default" -d $default_dts -p $pinctrl_node]
+                                       # add_prop "$pinctrl_gem3_default" "/delete-node/ mux" "" boolean $default_dts
+                                       # add_prop "$pinctrl_gem3_default" "/delete-node/ conf" "" boolean $default_dts
+                                       # add_prop "$pinctrl_gem3_default" "/delete-node/ conf-rx" "" boolean $default_dts
+                                       # add_prop "$pinctrl_gem3_default" "/delete-node/ conf-tx" "" boolean $default_dts
+                                       # add_prop "$pinctrl_gem3_default" "/delete-node/ conf-mdio" "" boolean $default_dts
+                                       # add_prop "$pinctrl_gem3_default" "/delete-node/ mux-mdio" "" boolean $default_dts
                                }
                        }
                        if {[lsearch -nocase $avail_param "CONFIG.PSU__I2C1__PERIPHERAL__IO"] >= 0} {
                                set i2c1_io [hsi get_property CONFIG.PSU__I2C1__PERIPHERAL__IO [hsi::get_cells -hier $periph]]
                                if {[string match -nocase $i2c1_io "EMIO"]} {
-                                       set pinctrl_i2c1_default [create_node -n "i2c1-default" -d $default_dts -p $pinctrl_node]
-                                       add_prop "$pinctrl_i2c1_default" "/delete-node/ mux" "" boolean $default_dts
-                                       add_prop "$pinctrl_i2c1_default" "/delete-node/ conf" "" boolean $default_dts
-                                       set pinctrl_i2c1_gpio [create_node -n "i2c1-gpio" -d $default_dts -p $pinctrl_node]
-                                       add_prop "$pinctrl_i2c1_gpio" "/delete-node/ mux" "" boolean $default_dts
-                                       add_prop "$pinctrl_i2c1_gpio" "/delete-node/ conf" "" boolean $default_dts
+                               	       dtg_warning "EMIO support for I2C1 PERIPHERAL is not yet available in SDT. Please manually edit the device tree"
+                               	       # FIXME : Add the support with DTG as reference
+                               	       # set pinctrl_node [create_node -n "&pinctrl0" -d $default_dts -p root]
+                                       # set pinctrl_i2c1_default [create_node -n "i2c1-default" -d $default_dts -p $pinctrl_node]
+                                       # add_prop "$pinctrl_i2c1_default" "/delete-node/ mux" "" boolean $default_dts
+                                       # add_prop "$pinctrl_i2c1_default" "/delete-node/ conf" "" boolean $default_dts
+                                       # set pinctrl_i2c1_gpio [create_node -n "i2c1-gpio" -d $default_dts -p $pinctrl_node]
+                                       # add_prop "$pinctrl_i2c1_gpio" "/delete-node/ mux" "" boolean $default_dts
+                                       # add_prop "$pinctrl_i2c1_gpio" "/delete-node/ conf" "" boolean $default_dts
                                }
                        }
                }
@@ -1712,16 +1749,14 @@ Generates system device tree based on args given in:
 		}
 	}
     	if {[is_zynqmp_platform $proctype] || [string match -nocase $proctype "versal"]} {
-		if {[string match -nocase $kernel_ver "none"]} {
-			gen_sata_laneinfo
-			gen_zynqmp_ccf_clk
-			gen_versal_clk
-			gen_opp_freq
-			gen_zynqmp_pinctrl
-			if {[string match -nocase $proctype "versal"]} {
-				gen_edac_node
-				gen_ddrmc_node
-			}
+		#gen_sata_laneinfo
+		gen_zynqmp_ccf_clk
+		gen_versal_clk
+		gen_opp_freq
+		gen_zynqmp_pinctrl
+		if {[string match -nocase $proctype "versal"]} {
+			gen_edac_node
+			gen_ddrmc_node
 		}
     	}
 
