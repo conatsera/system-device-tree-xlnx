@@ -7,16 +7,17 @@
 #ifndef _DT_BINDINGS_ZYNQMP_POWER_H
 #define _DT_BINDINGS_ZYNQMP_POWER_H
 
-#define		PD_RPU_0	6
-#define		PD_RPU_1	7
-#define		PD_OCM_BANK_0	11
-#define		PD_OCM_BANK_1	12
-#define		PD_OCM_BANK_2	13
-#define		PD_OCM_BANK_3	14
-#define		PD_TCM_BANK_0	15
-#define		PD_TCM_BANK_1	16
-#define		PD_TCM_BANK_2	17
-#define		PD_TCM_BANK_3	18
+#define		PD_RPU 		6
+#define		PD_RPU_0	7
+#define		PD_RPU_1	8
+#define		PD_OCM_0	11
+#define		PD_OCM_1	12
+#define		PD_OCM_2	13
+#define		PD_OCM_3	14
+#define		PD_TCM_0_A	15
+#define		PD_TCM_0_B	16
+#define		PD_TCM_1_A	17
+#define		PD_TCM_1_B	18
 #define		PD_USB_0	22
 #define		PD_USB_1	23
 #define		PD_TTC_0	24
