@@ -141,7 +141,7 @@ proc framebuf_wr_gen_frmbuf_node {ip drv_handle dts_file} {
         set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
         add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
         add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
-        if {$proctype == "zynq"} {
+        if {$proctype == "ps7_cortexa9"} {
                 #Workaround for issue (TBF)
                 set vcap_port_node [create_node -n "port" -l vcap_port$drv_handle -p $vcap_ports_node -d $dts_file]
         } else {
@@ -185,6 +185,12 @@ proc framebuf_wr_gen_frmbuf_node {ip drv_handle dts_file} {
 						dtg_warning "$drv_handle peripheral is NULL for the $pin $periph"
 					}
 				}
+			}
+			# add reset-gpio pin when no slice is connected between v_tpg ip and axi_gpio ip
+			set ip_name [hsi::get_property IP_NAME $sink_periph]
+			if {[string match -nocase $ip_name "axi_gpio"]} {
+				set gpio_number [hsi::get_property LEFT [hsi::get_pins -of_objects [hsi::get_cells -hier "$sink_periph"] "gpio_io_o" ]]
+				add_prop "$node" "reset-gpios" "$sink_periph $gpio_number 1" reference $dts_file
 			}
 		} else {
 			dtg_warning "$drv_handle peripheral is NULL for the $pin $sink_periph"
