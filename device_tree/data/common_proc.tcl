@@ -5425,12 +5425,7 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	}
 	if {[llength $rp_info] != 0} {
 		if {[string match -nocase $intc "imux"]} {
-			set proctype [get_hw_family]
-			if {[is_zynqmp_platform $proctype]} {
-				set intc "gic_a53"
-			} else {
-				set intc "gic_a72"
-			}
+			set intc "gic"
 		} else {
 			set firmware_name [get_partial_file]
 			set partial_fileName [file rootname $firmware_name]
