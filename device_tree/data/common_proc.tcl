@@ -6216,7 +6216,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
-	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc mig_7series"
+	set ignore_list "PERIPHERAL axi_noc mig_7series"
 	if {[string match -nocase $ip_type "psu_pcie"]} {
 		set pcie_config [hsi get_property CONFIG.C_PCIE_MODE [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $pcie_config "Endpoint Device"]} {
