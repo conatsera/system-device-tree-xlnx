@@ -71,7 +71,7 @@ dict with driver_param alias {
 	lappend items psv_uart serial
 	lappend items psv_sbsauart serial
 	lappend items psx_sbsauart serial
-	lappend items sbsuart serial
+	lappend items sbsauart serial
 	lappend items ps7_coresight_comp serial
 	lappend items psu_coresight_0 serial
 	lappend items psv_coresight serial
@@ -1889,7 +1889,7 @@ proc get_drivers args {
 	dict set driverlist psv_uart driver uartps
 	dict set driverlist psv_sbsauart driver uartps
 	dict set driverlist psx_sbsauart driver uartps
-	dict set driverlist sbsuart driver uartps
+	dict set driverlist sbsauart driver uartps
 	dict set driverlist ps7_coresight_comp driver coresight
 	dict set driverlist psu_coresight_0 driver coresight
 	dict set driverlist psv_coresight driver coresight
