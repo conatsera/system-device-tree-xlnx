@@ -2630,7 +2630,7 @@ proc update_alias {} {
 		set common_file "$path/$drvname/data/config.yaml"
 		set exists [file exists $common_file]
 		set tmp [get_driver_config $drv_handle alias]
-		if {[string_is_empty $tmp]} {
+		if {[string_is_empty $tmp] || [dict exists $dup_periph_handle $drv_handle]} {
 			continue
 		} else {
 			set alias_str $tmp
