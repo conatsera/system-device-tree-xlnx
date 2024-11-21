@@ -21,6 +21,13 @@
         set compatible [get_comp_str $drv_handle]
         pldt append $node compatible "\ \, \"xlnx,ai-engine-v2.0\""
 
+	global is_versal_gen2_platform
+	if {$is_versal_gen2_platform} {
+		set power_domain_family "scmi_devpd"
+	} else {
+		set power_domain_family "versal_firmware"
+	}
+
         #set default values for S80 device
         set hw_gen "AIE"
         set aie_rows_start 1
@@ -77,7 +84,24 @@
         add_prop "${node}" "xlnx,core-rows" $corerows noformating "pl.dtsi"
         append memrows "/bits/ 8 <$mem_rows_start $mem_rows_num>"
         add_prop "${node}" "xlnx,mem-rows" $memrows noformating "pl.dtsi"
-        set power_domain "versal_firmware 0x18224072"
+
+        set name [hsi get_property NAME [hsi get_current_part $drv_handle]]
+        set part_num [string range $name 0 7]
+        set part_num_v70 [string range $name 0 4]
+
+        if {$part_num == "xcvp2502"} {
+                #s100
+                set power_domain "${power_domain_family} 0x18225072"
+        } elseif {$part_num == "xcvp2802"} {
+                #s200
+                set power_domain "${power_domain_family} 0x18227072"
+        } elseif {$part_num_v70 == "xcv70"} {
+                #v70
+                set power_domain "${power_domain_family} 0x18224072"
+        } else {
+		#NON SSIT devices
+		set power_domain "${power_domain_family} 0x18224072"
+	}
         add_prop "${node}" "power-domains" $power_domain reference "pl.dtsi"
         add_prop "${node}" "#address-cells" 2 hexlist "pl.dtsi"
         add_prop "${node}" "#size-cells" 2 hexlist "pl.dtsi"
@@ -101,10 +125,17 @@
         global env
         global dtsi_fname
         set path $env(REPO)
+	global is_versal_gen2_platform
 
         set node [get_node $drv_handle]
         if {$node == 0} {
                 return
+        }
+
+        if {$is_versal_gen2_platform} {
+                set power_domain_family "scmi_devpd"
+        } else {
+                set power_domain_family "versal_firmware"
         }
 
         set bus_node "amba_pl: amba_pl"
@@ -122,17 +153,17 @@
 
         if {$part_num == "xcvp2502"} {
                 #s100
-                set power_domain "versal_firmware 0x18225072"
+                set power_domain "${power_domain_family} 0x18225072"
                 add_prop "${aperture_node}" "xlnx,device-name" "100" int "pl.dtsi"
                 set aperture_nodeid 0x18801000
         } elseif {$part_num == "xcvp2802"} {
                 #s200
-                set power_domain "versal_firmware 0x18227072"
+                set power_domain "${power_domain_family} 0x18227072"
                 add_prop "${aperture_node}" "xlnx,device-name" "200" int "pl.dtsi"
                 set aperture_nodeid 0x18803000
         } elseif {$part_num_v70 == "xcv70"} {
                 #v70
-                set power_domain "versal_firmware 0x18224072"
+                set power_domain "${power_domain_family} 0x18224072"
                 add_prop "${aperture_node}" "xlnx,device-name" "0" int "pl.dtsi"
                 set aperture_nodeid 0x18800000
         } else {
@@ -141,7 +172,7 @@
                 lappend intr_names "interrupt2"
                 lappend intr_names "interrupt3"
                 set intr_num "0x0 0x94 0x4>, <0x0 0x95 0x4>, <0x0 0x96 0x4"
-                set power_domain "versal_firmware 0x18224072"
+                set power_domain "${power_domain_family} 0x18224072"
                 add_prop "${aperture_node}" "interrupt-names" $intr_names stringlist "pl.dtsi"
                 add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
                 add_prop "${aperture_node}" "interrupt-parent" imux reference "pl.dtsi"
