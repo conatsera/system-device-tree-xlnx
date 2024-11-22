@@ -132,7 +132,7 @@ proc isppipeline_generate {drv_handle} {
 					gen_remoteendpoint $drv_handle "$outip$drv_handle"
 				}
 			} else {
-				set connectip [get_connect_ip $outip $master_intf]
+				set connectip [get_connect_ip $outip $master_intf $dts_file]
 				if {[llength $connectip]} {
 					set port1_node_endpoint [create_node -n "endpoint" -l ispipeline_out$drv_handle -p $port1_node -d $dts_file]
 					gen_endpoint $drv_handle "$drv_handle$outip"
