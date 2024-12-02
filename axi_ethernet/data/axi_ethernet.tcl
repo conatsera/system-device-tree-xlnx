@@ -422,11 +422,11 @@
                 }
                 if {[regexp "interrupt*" $values match]} {
                     if { $hasbuf == "true" && $ip_name == "axi_ethernet"} {
-                        set intr_val1 [pldt get $node interrupts]
+                        set intr_val1 [pldt get $ipnode interrupts]
                         set intr_val1 [string trimright $intr_val1 " >"]
                         set intr_val1 [string trimleft $intr_val1 "< "]
                         lappend intr_val1 $intr_val
-                        set intr_name [pldt get $node interrupt-names]
+                        set intr_name [pldt get $ipnode interrupt-names]
                         append intr_names $intr_name " , \"$int1\" , \"$int2\""
                     } else {
                         set intr_names $int_names
