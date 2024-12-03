@@ -83,6 +83,14 @@ proc dp_txss14_generate {drv_handle} {
                 add_prop "${node}" "xlnx,hdcp-authenticate" 0x1 int $dtsi_file 1
                 add_prop "${node}" "xlnx,hdcp-encrypt" 0x1 int $dtsi_file 1
         }
+	set versal_gt [hsi get_property CONFIG.C_VERSAL [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $versal_gt "1"]} {
+		add_prop "${node}" "xlnx,versal-gt" $versal_gt boolean $dtsi_file 1
+
+	} else {
+		pldt unset $node "xlnx,versal-gt"
+	}
+
 	append reg-names "$reg_names"
 	add_prop "$node" "reg-names" $reg_names stringlist $dtsi_file 1
 	overwrite_clknames $clknames $drv_handle
@@ -126,6 +134,25 @@ proc dp_txss14_generate {drv_handle} {
 	if {![string match -nocase $phys ""]} {
 		add_prop "$node" "phys" $phys reference $dtsi_file 1
 	}
+	if {[string match -nocase $versal_gt "1"]} {
+		set phy_names "dp-gtquad"
+		add_prop "$node" "phy-names" $phy_names stringlist $dtsi_file 1
+
+	} else {
+		set phy_names "dp-phy0 dp-phy1 dp-phy2 dp-phy3"
+		add_prop "$node" "phy-names" $phy_names stringlist $dtsi_file 1
+
+	}
+	if {[string match -nocase $versal_gt "1"]} {
+		set txpinname "m_axis_lnk_tx_lane0"
+		set channelip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $txpinname]
+		set gtpinname "GT_TX0"
+		set gtip [get_connected_stream_ip [hsi::get_cells -hier $channelip] $gtpinname]
+		if {[llength $gtip] && [llength [hsi::get_mem_ranges $gtip]]} {
+			set phy_s "${gtip}"
+			add_prop "$node" "phys" $phy_s reference $dtsi_file 1
+		}
+	}
 	set freq [get_clk_pin_freq  $drv_handle "S_AXI_ACLK"]
 	if {[llength $freq] == 0} {
 		set freq "100000000"
@@ -154,7 +181,17 @@ proc dp_txss14_generate {drv_handle} {
 			if {[llength $ip_mem_handles]} {
 				set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
 				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
-					gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file				}
+					gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file
+				} else {
+					set dp_tx_node [create_node -n "endpoint" -l dptx_out$drv_handle -p $port0_node -d $dtsi_file]
+					gen_endpoint $drv_handle "dptx_out$drv_handle"
+					if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+						gen_frmbuf_rd_node $inip $drv_handle $port0_node $dtsi_file
+					} else {
+						add_prop "$dp_tx_node" "remote-endpoint" $inip reference $dtsi_file
+						gen_remoteendpoint $drv_handle $inip$drv_handle
+					}
+				}
 			} else {
 				set connectip [get_connect_ip $inip $intfpins $dtsi_file]
 				if {[llength $connectip]} {
