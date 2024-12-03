@@ -49,6 +49,13 @@ proc dp_rxss14_generate {drv_handle} {
                 add_prop "${node}" "xlnx,hdcp-authenticate" 0x1 int $dts_file
                 add_prop "${node}" "xlnx,hdcp-encrypt" 0x1 int $dts_file
         }
+	set versal_gt [hsi get_property CONFIG.C_VERSAL [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $versal_gt "1"]} {
+		add_prop "${node}" "xlnx,versal-gt" $versal_gt boolean $dts_file 1
+
+	} else {
+		pldt unset $node "xlnx,versal-gt"
+	}
         set include_fec_ports [hsi get_property CONFIG.INCLUDE_FEC_PORTS [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,include-fec-ports" $include_fec_ports int $dts_file
         set lane_count [hsi get_property CONFIG.LANE_COUNT [hsi::get_cells -hier $drv_handle]]
@@ -93,12 +100,16 @@ proc dp_rxss14_generate {drv_handle} {
 
 	lappend reg_names "dp_base" "edid_base"
 	add_prop "$node" "reg-names" $reg_names stringlist $dts_file 1
-	set phy_names "dp-phy0 dp-phy1 dp-phy2 dp-phy3"
+	if {[string match -nocase $versal_gt "1"]} {
+		set phy_names "dp-gtquad"
+	} else {
+		set phy_names "dp-phy0 dp-phy1 dp-phy2 dp-phy3"
+	}
 	add_prop "${node}" "phy-names" $phy_names stringlist $dts_file 1
 
 	set hdcp_keymngmt [hsi get_cells -hier -filter {IP_NAME == "hdcp_keymngmt_blk"}]
 	if {[llength $hdcp_keymngmt]} {
-		add_prop "${node}" "xlnx,hdcp1x-keymgmt"  [lindex $hdcp_keymngmt 0] reference $dts_file
+		add_prop "${node}" "xlnx,hdcp1x_keymgmt"  [lindex $hdcp_keymngmt 0] reference $dts_file
 	}
 	set phy_names ""
 	set phys ""
@@ -139,6 +150,19 @@ proc dp_rxss14_generate {drv_handle} {
 	}
 	if {![string match -nocase $phys ""]} {
 		add_prop "$node" "phys" $phys reference $dts_file 1
+	}
+
+	if {[string match -nocase $versal_gt "1"]} {
+		set rxpinname "s_axis_lnk_rx_lane0"
+		set channelip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $rxpinname]
+		puts "$channelip"
+
+		set gtpinname "GT_RX0"
+		set gtip [get_connected_stream_ip [hsi::get_cells -hier $channelip] $gtpinname]
+		if {[llength $gtip] && [llength [hsi::get_mem_ranges $gtip]]} {
+			set phy_s "${gtip}"
+			add_prop "$node" "phys" $phy_s reference $dts_file 1
+		}
 	}
 	set ports_node [create_node -n "ports" -l dprx_ports$drv_handle -p ${node} -d $dts_file]
 	add_prop "$ports_node" "#address-cells" 1 int $dts_file
