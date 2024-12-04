@@ -2444,6 +2444,11 @@ proc gen_cpu_cluster {} {
 			foreach val $values {
 				set temp [get_memmap $val $proc]
 				set com_val [split $temp ","]
+				set ips_to_ignore "coresight"
+				# coresight mapped to microblaze is wrong configuration ignore it
+				if {[lsearch $ips_to_ignore $val] >= 0} {
+					continue
+				}
 				foreach value $com_val {
 					if {[expr $cell_size > 1]} {
 						set addr "[lindex $value 0] [lindex $value 1]"
