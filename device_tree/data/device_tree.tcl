@@ -305,6 +305,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "psx_pmc_trng" "trngpsx"
 	dict set ::sdtgen::namespacelist "pmc_trng" "trngpsx"
+   dict set ::sdtgen::namespacelist "visp_ss" "visp_ss"
 
 	dict set ::sdtgen::namespacelist "asu" "asu"
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"

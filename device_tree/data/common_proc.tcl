@@ -1837,6 +1837,7 @@ proc get_drivers args {
 	dict set driverlist pr_decoupler driver pr_decoupler
 	dict set driverlist prc driver prc
 	dict set driverlist dfx_controller driver prc
+   dict set driverlist visp_ss driver visp_ss
 	# What is psu_ocm
 	dict set driverlist psu_ocm_ram_0 driver psu_ocm
 	dict set driverlist psv_ocm_ram_0 driver psu_ocm
