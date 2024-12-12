@@ -106,16 +106,14 @@
         # ------------------------------------------------------------------------
 
 
-        set supported_block_names [list create]
+        set supported_block_names [list]
 
-        if { $ip_name == "axi_noc2" } {
-                set supported_block_names { \
-                        "C*_DDR_CH0_LEGACY*" "C*_DDR_CH0_MED*" "C*_DDR_CH0_HIGH_0*" "C*_DDR_CH0_HIGH_1*" "C*_DDR_CH0_HIGH0*" "C*_DDR_CH0_HIGH1*" "C*_DDR_CH1*" "C*_DDR_CH1A*" "C*_DDR_CH2*" \
-                        "C*_DDR_CH2A*" "C*_DDR_CH3*" "C*_DDR_CH3A*" "C*_DDR_CH4*" \
-                }
-        } else {
-                set supported_block_names { \
-                        "C*_DDR_LOW0*" "C*_DDR_LOW1*" "C*_DDR_LOW2*" "C*_DDR_LOW3*" "C*_DDR_CH1*" "C*_DDR_CH2*"  "C*_DDR_CH3*" \
+        set noc_instances_list [hsi get_mem_ranges [hsi get_cells -hier -filter IP_NAME==$ip_name]]
+
+        for {set index 0} {$index < [llength $noc_instances_list]} {incr index} {
+                set address_block [hsi get_property ADDRESS_BLOCK [lindex $noc_instances_list $index]]
+                if {[lsearch -exact $supported_block_names $address_block] == -1 && [string match *HBM* $address_block] != 1} {
+                        lappend supported_block_names $address_block
                 }
         }
 
