@@ -38,7 +38,7 @@
 
 	firmware {
 		versal2_firmware: versal2-firmware {
-			compatible = "xlnx,versal-firmware";
+			compatible = "xlnx,versal2-firmware";
 			method = "smc";
 		};
 
