@@ -7,8 +7,6 @@
  * Michal Simek <michal.simek@amd.com>
  */
 
-/dts-v1/;
-
 / {
 	compatible = "xlnx,versal2";
 	model = "AMD Versal Gen 2";
@@ -104,111 +102,99 @@
 		};
 	};
 
-	cpus_r52: cpus-r52@0 {
+	cpus_r52_0: cpus-r52@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		cpu-map {
-			cluster0 {
-				core0 {
-					cpu = <&cortexr52_0>;
-				};
-				core1 {
-					cpu = <&cortexr52_1>;
-				};
-			};
-
-			cluster1 {
-				core0 {
-					cpu = <&cortexr52_2>;
-				};
-
-				core1 {
-					cpu = <&cortexr52_3>;
-				};
-			};
-
-			cluster2 {
-				core0 {
-					cpu = <&cortexr52_4>;
-				};
-				core1 {
-					cpu = <&cortexr52_5>;
-				};
-			};
-
-			cluster3 {
-				core0 {
-					cpu = <&cortexr52_6>;
-				};
-				core1 {
-					cpu = <&cortexr52_7>;
-				};
-			};
-
-			cluster4 {
-				core0 {
-					cpu = <&cortexr52_8>;
-				};
-				core1 {
-					cpu = <&cortexr52_9>;
-				};
-			};
-		};
-
 		cortexr52_0: cpu@0 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x0>;
 		};
+	};
 
+	cpus_r52_1: cpus-r52@1 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_1: cpu@1 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x1>;
 		};
+	};
 
+	cpus_r52_2: cpus-r52@2 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_2: cpu@2 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x2>;
 		};
+	};
 
+	cpus_r52_3: cpus-r52@3 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_3: cpu@3 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x3>;
 		};
+	};
 
+	cpus_r52_4: cpus-r52@4 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_4: cpu@4 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x4>;
 		};
+	};
 
+	cpus_r52_5: cpus-r52@5 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_5: cpu@5 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x5>;
 		};
+	};
 
+	cpus_r52_6: cpus-r52@6 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_6: cpu@6 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x6>;
 		};
+	};
 
+	cpus_r52_7: cpus-r52@7 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_7: cpu@7 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x7>;
 		};
+	};
 
+	cpus_r52_8: cpus-r52@8 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_8: cpu@8 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
 			reg = <0x8>;
 		};
+	};
 
+	cpus_r52_9: cpus-r52@9 {
+		#address-cells = <1>;
+		#size-cells = <0>;
 		cortexr52_9: cpu@9 {
 			compatible = "arm,cortex-r52";
 			device_type = "cpu";
@@ -442,7 +428,7 @@
 		};
 
 		adma0: dma-controller@ebd00000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd00000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -453,7 +439,7 @@
 		};
 
 		adma1: dma-controller@ebd10000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd10000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -464,7 +450,7 @@
 		};
 
 		adma2: dma-controller@ebd20000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd20000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -475,7 +461,7 @@
 		};
 
 		adma3: dma-controller@ebd30000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd30000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -486,7 +472,7 @@
 		};
 
 		adma4: dma-controller@ebd40000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd40000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -497,7 +483,7 @@
 		};
 
 		adma5: dma-controller@ebd50000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd50000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -508,7 +494,7 @@
 		};
 
 		adma6: dma-controller@ebd60000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd60000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -519,7 +505,7 @@
 		};
 
 		adma7: dma-controller@ebd70000 {
-			compatible = "xlnx,zynqmp-dma-1.0";
+			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
 			reg = <0 0xebd70000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -778,7 +764,7 @@
 		};
 
 		ospi: spi@f1010000 {
-			compatible = "xlnx,versal-ospi-1.0", "cdns,qspi-nor";
+			compatible = "amd,versal2-ospi", "cdns,qspi-nor";
 			status = "disabled";
 			reg = <0 0xf1010000 0 0x10000>,
 			      <0 0xc0000000 0 0x20000000>;
