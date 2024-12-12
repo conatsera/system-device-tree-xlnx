@@ -1927,7 +1927,19 @@ proc proc_mapping {} {
 		IP_NAME==axi_noc2 || IP_NAME==noc_mc_ddr5 || IP_NAME==axi_noc || IP_NAME==noc_mc_ddr4 || \
 		IP_NAME==ddr3 || IP_NAME==ddr4 || IP_NAME==mig_7series}]"
 	global dup_periph_handle
+	set pmc_scan 0
         foreach val $proc_list {
+		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
+		# For devices where we have multiple PMCs, there can be some wrong mappings for SECONDARY PMCs
+		# For versal, it is assumed that there will only be a single PMC for which PLM will be built.
+		# Therefore, ignore memmap settings for other PMCs and do it only for primary PMC.
+		if {[string match *pmc $iptype]} {
+			if {$pmc_scan} {
+				continue
+			} else {
+				set pmc_scan 1
+			}
+		}
 		#puts "$val: [time {
 		set periph_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]
 		set hier_mapped_list [::struct::set intersect $periph_list $hier_periph_list]
@@ -1942,8 +1954,6 @@ proc proc_mapping {} {
 				)"
 			append periph_list " [hsi::get_cells -hier -filter $hier_mem_filter]"
 		}
-
-		set iptype [hsi get_property IP_NAME [hsi::get_cells -hier $val]]
 
 		foreach periph $periph_list {
 			# There can be a custom IP which is appearing in the output of get_mem_ranges
