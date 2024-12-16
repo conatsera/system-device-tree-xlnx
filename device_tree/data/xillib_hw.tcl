@@ -32,6 +32,7 @@ proc get_connected_intf { periph_name intf_name} {
     if { [llength $intf_net] == 0} {
         return $ret
     }
+    # set connected_intf [hsi::get_intf_pins -of_objects $intf_net -filter "TYPE!=[hsi get_property TYPE $intf_pin]"]
     
     set connected_intf [get_other_intf_pin $intf_net $intf_pin ] 
     set intf_type [hsi get_property TYPE $intf_pin]
@@ -156,6 +157,10 @@ proc remove_pin_from_list { pinList pin } {
     lappend returnList
     
     foreach pinInList $pinList {
+        # set pin_type [hsi get_property TYPE $pinInList]
+        # if { $pin_type == "MONITOR"} {
+            # continue
+        # }
         set givenCell [hsi::get_cells -of_objects $pin]
         set newCell [hsi::get_cells -of_objects $pinInList]
         if { $givenCell != $newCell } {
@@ -361,13 +366,34 @@ proc get_source_pins {periph_pin} {
               set all_pins [hsi::get_pins -of_objects $sig_net ]
               foreach pin $all_pins {
                 set real_source_pin [get_real_source_pin_traverse_out $pin]
+		lappend result_real_source_pin
+		lappend pins_to_retain
+		foreach outpin $real_source_pin {
+			set inpin [get_real_source_pin_traverse_in $outpin ]
+			if { [llength $inpin ] == 0 } {
+				set pins_to_retain [linsert $pins_to_retain end $outpin]
+			}
+			foreach tpin $inpin {
+				set result_real_source_pin [linsert $result_real_source_pin 0 $tpin]
+			}
+
+		}
+		lappend temp_result_pins
+		foreach tpin $pins_to_retain {
+			set temp_result_pins [linsert $temp_result_pins end $tpin ]
+		}
+		foreach tpin $result_real_source_pin {
+			set temp_result_pins [linsert $temp_result_pins end $tpin ]
+		}
+		set real_source_pin $temp_result_pins
+
                 if { [ llength $real_source_pin] != 0 } {
 		    set real_source_pins [prepend $real_source_pin $real_source_pins]
                 }
               }
-        if { [llength $real_source_pins] != 0 } {
-              return $real_source_pins
-        }
+              if { [llength $real_source_pins] != 0 } {
+                    return $real_source_pins
+              }
             } else {
 
                 foreach source_pin $source_pins {
@@ -376,9 +402,9 @@ proc get_source_pins {periph_pin} {
 		    set real_source_pins [prepend $real_source_pin $real_source_pins]
                     }
                 }
-        if { [llength $real_source_pins] != 0 } {
-                  return $real_source_pins
-        }
+                if { [llength $real_source_pins] != 0 } {
+                          return $real_source_pins
+                }
             }
           }
         } else {
@@ -416,15 +442,64 @@ proc get_real_source_pin_traverse_out { pin } {
           # removing the pin from where the traversal started or from where the funtion is called
           set real_source_port [remove_pin_from_list $real_source_port $pin]
           
+	  lappend source_pins_cur_lvl
           if { [ llength $real_source_pin] != 0 } {
-              set source_pins [linsert $source_pins 0 $real_source_pin ]
+              set source_pins_cur_lvl [linsert $source_pins_cur_lvl 0 $real_source_pin ]
           }
           if { [llength $real_source_port] != 0 } {
-              set source_pins [linsert $source_pins 0 $real_source_port]
+              set source_pins_cur_lvl [linsert $source_pins_cur_lvl 0 $real_source_port]
           }
+
+	  lappend real_source_pins_recurse
+	  lappend hier_pins
+	  foreach itr_source_pin $source_pins_cur_lvl {
+		  set itr_source_pins_recurse [get_real_source_pin_traverse_out $itr_source_pin]
+		  foreach temppin $itr_source_pins_recurse {
+			  set real_source_pins_recurse [linsert $real_source_pins_recurse 0 $temppin ]
+		  }
+		  if { [llength $itr_source_pins_recurse] != 0 } {
+			  set hier_pins [linsert $hier_pins 0 $itr_source_pin]
+		  }
+	  }
+	  foreach itr_src_pin $hier_pins {
+		  set source_pins_cur_lvl [remove_pin_from_list $source_pins_cur_lvl $itr_src_pin ]
+	  }
+          if { [ llength $source_pins_cur_lvl] != 0 } {
+	      foreach temppin $source_pins_cur_lvl {
+                  set source_pins [linsert $source_pins 0 $temppin]
+              }
+          }
+
+	  if { [llength $real_source_pins_recurse] != 0 } {
+		  foreach itr_pin $real_source_pins_recurse {
+			 set source_pins [linsert $source_pins 0 $itr_pin ]
+		  }
+	  }
           #if { [ llength $source_pins] != 0 } {
           #       return [get_real_source_pin_traverse_out $source_pins]
           #}
+	  if { [ llength $source_pins ] == 0 } {
+		  #the pin corresponding to upper_net could be on the boundary. So check if there is an upper and lower net for the pin and if that upper net is not same as this, then take that and go a level up
+		  set uppins [hsi::get_pins -of_objects $upper_net]
+	          lappend result_pin_list
+		  foreach uppin $uppins {
+			  set up_net [hsi::get_nets -boundary_type upper -of_objects $uppin]
+			  if { [ llength $upper_net] != 0 && $up_net != $upper_net } {
+				  set src_pins [get_real_source_pin_traverse_out $uppin]
+				  if { [llength $src_pins ] != 0 } {
+					  foreach temppin $src_pins {
+						  lappend result_pin_list $temppin
+					  }
+				  }
+			  }
+		  }
+		  if { [llength $result_pin_list] != 0 } {
+		      foreach temppin $result_pin_list {
+			  #set source_pins [linsert $source_pins 0 $result_pin_list ]
+		          set source_pins [linsert $source_pins 0 $temppin  ]
+		      }
+		  }
+	  }
       }
     return $source_pins
 }
@@ -438,10 +513,10 @@ proc get_real_source_pin_traverse_in { pin } {
       return $source_pins
     }
     
-    #set source_type [hsi get_property IP_NAME [hsi::get_cells -of_objects $pin]]
+    set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $pin]]
     set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $pin]]
-    if { [ string match -nocase $source_type "block_container" ] } {
-        
+    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ] } {
+
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $pin]
         set upper_net [hsi::get_nets -boundary_type upper -of_objects $pin]
         
@@ -456,12 +531,44 @@ proc get_real_source_pin_traverse_in { pin } {
             # removing the pin from where the traversal started or from where the funtion is called 
             set real_source_port [remove_pin_from_list $real_source_port $pin]
 
+	    lappend source_pins_cur_lvl
             if { [ llength $real_source_pin] != 0 } {
-                set source_pins [linsert $source_pins 0 $real_source_pin ]
+                set source_pins_cur_lvl [linsert $source_pins_cur_lvl 0 $real_source_pin ]
             }
             if { [llength $real_source_port] != 0 } {
-                set source_pins [linsert $source_pins 0 $real_source_port]
+                set source_pins_cur_lvl [linsert $source_pins_cur_lvl 0 $real_source_port]
             }
+
+
+	    lappend real_source_pins_recurse
+	    lappend hier_pins
+	    foreach itr_source_pin $source_pins_cur_lvl {
+
+                    set itr_source_pins_recurse [get_real_source_pin_traverse_in $itr_source_pin]
+                    foreach temppin $itr_source_pins_recurse {
+                            set real_source_pins_recurse [linsert $real_source_pins_recurse 0 $temppin ]
+                    }
+                    if { [llength $itr_source_pins_recurse] != 0 } {
+                            set hier_pins [linsert $hier_pins 0 $itr_source_pin]
+                    }
+
+	    }
+	    foreach itr_src_pin $hier_pins {
+                    set source_pins_cur_lvl [remove_pin_from_list $source_pins_cur_lvl $itr_src_pin ]
+            }
+	    if { [llength $real_source_pins_recurse] != 0 } {
+                    foreach itr_pin $real_source_pins_recurse {
+			 set source_pins [linsert $source_pins 0 $itr_pin ]
+                    }
+            }
+
+            if { [ llength $source_pins_cur_lvl] != 0 } {
+	        foreach temppin $source_pins_cur_lvl {
+                    #set source_pins [linsert $source_pins 0 $source_pins_cur_lvl ]
+                    set source_pins [linsert $source_pins 0 $temppin  ]
+	        }
+            }
+
             #if { [ llength $source_pins] != 0 } {
             #       return [get_real_source_pin_traverse_in $source_pins]
             #}
@@ -616,9 +723,8 @@ proc get_real_sink_pins_traverse_in { test_pin } {
       return $source_pins
     }
     set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
-    #set source_type [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
-    set source_type [hsi::get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
-    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] } {
+    set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
+    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "ps11" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ] } {
     
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $test_pin]
         set upper_net [hsi::get_nets -boundary_type upper -of_objects $test_pin]
@@ -629,10 +735,10 @@ proc get_real_sink_pins_traverse_in { test_pin } {
             # removing the pin form where the traversal started or from where the funtion is called 
             set real_sink_pins [remove_pin_from_list $real_sink_pins $test_pin]
             
-	    lappend source_pins
+	    lappend sink_pins_cur_lvl
             if { [ llength $real_sink_pins] != 0 } {
-                foreach source_pin $real_sink_pins { 
-                    set source_pins [linsert $source_pins 0 $source_pin ]
+                foreach sink_pin $real_sink_pins {
+                    set sink_pins_cur_lvl [linsert $sink_pins_cur_lvl 0 $sink_pin ]
                 }
             }
             
@@ -641,15 +747,15 @@ proc get_real_sink_pins_traverse_in { test_pin } {
             set real_sink_ports [remove_pin_from_list $real_sink_ports $test_pin]
             
             if { [llength $real_sink_ports] != 0 } {
-                foreach source_port $real_sink_ports { 
-                    set source_pins [linsert $source_pins 0 $source_port]
+                foreach sink_port $real_sink_ports {
+                    set sink_pins_cur_lvl [linsert $sink_pins_cur_lvl 0 $sink_port]
                 }
             }
 
 	    #Need to recursively go into the hierarchies
 	    lappend real_sink_pins_recurse
 	    lappend hier_pins
-	    foreach itr_sink_pin $source_pins {
+	    foreach itr_sink_pin $sink_pins_cur_lvl {
 		    set itr_sink_pins_recurse [get_real_sink_pins_traverse_in $itr_sink_pin]
 		    foreach temppin $itr_sink_pins_recurse {
 			    set real_sink_pins_recurse [linsert $real_sink_pins_recurse 0 $temppin ]
@@ -661,7 +767,7 @@ proc get_real_sink_pins_traverse_in { test_pin } {
 	    }
 
 	    foreach itr_sink_pin $hier_pins {
-                    set sink_pins_cur_lvl [remove_pin_from_list $source_pins $itr_sink_pin ]
+                    set sink_pins_cur_lvl [remove_pin_from_list $sink_pins_cur_lvl $itr_sink_pin ]
             }
 	    if { [ llength $sink_pins_cur_lvl] != 0 } {
 	        foreach temppin $sink_pins_cur_lvl {
@@ -688,9 +794,9 @@ proc get_real_sink_pins_traverse_out_recurse { periph_pin } {
 
 	lappend sink_pins
 	set hasCells [hsi::get_cells -of_objects $periph_pin]
-        set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $periph_pin]]
-        set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $periph_pin]]
-         if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] } {
+         set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $periph_pin]]
+         set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $periph_pin]]
+		 if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ] } {
          
             set lower_net [hsi::get_nets -boundary_type lower -of_objects $periph_pin]
             set upper_net [hsi::get_nets -boundary_type upper -of_objects $periph_pin]
@@ -701,7 +807,7 @@ proc get_real_sink_pins_traverse_out_recurse { periph_pin } {
                 # removing the pin from where the traversal started or from where the funtion is called 
                 set real_sink_pins [remove_pin_from_list $real_sink_pins $periph_pin]
             
-                set real_sink_ports [::hsi::get_ports -of_objects $upper_net -filter "DIRECTION==O" ]
+                set real_sink_ports [hsi::get_ports -of_objects $upper_net -filter "DIRECTION==O" ]
                 # removing the pin from where the traversal started or from where the funtion is called 
                 set real_sink_ports [remove_pin_from_list $real_sink_ports $periph_pin]
                                                                                                                         
@@ -758,7 +864,7 @@ proc get_real_sink_pins_traverse_out_recurse { periph_pin } {
 proc get_real_sink_pins_traverse_out { periph_pin } {
 
     #InDirect out pins
-    set hasCells [hsi::get_cells -of_objects $periph_pin]
+    set hasCells [hsi::get_cells -of_objects [hsi::get_pins $periph_pin]]
     lappend source_pins
     set sig_net [hsi::get_nets -of_objects $periph_pin]
     set pins [hsi::get_pins -of_objects $sig_net -filter {DIRECTION==O}]
@@ -855,20 +961,6 @@ proc get_connected_pin_count { periph_pin } {
     return $total_width
 }
 
-#
-# get the parameter value. It has special handling for DEVICE_ID parameter name
-#
-proc get_param_value {periph_handle param_name} {
-        if {[string compare -nocase "DEVICE_ID" $param_name] == 0} {
-            # return the name pattern used in printing the device_id for the device_id parameter
-            return [get_ip_param_name $periph_handle $param_name]
-        } else {
-            set value [hsi get_property CONFIG.$param_name $periph_handle]
-            set value [string map {_ ""} $value]
-            return $value
-    }
-}
-
 # 
 # Returns name of the p2p peripheral if arg is present
 # 
@@ -919,6 +1011,7 @@ proc get_port_intr_id { periph_name intr_port_name } {
 #
 proc is_intr_cntrl { periph_name } {
     set ret 0
+
     if { [llength $periph_name] != 0 } {
     set periph [hsi::get_cells -hier -filter "NAME==$periph_name"]
     if { [llength $periph] == 1 } {
