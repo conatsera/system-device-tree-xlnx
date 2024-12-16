@@ -165,6 +165,8 @@ proc get_drivers_sw args {
 	dict set driverlist ps7_scugic driver scugic
 	dict set driverlist psu_acpu_gic driver scugic
 	dict set driverlist psv_acpu_gic driver scugic
+	dict set driverlist psx_acpu_gic driver scugic
+	dict set driverlist acpu_gic driver scugic
 	dict set driverlist ps7_scutimer driver scutimer
 	dict set driverlist ps7_scuwdt driver scuwdt
 	dict set driverlist psu_wdt driver scuwdt
@@ -1243,7 +1245,7 @@ proc is_ip_interrupting_current_proc { periph_name} {
             return 0
         }
         #set current_proc [hsi get_property HW_INSTANCE [hsi::get_sw_processor]]
-	set proc_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9"
+	set proc_list "psv_cortexa72 psu_cortexa53 ps7_cortexa9 cortexa78 psx_cortexa78"
 #        set current_proc "psv_cortexa72_0"
 #	set current_proc [get_hw_family]
         set intr_pin [hsi::get_pins -of_objects $periph "Irq"]
