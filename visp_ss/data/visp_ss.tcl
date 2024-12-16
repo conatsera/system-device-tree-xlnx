@@ -174,7 +174,7 @@ proc create_vcp_node {sub_node default_dts isp_id bus_name} {
     return $vcp_node
 }
 #IO_MODE==2 (LIMO)
-proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_node sub_node_label live_stream bus_name} {
+proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
     set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
     set vcap_ports_node [create_node -l "vcap_ports${tile}${isp}" -n "ports" -p $vcp_node -d $default_dts]
     add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
@@ -184,8 +184,14 @@ proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_nod
         for {set j 0} {$j < 5} {incr j} {
             set port_idx [expr $iba * 5 + $j]
 			add_iba_properties $drv_handle $sub_node $default_dts $isp $iba $tile
-            if {$isp == 1 && $io_mode == 2 && $live_stream == 2 && ($port_idx == 0 || $port_idx % 5 == 0)} {
-                if {$iba == 4 || $iba == 3} {
+            if {$isp == 1 && $io_mode == 2 && $live_stream <= 2 && $port_idx % 5 == 0} {
+               set iba_values {}
+               if {$live_stream == 1} {
+                  lappend iba_values 4
+               } elseif {$live_stream == 2} {
+                  lappend iba_values 4 3
+               }
+               foreach iba $iba_values {
                     set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
                     set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
                     visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
@@ -258,7 +264,7 @@ proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id ports_
         if {$io_mode == 1} {
             handle_io_mode_1 $drv_handle $tile $isp $ports_node $isp_id $default_dts $sub_node $sub_node_label $bus_name
         } elseif {$io_mode == 2} {
-            handle_io_mode_2 $drv_handle $tile $isp $ports_node $isp_id $default_dts $sub_node $sub_node_label $live_stream $bus_name
+            handle_io_mode_2 $drv_handle $tile $isp $ports_node $isp_id $default_dts $sub_node $sub_node_label $live_stream $bus_name $io_mode
         } else {
         }
     }
