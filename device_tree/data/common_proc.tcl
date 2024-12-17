@@ -5546,6 +5546,14 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 					set reg "0x0 $base 0x0 $size"
 				}
 			} else {
+                if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+                    dtg_warning "$drv_handle base value $base is greater than 32-bit, restricting it to 32-bit value 0xFFFFFFFF"
+                    set base "0xFFFFFFFF"
+                }
+                if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+                    dtg_warning "$drv_handle size value $size is greater than 32-bit, restricting it to 32-bit value 0xFFFFFFFF"
+                    set size "0xFFFFFFFF"
+                }
 				set reg "$base $size"
 			}
 
@@ -5624,6 +5632,15 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 					set new_reg "0x0 $base 0x0 $size"
 				}
 			} else {
+                if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+                    dtg_warning "$drv_handle base value $base is greater than 32-bit, restricting it to 32-bit value 0xFFFFFFFF"
+                    set base "0xFFFFFFFF"
+                }
+                if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+                    dtg_warning "$drv_handle size value $size is greater than 32-bit, restricting it to 32-bit value 0xFFFFFFFF"
+                    set size "0xFFFFFFFF"
+                }
+
 				set new_reg "$base $size"
 			}
 			if {[string_is_empty $reg]} {
