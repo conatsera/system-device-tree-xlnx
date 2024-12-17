@@ -3229,6 +3229,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ebd50000 label adma5
 				dict set def_ps_mapping ebd60000 label adma6
 				dict set def_ps_mapping ebd70000 label adma7
+				dict set def_ps_mapping ed931000 label "mdb_pcie0: pcie"
+				dict set def_ps_mapping ed939000 label "mdb_pcie1: pcie"
 				dict set def_ps_mapping f19e0000 label can0
 				dict set def_ps_mapping f19f0000 label can1
 				dict set def_ps_mapping f1a00000 label can2
