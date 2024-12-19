@@ -131,9 +131,9 @@
 
                                                 }
                                         }
-                                        set layer0_video_format [hsi get_property CONFIG.VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
-                                        mixer_gen_video_format $layer0_video_format $mixer_node0 $drv_handle $max_data_width $dts_file
                                 }
+                                set layer0_video_format [hsi get_property CONFIG.VIDEO_FORMAT [hsi::get_cells -hier $drv_handle]]
+                                mixer_gen_video_format $layer0_video_format $mixer_node0 $drv_handle $max_data_width $dts_file
                         }
                         "1" {
                                 set mixer_node1 [create_node -n "layer_$layer" -l xx_mix_overlay_$layer$drv_handle -p $node -d $dts_file]
