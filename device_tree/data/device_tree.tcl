@@ -205,7 +205,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "pmc" "pmups"
 	dict set ::sdtgen::namespacelist "psx_psm" "pmups"
 	dict set ::sdtgen::namespacelist "psm" "pmups"
-	dict set ::sdtgen::namespacelist "pr_decoupler" "pr_decoupler"
+	dict set ::sdtgen::namespacelist "dfx_decoupler" "pr_decoupler"
 	dict set ::sdtgen::namespacelist "prc dfx_controller" "prc"
 	dict set ::sdtgen::namespacelist "psu_ocm_ram_0" "psu_ocm"
 	dict set ::sdtgen::namespacelist "psv_ocm_ram_0" "psu_ocm"
