@@ -117,6 +117,20 @@ proc visp_ss_generate {drv_handle} {
     set bus_name [detect_bus_name $drv_handle]
     set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
     set sub_region_size 0x10000  ;# 64 KB
+    set intr_val [pldt get $node interrupts]
+    set intr_val [string trimright $intr_val ">"]
+    set intr_val [string trimleft $intr_val "<"]
+    # Get interrupt names
+    set intr_names [pldt get $node interrupt-names]
+    set intr_names [string map {"," "" "\"" ""} $intr_names]
+
+    set intr_mapping {}
+      for {set i 0} {$i < [llength $intr_names]} {incr i} {
+         # Extract the next three values (base address, IRQ number, flags)
+             set value [lrange $intr_val [expr $i * 3] [expr $i * 3 + 2]]
+                 # Map the name to its value
+                     dict set intr_mapping [lindex $intr_names $i] $value
+       }
 	 pldt delete $node
 	 for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
@@ -155,6 +169,21 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "xlnx,netfps" $net_fps int $default_dts
 			add_prop "$sub_node" "xlnx,rpu" $rpu int $default_dts
 			add_prop "$sub_node" "isp_id" $isp_id int $default_dts
+         set tile_intrnames ""
+         dict for {key value} $intr_mapping {
+            if {[string match "*tile${tile}_isp${isp}*" $key]} {
+               add_prop "$sub_node" "interrupts" "$value" hexlist $default_dts
+               append tile_intrnames " \"$key\""
+            }
+            if {$isp == 0} {
+               if {[string match "*tile${tile}_isp_isr_irq*" $key] || [string match "*tile${tile}_isp_xmpu_interrupt*" $key]} {
+                  add_prop "$sub_node" "interrupts" "$value" hexlist $default_dts
+                  append tile_intrnames " \"$key\""
+               }
+            }
+         }
+         add_prop "$sub_node" "interrupt-names" $tile_intrnames stringlist $default_dts
+
 			if {$io_type == 1} {
 				set compatible_name "xlnx,visp-ss-lilo-1.0"
 				} elseif {$io_type == 2} {
