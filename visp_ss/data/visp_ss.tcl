@@ -119,6 +119,10 @@ proc visp_ss_generate {drv_handle} {
     set sub_region_size 0x10000  ;# 64 KB
 	 pldt delete $node
 	 for {set tile 0} {$tile < 3} {incr tile} {
+		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
+		if {!$tile_enabled} {
+			continue
+		}
 	   for {set isp 0} {$isp < 2} {incr isp} {
 			set isp_id [expr {$tile * 2 + $isp}]
 			set sub_node_label "visp_ss_${isp_id}"
