@@ -65,7 +65,12 @@ proc isppipeline_generate {drv_handle} {
                 return
         }
 	set ip_name [hsi get_property IP_NAME [hsi get_cells -hier $drv_handle]]
-	pldt append $node compatible "\ \, \"xlnx,isppipeline-1.0\""
+	set ip_version [get_comp_ver $drv_handle]
+	if {[string match -nocase $ip_version "2.0"]} {
+		pldt append $node compatible "\ \, \"xlnx,isppipeline-2.0\""
+	} else {
+		pldt append $node compatible "\ \, \"xlnx,isppipeline-1.0\""
+	}
 	add_prop $node "xlnx,max-height" "/bits/ 16 <2160>" noformating $dts_file
 	add_prop $node "xlnx,max-width" "/bits/ 16 <3840>" noformating $dts_file
 	add_prop $node "xlnx,rgain" "/bits/ 16 <128>" noformating $dts_file
