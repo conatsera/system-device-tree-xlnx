@@ -1064,7 +1064,7 @@
 						<0 0 0 2 &mdb_intc_1 1>,
 						<0 0 0 3 &mdb_intc_1 2>,
 						<0 0 0 4 &mdb_intc_1 3>;
-				msi-map = <0x0 &its 0x00 0x10000>;
+				msi-map = <0x0 &its 0x10000 0x10000>;
 				#address-cells = <3>;
 				#size-cells = <2>;
 				#interrupt-cells = <1>;
