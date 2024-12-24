@@ -125,6 +125,7 @@ proc visp_ss_generate {drv_handle} {
     set intr_names [string map {"," "" "\"" ""} $intr_names]
 
     set intr_mapping {}
+    set reg_mapping {}
       for {set i 0} {$i < [llength $intr_names]} {incr i} {
          # Extract the next three values (base address, IRQ number, flags)
              set value [lrange $intr_val [expr $i * 3] [expr $i * 3 + 2]]
@@ -142,8 +143,10 @@ proc visp_ss_generate {drv_handle} {
 			set sub_node_label "visp_ss_${isp_id}"
 			set sub_baseaddr [format %08x [expr 0x$baseaddr + $isp_id * $sub_region_size]]
 			set sub_node [create_node -l ${sub_node_label} -n "visp_ss" -u $sub_baseaddr -p $bus_name -d $default_dts]
-			add_prop "$sub_node" "reg" "0x0 0x$sub_baseaddr 0x0 $sub_region_size" hexlist $default_dts
+                        set reg_value "0x0 0x$sub_baseaddr 0x0 $sub_region_size"
+			add_prop "$sub_node" "reg" $reg_value hexlist $default_dts
 			add_prop "$sub_node" "status" "okay" string $default_dts
+                        dict set reg_mapping $sub_node_label $reg_value
 			set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
 				add_prop "$ports_node" "#address-cells" 1 int $default_dts
 				add_prop "$ports_node" "#size-cells" 0 int $default_dts
@@ -197,6 +200,31 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $ports_node $default_dts $sub_node $sub_node_label $bus_name
         }
+	}
+
+	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+	foreach proc $proclist {
+		if {![string_is_empty [hsi get_mem_ranges -of_objects [hsi get_cells -hier $proc] -filter INSTANCE==$drv_handle]]} {
+			set proc_ip_name [get_ip_property $proc IP_NAME]
+			dict for {label reg_val} $reg_mapping {
+				switch $proc_ip_name {
+					"cortexr52" - "microblaze" - "microblaze_riscv" {
+						set_memmap "${label}" $proc $reg_val
+					}
+					"cortexa78" {
+						set_memmap "${label}" a53 $reg_val
+					}
+					"pmc" {
+						set_memmap "${label}" pmc $reg_val
+					}
+					"asu" {
+						set_memmap "${label}" asu $reg_val
+					}
+					default {
+					}
+				}
+			}
+		}
 	}
 }
 

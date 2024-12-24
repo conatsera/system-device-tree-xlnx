@@ -2000,6 +2000,9 @@ proc proc_mapping {} {
 			if {$ipname in {"psv_ipi" "psx_ipi" "ipi"}} {
 				continue
 			}
+			if {$ipname == "visp_ss"} {
+				continue
+			}
 			set regprop ""
 			set addr_64 "0"
 			set size_64 "0"
