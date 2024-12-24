@@ -39,43 +39,45 @@ proc demosaic_generate {drv_handle} {
 	add_prop "$port1_node" "reg" 1 int $dts_file 1
 
 	set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "m_axis_video"]
-	set outipname [hsi get_property IP_NAME $outip]
-	set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange"
-	if {[lsearch  -nocase $valid_mmip_list $outipname] >= 0} {
-		foreach ip $outip {
-			if {[llength $ip]} {
-				set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-				set ip_mem_handles [hsi::get_mem_ranges $ip]
-				if {[llength $ip_mem_handles]} {
-					set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
-					set demonode [create_node -n "endpoint" -l demo_out$drv_handle -p $port1_node -d $dts_file]
-					gen_endpoint $drv_handle "demo_out$drv_handle"
-					add_prop "$demonode" "remote-endpoint" $ip$drv_handle reference $dts_file
-					gen_remoteendpoint $drv_handle "$ip$drv_handle"
-					if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"]} {
-						demosaic_gen_frmbuf_wr_node $ip $drv_handle $dts_file
-					}
-				} else {
-					if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
-						continue
-					}
-					set connectip [get_connect_ip $ip $master_intf $dts_file]
-					if {[llength $connectip]} {
+	if {[llength $outip]} {
+		set outipname [hsi get_property IP_NAME $outip]
+		set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange"
+		if {[lsearch  -nocase $valid_mmip_list $outipname] >= 0} {
+			foreach ip $outip {
+				if {[llength $ip]} {
+					set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+					set ip_mem_handles [hsi::get_mem_ranges $ip]
+					if {[llength $ip_mem_handles]} {
+						set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
 						set demonode [create_node -n "endpoint" -l demo_out$drv_handle -p $port1_node -d $dts_file]
 						gen_endpoint $drv_handle "demo_out$drv_handle"
-						add_prop "$demonode" "remote-endpoint" $connectip$drv_handle reference $dts_file
-						gen_remoteendpoint $drv_handle "$connectip$drv_handle"
-						if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
-							demosaic_gen_frmbuf_wr_node $connectip $drv_handle $dts_file
+						add_prop "$demonode" "remote-endpoint" $ip$drv_handle reference $dts_file
+						gen_remoteendpoint $drv_handle "$ip$drv_handle"
+						if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"]} {
+							demosaic_gen_frmbuf_wr_node $ip $drv_handle $dts_file
+						}
+					} else {
+						if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
+							continue
+						}
+						set connectip [get_connect_ip $ip $master_intf $dts_file]
+						if {[llength $connectip]} {
+							set demonode [create_node -n "endpoint" -l demo_out$drv_handle -p $port1_node -d $dts_file]
+							gen_endpoint $drv_handle "demo_out$drv_handle"
+							add_prop "$demonode" "remote-endpoint" $connectip$drv_handle reference $dts_file
+							gen_remoteendpoint $drv_handle "$connectip$drv_handle"
+							if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
+								demosaic_gen_frmbuf_wr_node $connectip $drv_handle $dts_file
+							}
 						}
 					}
+				} else {
+					dtg_warning "$drv_handle pin m_axis_video is not connected..check your design"
 				}
-			} else {
-				dtg_warning "$drv_handle pin m_axis_video is not connected..check your design"
 			}
 		}
+		demosaic_gen_gpio_reset $drv_handle $node $dts_file
 	}
-	demosaic_gen_gpio_reset $drv_handle $node $dts_file
 
 }
 
@@ -419,5 +421,3 @@ proc demosaic_update_endpoints {drv_handle} {
 			}
 		}
 	}
-
-
