@@ -112,6 +112,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_dp" "dp"
 	dict set ::sdtgen::namespacelist "dp_rx_subsystem" "dp_rxss12"
 	dict set ::sdtgen::namespacelist "dp_tx_subsystem" "dp_txss12"
+	dict set ::sdtgen::namespacelist "gtwiz_versal" "dp_gt_ctrl"
 	dict set ::sdtgen::namespacelist "v_dp_rxss1" "dp_rxss14"
 	dict set ::sdtgen::namespacelist "v_dp_txss1" "dp_txss14"
 	dict set ::sdtgen::namespacelist "displayport" "dp12_14_core"
