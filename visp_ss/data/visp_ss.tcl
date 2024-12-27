@@ -124,6 +124,7 @@ proc visp_ss_generate {drv_handle} {
 	set intr_val [pldt get $node interrupts]
 	set intr_val [string trimright $intr_val ">"]
 	set intr_val [string trimleft $intr_val "<"]
+	set intr_parent [pldt get $node interrupt-parent]
 	# Get interrupt names
 	set intr_names [pldt get $node interrupt-names]
 	set intr_names [string map {"," "" "\"" ""} $intr_names]
@@ -190,6 +191,7 @@ proc visp_ss_generate {drv_handle} {
 				}
 			}
 			add_prop "$sub_node" "interrupt-names" $tile_intrnames stringlist $default_dts
+			add_prop $sub_node interrupt-parent $intr_parent noformating $default_dts
 
 			if {$io_type == 1} {
 				set compatible_name "xlnx,visp-ss-lilo-1.0"
