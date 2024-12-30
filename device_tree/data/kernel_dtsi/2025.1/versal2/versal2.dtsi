@@ -216,7 +216,7 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		asu: cpu@0 {
-			compatible = "asu-microblaze-riscv";
+			compatible = "xlnx,asu-microblaze_riscv";
 			device_type = "cpu";
 			reg = <0x0>;
 		};
@@ -577,6 +577,24 @@
 			xlnx,dma-type = <2>;
 		};
 
+		asu_dma0: asudma@ebe8c000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-csudma-1.0";
+			interrupt-parent = <&imux>;
+			interrupts = <0 190 4>;
+			reg = <0x0 0xebe8c000 0x0 0x1000>;
+			xlnx,dma-type = <3>;
+		};
+
+		asu_dma1: asudma@ebe8d000 {
+			status = "disabled";
+			compatible = "xlnx,zynqmp-csudma-1.0";
+			interrupt-parent = <&imux>;
+			interrupts = <0 191 4>;
+			reg = <0x0 0xebe8d000 0x0 0x1000>;
+			xlnx,dma-type = <4>;
+		};
+
 		gem0: ethernet@f1a60000 {
 			compatible = "xlnx,versal-gem", "cdns,gem";
 			status = "disabled";
@@ -761,6 +779,12 @@
 			status = "disabled";
 			compatible = "xlnx,iomodule-3.1";
 			reg = <0x0 0xf0300000 0x0 0x1000>, <0xFFFFFFFF 0xFFFFFFFF 0x0 0xE0000>;
+		};
+
+		asu_iomodule0: iomodule@ebe80000 {
+			status = "disabled";
+			compatible = "xlnx,iomodule-3.1";
+			reg = <0x0 0xebe80000 0x0 0x1000>, <0xFFFFFFFF 0xFFFFFFFF 0x0 0xE0000>;
 		};
 
 		ospi: spi@f1010000 {
