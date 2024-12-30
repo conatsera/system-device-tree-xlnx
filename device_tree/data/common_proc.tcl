@@ -3237,6 +3237,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f1a10000 label can3
 				dict set def_ps_mapping f11c0000 label dma0
 				dict set def_ps_mapping f11d0000 label dma1
+				dict set def_ps_mapping ebe8c000 label asu_dma0
+				dict set def_ps_mapping ebe8d000 label asu_dma1
 				dict set def_ps_mapping f1a60000 label gem0
 				dict set def_ps_mapping f1a70000 label gem1
 				dict set def_ps_mapping f1a50000 label gpio0
@@ -3257,7 +3259,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f19a8000 label i3c6
 				dict set def_ps_mapping f19b0000 label i2c7
 				dict set def_ps_mapping f19b8000 label i3c7
-				dict set def_ps_mapping	f0300000 label iomodule0
+				dict set def_ps_mapping f0300000 label iomodule0
+				dict set def_ps_mapping ebe80000 label asu_iomodule0
 				dict set def_ps_mapping f1010000 label ospi
 				dict set def_ps_mapping f1030000 label qspi
 				dict set def_ps_mapping f12a0000 label rtc
@@ -3328,7 +3331,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f1950000 label i2c1
 				dict set def_ps_mapping f1948000 label i3c0
 				dict set def_ps_mapping f1958000 label i3c1
-				dict set def_ps_mapping	f0300000 label iomodule0
+				dict set def_ps_mapping f0300000 label iomodule0
 				dict set def_ps_mapping f1010000 label ospi
 				dict set def_ps_mapping f1030000 label qspi
 				dict set def_ps_mapping f12a0000 label rtc
@@ -3406,9 +3409,9 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ff0f0000 label "ttc1: timer"
 			dict set def_ps_mapping ff100000 label "ttc2: timer"
 			dict set def_ps_mapping ff110000 label "ttc3: timer"
-			dict set def_ps_mapping	f0280000 label "iomodule0: iomodule"
-			dict set def_ps_mapping	ff9d0000 label "usb0: usb"
-			dict set def_ps_mapping	fe200000 label "dwc3_0: dwc3"
+			dict set def_ps_mapping f0280000 label "iomodule0: iomodule"
+			dict set def_ps_mapping ff9d0000 label "usb0: usb"
+			dict set def_ps_mapping fe200000 label "dwc3_0: dwc3"
 			dict set def_ps_mapping f0800000 label "coresight: coresight"
 			dict set def_ps_mapping f11c0000 label "dma0: pmcdma"
 			dict set def_ps_mapping f11d0000 label "dma1: pmcdma"
