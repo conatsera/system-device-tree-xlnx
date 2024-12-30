@@ -154,6 +154,10 @@
                                 set_memmap "${drv_handle}_memory" psm $reg
                                 set proc_key psm
                         }
+                        if {$proc_ip_name == "asu"} {
+                                set_memmap "${drv_handle}_memory" asu $reg
+                                set proc_key asu
+                        }
                         if {$proc_ip_name in {"microblaze" "microblaze_riscv"}} {
                                 if {$64_bit} {
                                         set_memmap "${drv_handle}_memory" $procc $reg

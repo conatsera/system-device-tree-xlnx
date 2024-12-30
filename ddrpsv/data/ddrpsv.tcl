@@ -238,6 +238,9 @@
                                 "psv_psm" - "psx_psm" - "psm" {
                                         set_memmap "${label}" psm $reg_val
                                 }
+                                "asu" {
+                                        set_memmap "${label}" asu $reg_val
+                                }
                                 default {
                                 }
                         }
