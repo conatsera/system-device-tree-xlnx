@@ -55,6 +55,9 @@
                 "PMU" {
                         set memmap_key "pmu"
                 }
+                "ASU" {
+                        set memmap_key "asu"
+                }
         }
 	if {![string_is_empty $memmap_key]} {
 		set high [get_highaddr $drv_handle]
