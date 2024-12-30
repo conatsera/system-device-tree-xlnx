@@ -6081,6 +6081,10 @@ proc default_parameters {ip_handle {dont_generate ""}} {
 	set valid_prop_names {}
 	set ps_ip [is_ps_ip $ip_handle]
 	foreach par $par_handles {
+        if {[string first " " $par] != -1} {
+            puts "warning: property $par of $ip_handle has space in it, skipping its generation"
+            continue
+        }
 		if { $ps_ip } {
 			set tmp_par $par
 		} else {
