@@ -3292,6 +3292,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f03f0000 label pmc_wwdt
 				dict set def_ps_mapping f0800000 label coresight
 				dict set def_ps_mapping f1230000 label pmc_trng
+				dict set def_ps_mapping f1b00000 label dwc3_0
+				dict set def_ps_mapping f1c00000 label dwc3_1
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1
