@@ -136,7 +136,7 @@ proc framebuf_wr_gen_frmbuf_node {ip drv_handle dts_file} {
         set bus_node [detect_bus_name $drv_handle]
         set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
         add_prop $vcap "compatible" "xlnx,video" string $dts_file
-        add_prop $vcap "dmas" "$ip 0" reference $dts_file
+        add_prop $vcap "dmas" "$drv_handle 0" reference $dts_file
         add_prop $vcap "dma-names" "port0" string $dts_file
         set vcap_ports_node [create_node -n "ports" -l vcap_ports$drv_handle -p $vcap -d $dts_file]
         add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
