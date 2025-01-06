@@ -34,19 +34,26 @@
         pldt append $node compatible "\ \, \"xlnx,audio-formatter-1.0\""
 
 	set tx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "m_axis_mm2s"]
-        if {[llength $tx_connect_ip] != 0} {
-                add_prop "$node" "xlnx,tx" $tx_connect_ip reference $dts_file 1
-        } else {
-                dtg_warning "$drv_handle pin m_axis_mm2s is not connected... check your design"
+        if {![llength $tx_connect_ip]} {
+                dtg_warning "$drv_handle pin m_axis_mm2s is not connected...check your design"
         }
+        set inip ""
+        foreach inip $tx_connect_ip {
+               if {![regexp -nocase  ".*ila_0" $inip]} {
+                       add_prop "$node" "xlnx,tx" $inip reference $dts_file 1
+               }
+         }
+        #Rx Path Audio Pipel line mapping
         set rx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "s_axis_s2mm"]
-        if {[llength $rx_connect_ip] != 0} {
-                add_prop "$node" "xlnx,rx" $rx_connect_ip reference $dts_file 1
-        } else {
-                dtg_warning "$drv_handle pin s_axis_s2mm is not connected... check your design"
+        if {![llength $rx_connect_ip]} {
+                dtg_warning "$drv_handle pin s_axis_s2mm is not connected...check your design"
         }
-
-
+        set inip ""
+        foreach inip $rx_connect_ip {
+               if {![regexp -nocase  ".*ila_0" $inip]} {
+                       add_prop "$node" "xlnx,rx" $inip reference $dts_file 1
+               }
+         }
     }
 
 
