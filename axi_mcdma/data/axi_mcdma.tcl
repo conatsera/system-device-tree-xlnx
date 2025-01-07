@@ -52,7 +52,7 @@
                 add_cross_property $drv_handle $ip_prop $drv_handle "xlnx,include-dre" $node boolean
                 set addr_width [hsi get_property CONFIG.c_addr_width $mcdma_ip]
                 set inhex [format %x $addr_width]
-                append addrwidth "/bits/ 8 <0x$inhex>"
+                append addrwidth "/bits/ 8 <0x0 0x0 0x0 0x$inhex>"
                 add_prop $node "xlnx,addrwidth" $addrwidth noformating "pl.dtsi"
                 set baseaddr [get_baseaddr $mcdma_ip no_prefix]
                 set tx_chan [get_ip_param_value $mcdma_ip C_INCLUDE_MM2S]
@@ -103,7 +103,7 @@
                 add_cross_property $drv_handle $ip_prop $drv_handle "xlnx,include-dre" $node boolean
                 set addr_width [hsi get_property CONFIG.c_addr_width $mcdma_ip]
                 set inhex [format %x $addr_width]
-                append addrwidth "/bits/ 8 <0x$inhex>"
+                append addrwidth "/bits/ 8 <0x0 0x0 0x0 0x$inhex>"
                 add_prop $node "xlnx,addrwidth" $addrwidth noformating "pl.dtsi"
         }
         incr dma_count
