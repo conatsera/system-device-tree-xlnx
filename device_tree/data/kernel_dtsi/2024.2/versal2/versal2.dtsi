@@ -577,7 +577,7 @@
 			status = "disabled";
 			compatible = "xlnx,zynqmp-csudma-1.0";
 			interrupt-parent = <&imux>;
-			interrupts = <0 190 4>;
+			interrupts = <0 224 4>;
 			reg = <0x0 0xf11c0000 0x0 0x10000>;
 			xlnx,dma-type = <1>;
 		};
@@ -586,7 +586,7 @@
 			status = "disabled";
 			compatible = "xlnx,zynqmp-csudma-1.0";
 			interrupt-parent = <&imux>;
-			interrupts = <0 191 4>;
+			interrupts = <0 225 4>;
 			reg = <0x0 0xf11d0000 0x0 0x10000>;
 			xlnx,dma-type = <2>;
 		};
