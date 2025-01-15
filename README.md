@@ -61,6 +61,27 @@ The generated system device tree contains following files.
 			contains memory, clusters, aliases etc.
 	pcw.dtsi:	which contains peripheral configuration wizard information
 			of the peripherals.
+
+Apart from the dtsi files and system-top.dts, system device tree output directory also contains
+some files that are needed to configure the hardware. These files are available within XSA and
+are extracted as they are, using hsi::open_hw_design. The call to hsi::open_hw_design command
+is wrapped within generate_sdt.
+
+For different platforms, extracted files are:
+* Microblaze / Microblaze RISCV:
+      - bitstream (.bit)
+* Zynq:
+     - ps7_inits (.c, .h, .tcl etc)
+     - bitstream(.bit)
+* ZynqMP:
+     - psu_inits (.c, .h, .tcl etc)
+     - bitstream(.bit)
+* Versal:
+     - PDI (.pdi)
+     - A folder named "extracted" that contains:
+	  - ELFs like plm, psm
+	  - CDOs like lpd, fpd, pmc_data etc.
+	  - bif file that can re-construct the PDI using above artifacts
 ```
 ##### Note: Clock files, SOC file, BOARD files are static files which resides inside the DTG++.
 
