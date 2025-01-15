@@ -119,7 +119,7 @@ proc vproc_ss_generate {drv_handle} {
 					if {[llength $connectip]} {
 						set sca_node [create_node -n "endpoint" -l sca_out$drv_handle -p $port1_node -d $dts_file]
 						gen_endpoint $drv_handle "sca_out$drv_handle"
-						add_prop "$sca_node" "remote-endpoint" $connectip$drv_handle reference -d $dts_file
+						add_prop "$sca_node" "remote-endpoint" $connectip$drv_handle reference $dts_file
 						gen_remoteendpoint $drv_handle "$connectip$drv_handle"
 						if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"] \
 						    || [string match -nocase [hsi::get_property IP_NAME $connectip] "axi_vdma"]} {
