@@ -22,6 +22,7 @@ package require Tcl 8.5.14
 package require yaml
 package require struct
 package require textutil::split
+package require json
 
 namespace eval ::sdtgen {
     variable namespacelist [dict create]
