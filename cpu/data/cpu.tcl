@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -47,8 +47,8 @@
         add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
         set model "$ip_name,[get_ip_version $drv_handle]"
         add_prop $node "model" $model string "pl.dtsi"
-	if {[string match -nocase $ip_name "microblaze"]} {
-		set family [hsi get_property CONFIG.C_FAMILY $drv_handle]
+	if {$ip_name in {"microblaze" "microblaze_riscv"}} {
+                set family [get_ip_property $drv_handle CONFIG.C_FAMILY]
 		add_prop $node "xlnx,family" $family string "pl.dtsi"
 	}
         add_prop $node "reg" $nr hexint "pl.dtsi"
