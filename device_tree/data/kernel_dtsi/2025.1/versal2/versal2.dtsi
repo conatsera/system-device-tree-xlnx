@@ -805,7 +805,7 @@
 			status = "disabled";
 			reg = <0 0xf03f0000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
-			interrupts = <0 217 1>, <0 218 1>, <0 219 1>, <0 220 1>;
+			interrupts = <0 236 1>, <0 237 1>, <0 238 1>, <0 239 1>;
 			interrupt-parent = <&imux>;
 			timeout-sec = <30>;
 		};
@@ -1129,7 +1129,7 @@
 			reg = <0 0xecc10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 139 1>, <0 140 1>, <0 141 1>, <0 142 1>;
+			interrupts = <0 236 1>, <0 237 1>, <0 238 1>, <0 239 1>;
 			timeout-sec = <30>;
 		};
 
@@ -1139,7 +1139,7 @@
 			reg = <0 0xecd10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 143 1>, <0 144 1>, <0 145 1>, <0 146 1>;
+			interrupts = <0 240 1>, <0 241 1>, <0 242 1>, <0 243 1>;
 			timeout-sec = <30>;
 		};
 
@@ -1149,7 +1149,7 @@
 			reg = <0 0xece10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 147 1>,  <0 148 1>,  <0 149 1>,  <0 150 1>;
+			interrupts = <0 244 1>,  <0 245 1>,  <0 246 1>,  <0 247 1>;
 			timeout-sec = <30>;
 		};
 
@@ -1159,7 +1159,7 @@
 			reg = <0 0xecf10000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
 			interrupt-parent = <&imux>;
-			interrupts = <0 164 1>, <0 165 1>,  <0 166 1>,  <0 167 1>;
+			interrupts = <0 248 1>, <0 249 1>,  <0 250 1>,  <0 251 1>;
 			timeout-sec = <30>;
 		};
 
@@ -1168,7 +1168,7 @@
 			status = "disabled";
 			reg = <0 0xeb000000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
-			interrupts = <0 82 1>, <0 84 1>, <0 86 1>, <0 87 1>;
+			interrupts = <0 236 1>, <0 237 1>, <0 238 1>, <0 239 1>;
 			interrupt-parent = <&imux>;
 			timeout-sec = <30>;
 		};
@@ -1178,10 +1178,41 @@
 			status = "disabled";
 			reg = <0 0xeb010000 0 0x10000>;
 			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
-			interrupts = <0 83 1>, <0 85 1>, <0 88 1>, <0 89 1>;
+			interrupts = <0 240 1>, <0 241 1>, <0 242 1>, <0 243 1>;
 			interrupt-parent = <&imux>;
 			timeout-sec = <30>;
 		};
+
+		lpd_wwdt2: watchdog@eb020000 {
+			compatible = "xlnx,versal-wwdt";
+			status = "disabled";
+			reg = <0 0xeb020000 0 0x10000>;
+			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
+			interrupts = <0 244 1>, <0 245 1>, <0 246 1>, <0 247 1>;
+			interrupt-parent = <&imux>;
+			timeout-sec = <30>;
+		};
+
+		lpd_wwdt3: watchdog@eb030000 {
+			compatible = "xlnx,versal-wwdt";
+			status = "disabled";
+			reg = <0 0xeb030000 0 0x10000>;
+			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
+			interrupts = <0 248 1>, <0 249 1>, <0 250 1>, <0 251 1>;
+			interrupt-parent = <&imux>;
+			timeout-sec = <30>;
+		};
+
+		lpd_wwdt4: watchdog@eb040000 {
+			compatible = "xlnx,versal-wwdt";
+			status = "disabled";
+			reg = <0 0xeb040000 0 0x10000>;
+			interrupt-names = "wdt", "wwdt_reset_pending", "gwdt", "gwdt_reset_pending";
+			interrupts = <0 252 1>, <0 253 1>, <0 254 1>, <0 255 1>;
+			interrupt-parent = <&imux>;
+			timeout-sec = <30>;
+		};
+
 
 		coresight: coresight@f0800000 {
 		    compatible = "xlnx,coresight-1.0";

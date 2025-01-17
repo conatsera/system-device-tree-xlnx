@@ -3289,6 +3289,9 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ecf10000 label wwdt3
 				dict set def_ps_mapping eb000000 label lpd_wwdt0
 				dict set def_ps_mapping eb010000 label lpd_wwdt1
+				dict set def_ps_mapping eb020000 label lpd_wwdt2
+				dict set def_ps_mapping eb030000 label lpd_wwdt3
+				dict set def_ps_mapping eb040000 label lpd_wwdt4
 				dict set def_ps_mapping f03f0000 label pmc_wwdt
 				dict set def_ps_mapping f0800000 label coresight
 				dict set def_ps_mapping f1230000 label pmc_trng
