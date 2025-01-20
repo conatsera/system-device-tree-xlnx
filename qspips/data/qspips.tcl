@@ -30,13 +30,13 @@
                             return
                        }
                        qspips_set_spi_max_frequency $node $dts_file
-                       add_prop $node qspi-fbclk 0 int $dts_file
+                       add_prop $node xlnx,qspi-fbclk 0 int $dts_file
                    } elseif {[regexp "ENABLE 1" $fbclk matched]} {
                        set node [gen_peripheral_nodes $drv_handle]
                        if {$node == 0} {
                             return
                        }
-                       add_prop $node qspi-fbclk 1 int $dts_file
+                       add_prop $node xlnx,qspi-fbclk 1 int $dts_file
                    }
 	} elseif {[llength $psxwizard]} {
                 set psx_pmcx_config [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $psxwizard]]
@@ -54,7 +54,7 @@
                         }
                 }
         } else {
-               add_prop $node qspi-fbclk 0 int $dts_file
+               add_prop $node xlnx,qspi-fbclk 0 int $dts_file
 	}
 
         set is_stacked 0
