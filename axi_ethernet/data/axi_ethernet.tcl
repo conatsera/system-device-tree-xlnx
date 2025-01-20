@@ -538,19 +538,30 @@
                 set clks [string trimright $clks ">"]
                 set null ""
                 if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))  && $core== 0} {
-                            if {[llength $dclk]} {  
+                            if {[llength $dclk]} {
                                 append clknames "$core_clk_0 " "$dclk " "$axi_aclk_0"
                             } else {
                                 append clknames "$core_clk_0 " "$axi_aclk_0"
-                            }       
-                            append clknames1 " $clknames" " $clk_names"
+                            }
+                            append clk_names0 " $clknames" " $clk_names"
                             set index0 [lindex $clk_list $axi_index_0]
                             regsub -all "\>||\t" $index0 {} index0
+                            set ini0 [lindex $clk_list $index_0]
+                            regsub -all " " $ini0 "" ini0
+                            regsub -all "\<&||\t" $ini0 {} ini0
                             if {[llength $dclk]} {
-                                append clkvals  "[lindex $clk_list $index_0], [lindex $clk_list $dclk_index], $index0>, $clks"
+                                set dclk_ini [lindex $clk_list $dclk_index]
+                                set dclk_ini [string trim $dclk_ini]
+                                if {![string match -nocase "<&*" "$dclk_ini"]} {
+                                    set dclk_ini "<&$dclk_ini"
+                                }
+                                append clkvals  "$ini0, $dclk_ini, $index0>, $clks"
                             } else {
-                                append clkvals  "[lindex $clk_list $index_0], $index0>, <&$clks"
+                                append clkvals  "$ini0, $index0>, <&$clks"
                             }
+
+                            add_prop "${nodep}" "clocks" $clkvals reference "pl.dtsi" 1
+                            add_prop "${nodep}" "clock-names" $clk_names0 stringlist "pl.dtsi" 1
                             set clknames1 ""
                         }
                         if {(($ip_name == "xxv_ethernet") || ($ip_name == "ethernet_1_10_25g"))
@@ -567,12 +578,17 @@
                             regsub -all " " $ini1 "" ini1
                             regsub -all "\<&||\t" $ini1 {} ini1
                             if {[llength $dclk]} {
-                                append clkvals1  "$ini1, [lindex $clk_list $dclk_index], $index1>, $clks"
+                                set dclk_ini1 [lindex $clk_list $dclk_index]
+                                set dclk_ini1 [string trim $dclk_ini1]
+                                if {![string match -nocase "<&*" "$dclk_ini1"]} {
+                                    set dclk_ini1 "<&$dclk_ini1"
+                                }
+                                append clkvals1  "$ini1, $dclk_ini1, $index1>, $clks"
                             } else {
                                 append clkvals1  "$ini1, $index1>, $clks"
                             }
-                            add_prop "${eth_node}" "clocks" $clkvals1 reference "pl.dtsi"
-                            add_prop "${eth_node}" "clock-names" $clk_names1 stringlist "pl.dtsi"
+                            add_prop "${eth_node}" "clocks" $clkvals1 reference "pl.dtsi" 1
+                            add_prop "${eth_node}" "clock-names" $clk_names1 stringlist "pl.dtsi" 1
                             set clk_names1 ""
                             set clkvals1 ""
                         }
@@ -590,13 +606,18 @@
                             regsub -all " " $ini2 "" ini2
                             regsub -all "\<&||\t" $ini2 {} ini2
                             if {[llength $dclk]} {
-                                append clkvals2  "$ini2, [lindex $clk_list $dclk_index],[lindex $clk_list $axi_index_2], <&$clks"
+                                set dclk_ini2 [lindex $clk_list $dclk_index]
+                                set dclk_ini2 [string trim $dclk_ini2]
+                                if {![string match -nocase "<&*" "$dclk_ini2"]} {
+                                    set dclk_ini2 "<&$dclk_ini2"
+                                }
+                                append clkvals2  "$ini2, $dclk_ini2, [lindex $clk_list $axi_index_2], <&$clks"
                             } else {
                                 append clkvals2  "$ini2, [lindex $clk_list $axi_index_2], <&$clks"
                             }
                             append clk_label2 $drv_handle "_" $core
-                            add_prop "${eth_node}" "clocks" $clkvals2 reference "pl.dtsi"
-                            add_prop "${eth_node}" "clock-names" $clk_names2 stringlist "pl.dtsi"
+                            add_prop "${eth_node}" "clocks" $clkvals2 reference "pl.dtsi" 1
+                            add_prop "${eth_node}" "clock-names" $clk_names2 stringlist "pl.dtsi" 1
                             set clk_names2 ""
                             set clkvals2 ""
                         }
@@ -614,13 +635,18 @@
                             regsub -all " " $ini "" ini
                             regsub -all "\<&||\t" $ini {} ini
                             if {[llength $dclk]} {
-                                append clkvals3 "$ini, [lindex $clk_list $dclk_index], [lindex $clk_list $axi_index_3]>, <&$clks"
+                                set dclk_ini3 [lindex $clk_list $dclk_index]
+                                set dclk_ini3 [string trim $dclk_ini3]
+                                if {![string match -nocase "<&*" "$dclk_ini3"]} {
+                                    set dclk_ini3 "<&$dclk_ini3"
+                                }
+                                append clkvals3 "$ini, $dclk_ini3, [lindex $clk_list $axi_index_3]>, <&$clks"
                             } else {
                                 append clkvals3 "$ini, [lindex $clk_list $axi_index_3]>, <&$clks"
                             }
                             append clk_label3 $drv_handle "_" $core
-                            add_prop "${eth_node}" "clocks" $clkvals3 reference "pl.dtsi"
-                            add_prop "${eth_node}" "clock-names" $clk_names3 stringlist "pl.dtsi"
+                            add_prop "${eth_node}" "clocks" $clkvals3 reference "pl.dtsi" 1
+                            add_prop "${eth_node}" "clock-names" $clk_names3 stringlist "pl.dtsi" 1
                             set clk_names3 ""
                             set clkvals3 ""
                         }
