@@ -1,6 +1,6 @@
 # System Device Tree Generator (SDTGen / DTG++)
 
-A TCL package that can generate System Device Tree.
+A tool with TCL interface that can generate System Device Tree.
 More info on the evolution can be read in following segments.
 
 ## Device Tree (DT)
@@ -22,22 +22,18 @@ More details on the System Device Tree spec can be found inside devicetree-org l
 ## Hardware Software Interface (HSI)
 An AMD-Xilinx proprietary TCL based utility that can extract the hardware specific data from
 the XSA (Xilinx Support Archive) file into a human readable format. The extracted hardware
-meta-data can then be passed on to the software world.
-
-## XSCT
-XSCT (Xilinx Software Command-Line) is a tool that allows us to create complete Xilinx SDK
-workspaces using the batch mode, investigate the hardware and software, debug and run the
-project, all from the command line. It is capable of running TCL scripts. It is an ‘umbrella’
-tool that covers; HSI, XSDB, SDTGen, Bootgen, and the debugger. More info on how to use HSI
-from XSCT command line can be found from these sections at:
-[Extracting HW info using HSI from the XSCT command line](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-ExtractingHWinfousingHSIfromtheXSCTcommandline:) and [Internal HSI utilities](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-InternalHSIutilities:).
-More details on XSCT tool can be accessed at [UG-1208](https://usermanual.wiki/Document/ug1208xsctreferenceguide.1558655150/view).
+meta-data can then be passed on to the software world.<br>
+More info on how to use HSI commands can be found at:
+[Extracting HW info using HSI](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-ExtractingHWinfousingHSIfromtheXSCTcommandline:) and [Internal HSI utilities](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-InternalHSIutilities:)
 
 ## SDTGen (DTG++)
-An XSCT package that uses TCL scripts and Hardware HSI APIs to read the hardware information
-from XSA and put it in System Device Tree (SDT) format. The TCL source files for this
-package is kept in present repository and the same can be found in the installed xsct tool. Let's call this path the SDT repo from here on. Sample SDT repo location inside Vitis install may look like /home/abc/Xilinx/Vitis/2024.1/data/system-device-tree-xlnx. By default, the package sources the device_tree.tcl file from
-&lt;SDT repo&gt;/device_tree/data/device_tree.tcl and exports the following three procs as sdtgen commands:
+A tool that uses TCL scripts and Hardware HSI APIs to read the hardware information from XSA and
+put it in System Device Tree (SDT) format. The TCL source files for the tool is kept in present
+repository and the same can be found in the installed Vitis/Vivado tool. Let's call this path the
+SDT repo from here on. Sample SDT repo location inside Vitis/Vivado install may look like
+<I>/home/abc/Xilinx/Vivado/2025.1/data/system-device-tree-xlnx</I>. By default, the SDTGen tool sources the
+device_tree.tcl file from <I>&lt;SDT repo&gt;/device_tree/data/device_tree.tcl</I> and exports the following
+three procs:
 * set_dt_param
 * get_dt_param
 * generate_sdt
@@ -88,48 +84,48 @@ For different platforms, extracted files are:
 ## Steps to use SDTGen
 			
 ```bash
-XSCT Setup:
+SDTGen Setup:
 -------------
-        Get the path of XSCT binary from the installed Vitis tool
-        (say: /home/abc/Xilinx/Vitis/2024.1/bin/xsct)
+        Get the path of sdtgen binary from the installed Vitis/Vivado tool
+        (say: /home/abc/Xilinx/Vivado/2025.1/bin/sdtgen or /home/abc/Xilinx/Vitis/2025.1/bin/sdtgen)
 
 Put commands like below in a TCL file (say sdt.tcl)
 ------------
 	set outdir [lindex $argv 1]
 	set xsa [lindex $argv 0]
 	exec rm -rf $outdir
-	sdtgen set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0
-	sdtgen generate_sdt
+	set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0
+	generate_sdt
 ------------
 
-Run XSCT command like below to get the SDT directory
+Run sdtgen command like below to get the SDT directory
 ------------
-<xsct binary path> sdt.tcl <Vivado generated xsa path> <sdt outdir where files will be generated>
+<sdtgen binary path> sdt.tcl <Vivado generated xsa path> <sdt outdir where files will be generated>
 e.g.
-/home/abc/Xilinx/Vitis/2024.1/bin/xsct sdt.tcl design1_wrapper.xsa sdt_outdir
+/home/abc/Xilinx/Vitis/2025.1/bin/sdtgen sdt.tcl design1_wrapper.xsa sdt_outdir
 ```
 
 ## Command line arguments available with SDTGen
 ### set_dt_param
 Takes the user inputs to set the parameters needed for the system device tree generation.
 * Has two mandatory arguments:
-	* -xsa : sets the XSA path for which SDT has to be generated.
-	* -dir : sets the output directory where the SDT has to be generated.
+	* <I>-xsa</I> : sets the XSA path for which SDT has to be generated.
+	* <I>-dir</I> : sets the output directory where the SDT has to be generated.
 * Other available optional arguments are:
 	* Category 1: Arguments that help in including dtsi files into final SDT
-		* -board_dts :
+		* <I>-board_dts</I> :
 			* includes the static board specific DTSI file available at
 				<SDT repo>/device_tree/data/kernel_dtsi/2024.1/BOARD inside the final SDT
 			* Mostly useful for Linux use cases.
-		* -include_dts :
+		* <I>-include_dts</I> :
 			* includes a user defined custom dtsi file inside the final SDT
 			* useful in providing customized use case specific data which can not be generated by the SDTGen tool
 			* Can be a handy workaround when SDTGen tool is generating a wrong data, can be used to override the existing data in the final SDT
 	* Category 2: Arguments that can help in debugging issues while generating SDT (Useful for developers)
-		* -trace :
+		* <I>-trace</I> :
 			* enables traces of the procs called to generate the SDT
 			* gives the sequence of APIs called, helps in debugging which proc call actually failed
-		* -debug :
+		* <I>-debug</I> :
 			* enables the warning prints wherever mentioned in the TCL scripts
 			* Helpful in getting more info on what might go missing in the final SDT even though the SDT generation is successful.
 			* Less frequently used.
@@ -138,34 +134,35 @@ Takes the user inputs to set the parameters needed for the system device tree ge
 # Note that the Multiple parameter setting in one line is allowed for all the available arguments of set_dt_param.
 
 # Set the mandatory set_dt_param arguments.
-xsct% sdtgen set_dt_param -dir outdir
-xsct% sdtgen set_dt_param -xsa design_1_wrapper.xsa
+sdtgen% set_dt_param -dir outdir
+sdtgen% set_dt_param -xsa design_1_wrapper.xsa
 
 # Multiple options in a single command
-xsct% sdtgen set_dt_param -xsa system.xsa -dir sdt_outdir
+sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir
 
 # Sample optional arguments with set_dt_param
 
 # Category 1: Arguments that help in including dtsi files into final SDT
 
-# Include board specific dtsi file from <SDT repo>/device_tree/data/kernel_dtsi/2024.1/BOARD path
-# Below command copies the <SDT repo>/device_tree/data/kernel_dtsi/2024.1/BOARD/zcu102-rev1.0.dtsi file into SDT output directory and add include statement in system-top.dts
-xsct% sdtgen set_dt_param -board_dts zcu102-rev1.0
+# Include board specific dtsi file from <SDT repo>/device_tree/data/kernel_dtsi/2025.1/BOARD path
+# Below command copies the <SDT repo>/device_tree/data/kernel_dtsi/2025.1/BOARD/zcu102-rev1.0.dtsi file
+# into SDT output directory and add include statement in system-top.dts
+sdtgen% set_dt_param -board_dts zcu102-rev1.0
 
 # Include a user defined custom dtsi file inside the final SDT
 # Below command copies the custom.dtsi file into SDT output directory and add include statement in system-top.dts
-xsct% sdtgen -include_dts <path>/custom.dtsi
+sdtgen% set_dt_param -include_dts <path>/custom.dtsi
 
 # Category 2 : Arguments that can help in debugging issues while generating SDT (Useful for developers)
 
 # Enable the trace i.e. the flow of TCL procs that are getting invoked during SDT generation. The default trace option is "disable".
-xsct% sdtgen set_dt_param -trace enable
+sdtgen% set_dt_param -trace enable
 
 # Enable the debug option to get warning prints. The default debug option is "disable".
-xsct% sdtgen set_dt_param -debug enable
+sdtgen% set_dt_param -debug enable
 
 # Command Help
-xsct% sdtgen set_dt_param -help
+sdtgen% set_dt_param -help
             Usage: set/get_dt_param \[OPTION\]
             -xsa              Vivado hw design file
             -board_dts        board specific file
@@ -175,16 +172,16 @@ xsct% sdtgen set_dt_param -help
             -trace            Enable DTG++ traces
 
 # Combining everything in one command
-xsct% sdtgen set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -include_dts ./custom.dtsi -trace enable -debug enable
+sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -include_dts ./custom.dtsi -trace enable -debug enable
 ```
 ### get_dt_param
-Returns the values set for the given argument. Returns the default values if the argument is not set using the "sdtgen set_dt_param".
-Do mark the usage of -repo. Helpful in finding the path of the system device tree TCLs being used.
+Returns the values set for the given argument. Returns the default values if the argument is not set using the <I>set_dt_param</I>.
+	Do mark the usage of <I>-repo</I>. Helpful in finding the path of the system device tree TCLs being used.
 * Usage:
 ```bash
-# Unlike "sdtgen set_dt_param", "sdtgen get_dt_param" expects only one argument in one command.
+# Unlike set_dt_param, get_dt_param expects only one argument in one command.
 
-xsct% sdtgen get_dt_param -help
+sdtgen% get_dt_param -help
             Usage: set/get_dt_param \[OPTION\]
             -repo             system device tree repo source
             -xsa              Vivado hw design file
@@ -195,25 +192,27 @@ xsct% sdtgen get_dt_param -help
             -trace            Enable DTG++ traces
 
 
-xcst% sdtgen get_dt_param -board_dts
+sdtgen% get_dt_param -board_dts
 zcu102-rev1.0
-xcst% sdtgen get_dt_param -dir
+sdtgen% get_dt_param -dir
 sdt_outdir
-xsct% sdtgen get_dt_param -xsa
+sdtgen% get_dt_param -xsa
 system.xsa
-xsct% sdtgen get_dt_param -repo
-/home/abc/Xilinx/Vitis/2024.1/data/system-device-tree-xlnx
+sdtgen% get_dt_param -repo
+/home/abc/Xilinx/Vitis/2025.1/data/system-device-tree-xlnx
 ```
 ### generate_sdt
 Generates the system device tree with the set parameters.
 Usage:
 ```bash
-sdtgen generate_sdt
+generate_sdt
 ```
 
 ### How to use custom system device tree repository path with SDTGen
-#### Usage of CUSTOM_SDT_REPO (New in 2024.1):
- As mentioned in earlier section, by default the TCL source files for sdtgen package is residing in the installed xsct tool under &lt;Installed Vitis Path&gt;/2024.1/data/system-device-tree-xlnx. If user wants to use the local SDT repo instead of the installed one, CUSTOM_SDT_REPO variable has to be set in the environment.
+ As mentioned in earlier section, by default the TCL source files for sdtgen package is residing in the
+installed Vitis/Vivado tool under <br><I> &lt;Installed Vitis/Vivado Path&gt;/2025.1/data/system-device-tree-xlnx</I>.
+If user wants to use the local SDT repo instead of the installed one, "<I>CUSTOM_SDT_REPO</I>" variable has to
+be set in the environment.
 
 ```bash
 # Say the local SDT repo is kept at /home/abc/local_sdt_repo/system-device-tree-xlnx
@@ -222,41 +221,10 @@ sdtgen generate_sdt
 # e.g.
 export CUSTOM_SDT_REPO=/home/abc/local_sdt_repo/system-device-tree-xlnx
 
-# Use the same tcl as generated above (without any change) and call xsct command
-/home/abc/Xilinx/Vitis/2024.1/bin/xsct sdt.tcl design1_wrapper.xsa sdt_outdir
+# Use the same tcl as generated above (without any change) and call sdtgen command
+/home/abc/Xilinx/Vitis/2025.1/bin/sdtgen sdt.tcl design1_wrapper.xsa sdt_outdir
 
-# This will lead to prints like below while launching XSCT which ensures that these local tcls are being sourced
+# This will lead to prints like below while launching SDTGen which ensures that these local tcls are being sourced
 # Info: Detected Custom SDT repo path at /home/abc/local_sdt_repo/system-device-tree-xlnx Verifying...
 # Successfully sourced custom SDT Repo path.
-```
-#### Old flow (adopted till 2023.2, deprecated in 2024.1):
-##### If there is NO change in the device_tree.tcl file:
-* Use -repo option with sdtgen set_dt_param command.
-* Usage:
-```bash
-sdtgen set_dt_param -xsa design1_wrapper.xsa -dir outdir -repo /home/abc/local_sdt_repo/system-device-tree-xlnx
-```
-
-##### If there is a change in device_tree.tcl file along with other files:
-* When the installed XSCT path is write protected:
-	* Copy scripts folder from Vitis installation directory (say: /home/abc/Xilinx/Vitis/2024.1/scripts) to another path (eg./tmp/path/)
-	* Set MYVIVADO variable to the copied XSCT scripts path (eg. export MYVIVADO=/tmp/path/)
-	* Update the sdt_path variable in sdtgen.tcl kept at the copied XSCT scripts path. sdtgen.tcl can be found inside /tmp/path/scripts/xsct/sdtgen/sdtgen.tcl
-* When the installed XSCT path is NOT write protected:
-	* Update the sdt_path variable in sdtgen.tcl kept at /home/abc/Xilinx/Vitis/2024.1/scripts/xsct/sdtgen/sdtgen.tcl with local SDT repo path.
-* Set the -repo option to the local SDT repo path in conjunction with above steps when other file changes are also involved in addition to device_tree.tcl changes
-* Usage:
-```bash
-# Copy the scripts folder into a local location
-mkdir /tmp/path
-cp -r /home/abc/Xilinx/Vitis/2024.1/scripts /tmp/path/
-
-# Set the MYVIVADO variable to the copied XSCT scipts path
-export MYVIVADO=/tmp/path
-
-# Open the /tmp/path/scripts/xsct/sdtgen/sdtgen.tcl file and update the sdt_path with the local SDT repo path
-# eg. set sdt_path $env(XILINX_VITIS) -> set sdt_path /home/abc/local_sdt_repo/system-device-tree-xlnx
-
-# If there are changes in files other than device_tree.tcl
-sdtgen set_dt_param -xsa design1_wrapper.xsa -dir outdir -repo /home/abc/local_sdt_repo/system-device-tree-xlnx
 ```
