@@ -1,135 +1,65 @@
-# System Device Tree Generator (SDTGen / DTG++)
+# Table of contents
 
-A tool with TCL interface that can generate System Device Tree.
-More info on the evolution can be read in following segments.
+- [Overview](#Overview)
+- [Requirements](#Requirements)
+- [Supported devices](<#Supported devices">)
+- [Usage](#Usage)
+- [Tutorial](#Tutorial)
+- [Background/History](#Background/History)
 
-## Device Tree (DT)
-A device tree is a data structure and language for describing hardware. It is a description
-of hardware that is readable by an operating system so that the operating system doesn't
-need to hard code details of the machine.
-Info courtesy: https://www.kernel.org/doc/html/latest/devicetree/usage-model.html#linux-and-the-devicetree
+# Overview
 
-## System Device Tree (SDT)
-The System Device Tree is a superset of a traditional Linux-compatible devicetree.
-An overview of System Device Tree concept can be found on the Linaro site [here](https://static.linaro.org/connect/lvc20/presentations/LVC20-314-0.pdf).
-System Device Tree is architected to be compatible with traditional device-tree files and acts as a superset extension of the original syntax.
-In general, System Device Tree represents the entirety of the system, including components not historically relevant to an operating system.
-Unlike regular Linux device tree which represents hardware information that is only needed for
-Linux/APU, System Device Tree represents complete hardware information in device tree format.
-For example, System Device Tree can carry information about the CPU cluster and memory associated with the Cortex-R CPU cluster in a device such as Zynq UltraScale+ MPSoC. While this information isn't needed for Linux to operate properly it can be used in the context of the Lopper tool (refer [link](https://static.linaro.org/connect/lvc20/presentations/LVC20-314-0.pdf)) to allow complex inter-software architectures to be specified in simple configuration files.
-More details on the System Device Tree spec can be found inside devicetree-org lopper repository [here](https://github.com/devicetree-org/lopper/tree/master/specification/source).
+SDTGen is a tool that implements a TCL interface to generate [System
+Device
+Trees](https://github.com/devicetree-org/lopper/blob/master/specification/source/chapter1-introduction.rst)
+for AMD&trade; FPGAs using an XSA file as input.
 
-## Hardware Software Interface (HSI)
-An AMD-Xilinx proprietary TCL based utility that can extract the hardware specific data from
-the XSA (Xilinx Support Archive) file into a human readable format. The extracted hardware
-meta-data can then be passed on to the software world.<br>
-More info on how to use HSI commands can be found at:
-[Extracting HW info using HSI](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-ExtractingHWinfousingHSIfromtheXSCTcommandline:) and [Internal HSI utilities](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-InternalHSIutilities:)
+# Requirements
 
-## SDTGen (DTG++)
-A tool that uses TCL scripts and Hardware HSI APIs to read the hardware information from XSA and
-put it in System Device Tree (SDT) format. The TCL source files for the tool is kept in present
-repository and the same can be found in the installed Vitis/Vivado tool. Let's call this path the
-SDT repo from here on. Sample SDT repo location inside Vitis/Vivado install may look like
-<I>/home/abc/Xilinx/Vivado/2025.1/data/system-device-tree-xlnx</I>. By default, the SDTGen tool sources the
-device_tree.tcl file from <I>&lt;SDT repo&gt;/device_tree/data/device_tree.tcl</I> and exports the following
-three procs:
-* set_dt_param
-* get_dt_param
-* generate_sdt
+This tool requires that you have access to [AMD Vivado&trade;  Design
+Suite](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vivado.html)
+or [AMD Vitis&trade; Unified Software
+Platform](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vitis.html)
 
-## Input for SDTGen
+# Supported devices
 
-Vivado generated XSA.
+System Device Tree Generator (SDTGen) currently only supports AMD&trade;
+SoCs and designs based on ARM&trade; processors. Support for AMD
+MicroBlaze&trade; Processors and AMD MicroBlaze&trade; V Processors is
+limited and will not provide Linux&reg; or bare metal device trees. 
 
-## Output of SDTGen
-System Device Tree files.
-```bash
-The generated system device tree contains following files.
-	soc.dtsi:	which is a static SOC specific file.
-			e.g.: versal.dtsi
-	pl.dtsi:	which contains Programmable Logic(soft IPs) information.
-	board.dtsi:	which is Board file.
-			Ex: versal-vck190-reva
-	clk.dtsi:	which is clock information.
-			Ex: versal-clk.dtsi
-	system-top.dts:	which is top level system information which
-			contains memory, clusters, aliases etc.
-	pcw.dtsi:	which contains peripheral configuration wizard information
-			of the peripherals.
+# Usage 
 
-Apart from the dtsi files and system-top.dts, system device tree output directory also contains
-some files that are needed to configure the hardware. These files are available within XSA and
-are extracted as they are, using hsi::open_hw_design. The call to hsi::open_hw_design command
-is wrapped within generate_sdt.
+## Flow
 
-For different platforms, extracted files are:
-* Microblaze / Microblaze RISCV:
-      - bitstream (.bit)
-* Zynq:
-     - ps7_inits (.c, .h, .tcl etc)
-     - bitstream(.bit)
-* ZynqMP:
-     - psu_inits (.c, .h, .tcl etc)
-     - bitstream(.bit)
-* Versal:
-     - PDI (.pdi)
-     - A folder named "extracted" that contains:
-	  - ELFs like plm, psm
-	  - CDOs like lpd, fpd, pmc_data etc.
-	  - bif file that can re-construct the PDI using above artifacts
-```
-##### Note: Clock files, SOC file, BOARD files are static files which resides inside the DTG++.
-
-## Steps to use SDTGen
-			
-```bash
-SDTGen Setup:
--------------
-        Get the path of sdtgen binary from the installed Vitis/Vivado tool
-        (say: /home/abc/Xilinx/Vivado/2025.1/bin/sdtgen or /home/abc/Xilinx/Vitis/2025.1/bin/sdtgen)
-
-Put commands like below in a TCL file (say sdt.tcl)
-------------
-	set outdir [lindex $argv 1]
-	set xsa [lindex $argv 0]
-	exec rm -rf $outdir
-	set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0
-	generate_sdt
-------------
-
-Run sdtgen command like below to get the SDT directory
-------------
-<sdtgen binary path> sdt.tcl <Vivado generated xsa path> <sdt outdir where files will be generated>
-e.g.
-/home/abc/Xilinx/Vitis/2025.1/bin/sdtgen sdt.tcl design1_wrapper.xsa sdt_outdir
-```
+SDTGen requires a multi-stage approach for usage. First one needs to set
+it up with parameters like input path, output path, and external DTS
+files, and then running a command to generate the output. 
 
 ## Command line arguments available with SDTGen
 ### set_dt_param
-Takes the user inputs to set the parameters needed for the system device tree generation.
-* Has two mandatory arguments:
-	* <I>-xsa</I> : sets the XSA path for which SDT has to be generated.
-	* <I>-dir</I> : sets the output directory where the SDT has to be generated.
-* Other available optional arguments are:
-	* Category 1: Arguments that help in including dtsi files into final SDT
-		* <I>-board_dts</I> :
-			* includes the static board specific DTSI file available at
-				<SDT repo>/device_tree/data/kernel_dtsi/2024.1/BOARD inside the final SDT
-			* Mostly useful for Linux use cases.
-		* <I>-include_dts</I> :
-			* includes a user defined custom dtsi file inside the final SDT
-			* useful in providing customized use case specific data which can not be generated by the SDTGen tool
-			* Can be a handy workaround when SDTGen tool is generating a wrong data, can be used to override the existing data in the final SDT
-	* Category 2: Arguments that can help in debugging issues while generating SDT (Useful for developers)
-		* <I>-trace</I> :
-			* enables traces of the procs called to generate the SDT
-			* gives the sequence of APIs called, helps in debugging which proc call actually failed
-		* <I>-debug</I> :
-			* enables the warning prints wherever mentioned in the TCL scripts
-			* Helpful in getting more info on what might go missing in the final SDT even though the SDT generation is successful.
-			* Less frequently used.
-* Usage:
+Takes the user inputs to set the parameters needed for the system device
+tree generation.
+* Mandatory arguments: 
+  * `-xsa` : Sets the XSA path for which SDT has to be generated. 
+  * `-dir` : Sets the output directory where the SDT is to be generated.
+* Optional arguments:
+  * `-board_dts` : Includes the static AMD&trade; development board
+  	specific DTSI file available at `<this
+  	repo>/device_tree/data/kernel_dtsi/<release>/<board>` inside the
+  	final SDT
+  * `-include_dts` : Includes a user defined custom `.dtsi` file inside the
+  	final SDT 
+	* Can be used to workaround when SDTGen tool is generating
+  	incorrect data, can be used to override the existing data in the
+  	final SDT, or add a custom board `.dtsi` file.
+  * `-trace` : Enables traces of the procs called to generate the SDT
+  * `-debug` : Enables the warning prints wherever mentioned in the
+  	TCL scripts 
+  	* Helpful in getting more info on what might go missing
+  	in the final SDT even though the SDT generation is successful.
+  
+#### Example
 ```bash
 # Note that the Multiple parameter setting in one line is allowed for all the available arguments of set_dt_param.
 
@@ -142,8 +72,6 @@ sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir
 
 # Sample optional arguments with set_dt_param
 
-# Category 1: Arguments that help in including dtsi files into final SDT
-
 # Include board specific dtsi file from <SDT repo>/device_tree/data/kernel_dtsi/2025.1/BOARD path
 # Below command copies the <SDT repo>/device_tree/data/kernel_dtsi/2025.1/BOARD/zcu102-rev1.0.dtsi file
 # into SDT output directory and add include statement in system-top.dts
@@ -152,8 +80,6 @@ sdtgen% set_dt_param -board_dts zcu102-rev1.0
 # Include a user defined custom dtsi file inside the final SDT
 # Below command copies the custom.dtsi file into SDT output directory and add include statement in system-top.dts
 sdtgen% set_dt_param -include_dts <path>/custom.dtsi
-
-# Category 2 : Arguments that can help in debugging issues while generating SDT (Useful for developers)
 
 # Enable the trace i.e. the flow of TCL procs that are getting invoked during SDT generation. The default trace option is "disable".
 sdtgen% set_dt_param -trace enable
@@ -175,9 +101,9 @@ sdtgen% set_dt_param -help
 sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -include_dts ./custom.dtsi -trace enable -debug enable
 ```
 ### get_dt_param
-Returns the values set for the given argument. Returns the default values if the argument is not set using the <I>set_dt_param</I>.
-	Do mark the usage of <I>-repo</I>. Helpful in finding the path of the system device tree TCLs being used.
-* Usage:
+Returns the values set for the given argument. Returns the default
+values if the argument has not been set using the "sdtgen set_dt_param". 
+#### Example 
 ```bash
 # Unlike set_dt_param, get_dt_param expects only one argument in one command.
 
@@ -202,17 +128,54 @@ sdtgen% get_dt_param -repo
 /home/abc/Xilinx/Vitis/2025.1/data/system-device-tree-xlnx
 ```
 ### generate_sdt
-Generates the system device tree with the set parameters.
-Usage:
+Generates the system device tree with the set parameters. Usage:
 ```bash
 generate_sdt
 ```
 
-### How to use custom system device tree repository path with SDTGen
- As mentioned in earlier section, by default the TCL source files for sdtgen package is residing in the
-installed Vitis/Vivado tool under <br><I> &lt;Installed Vitis/Vivado Path&gt;/2025.1/data/system-device-tree-xlnx</I>.
-If user wants to use the local SDT repo instead of the installed one, "<I>CUSTOM_SDT_REPO</I>" variable has to
-be set in the environment.
+## Output of SDTGen
+
+SDTGen outputs both hardware configuration information in the form of
+System Device Trees, but also binary files containing "firmware"
+(initial bootloaders, hardware configuration files) for the device.
+
+### System Device Tree files.
+
+The generated system device tree contains following files.
+* Files that are static for a given device family:	
+  * soc.dtsi: A SOC specific file containing information about the CPU . e.x.: versal.dtsi
+  * board.dtsi: A board file copied from AMD&trade;'s prebuilt board repository. e.x.: versal-vck190-reva
+  * clk.dtsi: Clock information for the device. e.x.: versal-clk.dtsi
+* Files dynamically generated based on AMD Vivado&trade; Design Suite output: 
+  * pl.dtsi: Contains Programmable Logic(soft IPs) information.
+  * system-top.dts: System information about memory, CPU clusters, aliases etc.
+  * pcw.dtsi: Information about the configuration of the processing system from the AMD Vivado&trade;  Design Suite peripheral configuration wizard. 
+
+### Binary files
+Apart from the `.dtsi` files and `system-top.dts`, the SDTGen output directory also contains some files that are needed to configure the hardware. These files are available within XSA and are extracted and placed into the output directory.
+
+For different platforms, extracted files are:
+* Microblaze / Microblaze RISCV: - bitstream (.bit)
+* Zynq:
+     - ps7_inits (.c, .h, .tcl etc)
+     - bitstream(.bit)
+* ZynqMP:
+     - psu_inits (.c, .h, .tcl etc)
+     - bitstream(.bit)
+* Versal:
+     - PDI (.pdi)
+     - A folder named "extracted" that contains:
+	  - ELFs like plm, psm
+	  - CDOs like lpd, fpd, pmc_data etc.
+	  - bif file that can re-construct the PDI using above artifacts
+
+## How to use custom system device tree repository path with SDTGen
+### Usage of CUSTOM_SDT_REPO:
+ By default SDTGen will run from the installed tool under &lt;Installed
+ Vitis Path&gt;/2025.1/data/system-device-tree-xlnx or &lt;Installed
+ Vivado Path&gt;/2025.1/data/system-device-tree-xlnx. If you want to use
+ the local SDT repo instead of the installed one, use the environment
+ variable `CUSTOM_SDT_REPO`.
 
 ```bash
 # Say the local SDT repo is kept at /home/abc/local_sdt_repo/system-device-tree-xlnx
@@ -228,3 +191,97 @@ export CUSTOM_SDT_REPO=/home/abc/local_sdt_repo/system-device-tree-xlnx
 # Info: Detected Custom SDT repo path at /home/abc/local_sdt_repo/system-device-tree-xlnx Verifying...
 # Successfully sourced custom SDT Repo path.
 ```
+# Tutorial
+
+The following shows how to use SDTGen with a helper script to create a
+System Device Tree from a `.xsa` file. 
+
+1. Determine the path of XSCT binary from the installed Vitis tool
+
+	For example
+	```
+	/home/abc/Xilinx/Vitis/2025.1/sdtgen/
+	```
+
+2. Put the commands below in a TCL file (e.x. `sdt.tcl`)
+	```
+	set outdir [lindex $argv 1]
+	set xsa [lindex $argv 0]
+	exec rm -rf $outdir
+	sdtgen set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0
+	sdtgen generate_sdt
+	```
+
+3. Run the sdtgen command to get the SDT directory
+
+	```
+	<sdtgen binary path> sdt.tcl <Vivado generated xsa path> <sdt outdir where files will be generated>
+	```
+	For example
+	```
+	<Vitis install location>/bin/sdtgen sdt.tcl design1_wrapper.xsa sdt_outdir
+	```
+
+# Background/History
+## Device Tree (DT)
+A [device
+tree](https://www.kernel.org/doc/html/latest/devicetree/usage-model.html#linux-and-the-devicetree
+) is a data structure and language for describing hardware. It is a
+description of hardware that is readable by an operating system so that
+the operating system doesn't need to hard code details of the machine.
+
+## System Device Tree (SDT)
+The System Device Tree is a superset of a traditional Linux-compatible
+devicetree intended to support more complex software including
+hypervisors and RTOSs. System Device Tree is architected to be
+compatible with traditional device-tree files and acts as a superset
+extension of the original syntax. In general, the System Device Tree
+represents the entirety of the system, including components not
+historically relevant to an individual operating system, in contrast the
+regular Linux device tree represents hardware information that is only
+needed for Linux/APU.
+
+System Device Tree uses the same syntax as traditional Device Tree. 
+
+For example, a System Device Tree can include information about the CPU
+cluster and memory associated with the Cortex-R CPU cluster in a device
+such as AMD Zynq&trade; UltraScale+&trade; MPSoC in addition to the
+Cortex-A cluster available in traditional Device Tree.
+
+ System Device Trees are intended to be parsed with a tool like
+[Lopper](https://github.com/devicetree-org/lopper/tree/master) to allow
+complex inter-software architectures to be specified in simple
+configuration files. More details on the System Device Tree spec can be
+found inside [devicetree-org lopper
+repository](https://github.com/devicetree-org/lopper/tree/master/specification/source).
+
+## Hardware Software Interface (HSI)
+An AMD-Xilinx proprietary TCL based utility that can extract the
+hardware specific data from the XSA (Xilinx Support Archive) file into a
+human readable format. The extracted hardware meta-data can then be
+passed on to the software world. HSI is provided by AMD Vivado&trade;
+Design Suite or AMD Vitis&trade; Unified Software Platform.
+
+More info on how to use HSI commands can be found at:
+
+[Extracting HW info using
+HSI](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-ExtractingHWinfousingHSIfromtheXSCTcommandline:)
+and [Internal HSI
+utilities](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841693/HSI+debugging+and+optimization+techniques#HSIdebuggingandoptimizationtechniques-InternalHSIutilities:)
+
+
+## SDTGen
+SDTGen (this tool) is a tool that uses TCL scripts and Hardware HSI APIs
+to read the hardware information from XSA and put it in System Device
+Tree (SDT) format. The TCL source files for the tool is kept in present
+repository and the same can be found in the install directory for AMD
+Vitis&trade; Unified Software Platform or AMD Vivado&trade;  Design
+Suite. 
+
+SDTGen exports the following three procs into it's environment:
+
+* set_dt_param
+* get_dt_param
+* generate_sdt
+
+
