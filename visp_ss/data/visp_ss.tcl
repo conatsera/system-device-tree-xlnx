@@ -147,8 +147,16 @@ proc visp_ss_generate {drv_handle} {
 			set isp_id [expr {$tile * 2 + $isp}]
 			set sub_node_label "visp_ss_${isp_id}"
 			set sub_baseaddr [format %08x [expr 0x$baseaddr + $isp_id * $sub_region_size]]
+			set sub_baseaddr1 [expr 0x$baseaddr + $isp_id * $sub_region_size]
 			set sub_node [create_node -l ${sub_node_label} -n "visp_ss" -u $sub_baseaddr -p $bus_name -d $default_dts]
-			set reg_value "0x0 0x$sub_baseaddr 0x0 $sub_region_size"
+			if {$sub_baseaddr1 > 0xFFFFFFFF} {
+				# >32-bit address case
+				set sub_baseaddr_high [format %08x [expr ($sub_baseaddr1 >> 32) & 0xFFFFFFFF]]
+				set sub_baseaddr_low [format %08x [expr $sub_baseaddr1 & 0xFFFFFFFF]]
+				set reg_value "0x$sub_baseaddr_high 0x$sub_baseaddr_low 0x0 $sub_region_size"
+			} else {
+				set reg_value "0x0 0x$sub_baseaddr 0x0 $sub_region_size"
+			}
 			add_prop "$sub_node" "reg" $reg_value hexlist $default_dts
 			add_prop "$sub_node" "status" "okay" string $default_dts
 			dict set reg_mapping $sub_node_label $reg_value
