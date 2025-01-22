@@ -4536,7 +4536,7 @@ proc gen_clk_property {drv_handle} {
 		return
 	}
 
-	set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I}]
+	set clk_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] -filter {TYPE==clk&&DIRECTION==I  || TYPE==gt_usrclk&&DIRECTION==I}]
 	dtg_verbose "clk_pins:$clk_pins"
 	set ip [get_ip_property $drv_handle IP_NAME]
 	set ignore_list "lmb_bram_if_cntlr PERIPHERAL axi_noc mrmac"
