@@ -557,7 +557,7 @@
                                 }
                                 append clkvals  "$ini0, $dclk_ini, $index0>, $clks"
                             } else {
-                                append clkvals  "$ini0, $index0>, <&$clks"
+                                append clkvals  "$ini0, $index0>, $clks"
                             }
 
                             add_prop "${nodep}" "clocks" $clkvals reference "pl.dtsi" 1
@@ -611,9 +611,9 @@
                                 if {![string match -nocase "<&*" "$dclk_ini2"]} {
                                     set dclk_ini2 "<&$dclk_ini2"
                                 }
-                                append clkvals2  "$ini2, $dclk_ini2, [lindex $clk_list $axi_index_2], <&$clks"
+                                append clkvals2  "$ini2, $dclk_ini2, $index2>, $clks"
                             } else {
-                                append clkvals2  "$ini2, [lindex $clk_list $axi_index_2], <&$clks"
+                                append clkvals2  "$ini2, $index2>, $clks"
                             }
                             append clk_label2 $drv_handle "_" $core
                             add_prop "${eth_node}" "clocks" $clkvals2 reference "pl.dtsi" 1
@@ -640,9 +640,9 @@
                                 if {![string match -nocase "<&*" "$dclk_ini3"]} {
                                     set dclk_ini3 "<&$dclk_ini3"
                                 }
-                                append clkvals3 "$ini, $dclk_ini3, [lindex $clk_list $axi_index_3]>, <&$clks"
+                                append clkvals3 "$ini, $dclk_ini3, $index3>, $clks"
                             } else {
-                                append clkvals3 "$ini, [lindex $clk_list $axi_index_3]>, <&$clks"
+                                append clkvals3 "$ini, $index3>, $clks"
                             }
                             append clk_label3 $drv_handle "_" $core
                             add_prop "${eth_node}" "clocks" $clkvals3 reference "pl.dtsi" 1
