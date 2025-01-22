@@ -1999,7 +1999,7 @@ proc proc_mapping {} {
 			if {$ipname in {"psv_pmc_qspi_ospi" "psx_pmc_qspi_ospi" "pmc_qspi_ospi"}} {
 				continue
 			}
-			if {$ipname in {"psv_ipi" "psx_ipi" "ipi"}} {
+			if {$ipname in {"psv_ipi" "psx_ipi" "psu_ipi" "ipi"}} {
 				continue
 			}
 			if {$ipname == "visp_ss"} {
