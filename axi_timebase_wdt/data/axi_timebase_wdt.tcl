@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -28,6 +28,12 @@
         if {![string equal $clk_freq ""]} {
                 add_prop $node "clock-frequency" $clk_freq int "pl.dtsi"
         }
+
+        set proc_type [get_hw_family]
+        if {[regexp "microblaze" $proc_type match]} {
+               gen_dev_ccf_binding $drv_handle "s_axi_aclk"
+        }
+
         set_drv_conf_prop $drv_handle "C_WDT_ENABLE_ONCE" "xlnx,wdt-enable-once" $node
         set_drv_conf_prop $drv_handle "C_WDT_INTERVAL" "xlnx,wdt-interval" $node
         set_drv_conf_prop $drv_handle "C_ENABLE_WINDOW_WDT" "xlnx,enable-window-wdt" $node
