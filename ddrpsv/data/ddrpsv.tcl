@@ -260,7 +260,7 @@
                         if {[lindex [dict get $global_map_dict $procc $index] 0]} {
                         set proc_reg_list [dict get $global_map_dict $procc $index]
                         set count [llength $proc_reg_list]
-                        set count [expr [expr $count-1]/2]
+                        set count [expr $count-1]
                         for {set i 0} { $i <= $count} {set i [expr $i+2]} {
                             set curr_region_access 1
                             set curr_base_addr [lindex [dict get $global_map_dict $procc $index] [expr $i+1]]
