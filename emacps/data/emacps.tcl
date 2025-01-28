@@ -72,7 +72,6 @@
 
     proc emacps_generate {drv_handle} {
         global env
-        update_eth_mac_addr $drv_handle
         set node [get_node $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
