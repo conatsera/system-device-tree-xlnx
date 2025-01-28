@@ -3,7 +3,7 @@
  * dts file for Xilinx Versal
  *
  * (C) Copyright 2017-2022 Xilinx, Inc.
- * (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+ * (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * Michal Simek <michal.simek@xilinx.com>
  */
@@ -846,6 +846,7 @@
 				reg = <0 0xfe200000 0 0x10000>;
 				interrupt-names = "host", "peripheral", "otg", "wakeup";
 				interrupts = <0 0x16 4>, <0 0x16 4>, <0 0x1a 4>, <0x0 0x4a 0x4>;
+				interrupt-parent = <&imux>;
 				/* iommus = <&smmu 0x230>; */
 				snps,dis_u2_susphy_quirk;
 				snps,dis_u3_susphy_quirk;
