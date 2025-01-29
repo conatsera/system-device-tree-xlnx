@@ -1069,6 +1069,7 @@
 
 		mdb_pcie0: pcie@ed931000 {
 				compatible = "amd,versal2-mdb-host";
+                status = "disabled";
 				reg = <0x0 0xed931000 0x0 0x2000>,
 				      <0x1000 0x100000 0x0 0xff00000>,
 				      <0x1000 0x0 0x0 0x100000>,
@@ -1097,6 +1098,7 @@
 
 		mdb_pcie1: pcie@ed939000 {
 				compatible = "amd,versal2-mdb-host";
+                status = "disabled";
 				reg = <0x0 0xed939000 0x0 0x2000>,
 				      <0x1400 0x100000 0x0 0xff00000>,
 				      <0x1400 0x0 0x0 0x100000>,
