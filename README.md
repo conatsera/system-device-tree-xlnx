@@ -26,7 +26,7 @@ Platform](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vitis
 System Device Tree Generator (SDTGen) currently only supports AMD&trade;
 SoCs and designs based on ARM&trade; processors. Support for AMD
 MicroBlaze&trade; Processors and AMD MicroBlaze&trade; V Processors is
-limited and will not provide Linux&reg; or bare metal device trees. 
+limited and will not provide Linux&reg; device trees. 
 
 # Usage 
 
@@ -102,7 +102,7 @@ sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -i
 ```
 ### get_dt_param
 Returns the values set for the given argument. Returns the default
-values if the argument has not been set using the "sdtgen set_dt_param". 
+values if the argument has not been set using the "set_dt_param". 
 #### Example 
 ```bash
 # Unlike set_dt_param, get_dt_param expects only one argument in one command.
@@ -165,15 +165,15 @@ For different platforms, extracted files are:
 * Versal:
      - PDI (.pdi)
      - A folder named "extracted" that contains:
-	  - ELFs like plm, psm
-	  - CDOs like lpd, fpd, pmc_data etc.
-	  - bif file that can re-construct the PDI using above artifacts
+     	- ELFs like plm, psm
+     	- CDOs like lpd, fpd, pmc_data etc.
+     	- bif file that can re-construct the PDI using above artifacts
 
 ## How to use custom system device tree repository path with SDTGen
 ### Usage of CUSTOM_SDT_REPO:
- By default SDTGen will run from the installed tool under &lt;Installed
- Vitis Path&gt;/2025.1/data/system-device-tree-xlnx or &lt;Installed
- Vivado Path&gt;/2025.1/data/system-device-tree-xlnx. If you want to use
+ By default SDTGen will run from the installed tool under <i>&lt;Installed
+ Vitis Path&gt;</i>/2025.1/data/system-device-tree-xlnx or <i>&lt;Installed
+ Vivado Path&gt;</i>/2025.1/data/system-device-tree-xlnx. If you want to use
  the local SDT repo instead of the installed one, use the environment
  variable `CUSTOM_SDT_REPO`.
 
@@ -208,8 +208,8 @@ System Device Tree from a `.xsa` file.
 	set outdir [lindex $argv 1]
 	set xsa [lindex $argv 0]
 	exec rm -rf $outdir
-	sdtgen set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0
-	sdtgen generate_sdt
+	set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0
+	generate_sdt
 	```
 
 3. Run the sdtgen command to get the SDT directory
