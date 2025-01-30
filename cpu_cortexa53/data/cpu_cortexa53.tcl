@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -18,6 +18,7 @@
         set dtsi_fname "zynqmp/zynqmp.dtsi"
         update_system_dts_include [file tail ${dtsi_fname}]
         update_system_dts_include [file tail "zynqmp-clk-ccf.dtsi"]
+        update_system_dts_include [file tail "zynqmp-u-boot.dtsi"]
         set bus_name "amba"
         set ip_name [get_ip_property $drv_handle IP_NAME]
         set fields [split [get_ip_property $drv_handle NAME] "_"]
