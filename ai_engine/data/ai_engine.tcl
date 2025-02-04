@@ -23,7 +23,7 @@
 
 	global is_versal_gen2_platform
 	if {$is_versal_gen2_platform} {
-		set power_domain_family "scmi_devpd"
+		set power_domain_family "versal2_firmware"
 	} else {
 		set power_domain_family "versal_firmware"
 	}
@@ -133,7 +133,7 @@
         }
 
         if {$is_versal_gen2_platform} {
-                set power_domain_family "scmi_devpd"
+                set power_domain_family "versal2_firmware"
         } else {
                 set power_domain_family "versal_firmware"
         }
