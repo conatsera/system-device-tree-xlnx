@@ -659,6 +659,21 @@
         }
         gen_dev_ccf_binding $drv_handle "s_axi_aclk"
         }
+
+        set eoe_tcl_file "$path/axi_eoe/data/axi_eoe.tcl"
+        if {[file exists $eoe_tcl_file]} {
+            source $eoe_tcl_file
+            set eoe_ip [hsi::get_cells -hier -filter {IP_NAME == ethernet_offload}]
+            if {[llength $eoe_ip]} {
+                set mcdma_ip [hsi::get_cells -hier -filter {IP_NAME == axi_mcdma}]
+                set eth_dma [hsi get_property CONFIG.C_ETHERNET_DMA $mcdma_ip]
+                if {[string compare -nocase $eth_dma 1] == 0} {
+                    axi_eoe_generate $eoe_ip $node $dts_file
+                } else {
+                    error "ERROR: Ethernet Offload is not Supported"
+                }
+            }
+        }
     }
 
     proc axi_ethernet_pcspma_phy_node {slave} {

@@ -1827,6 +1827,33 @@
         add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-user-data-width-c0" $GT_CH3_TX_USER_DATA_WIDTH_C0 int $dts_file
         set GT_CH3_TX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH3_TX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-user-data-width-c1" $GT_CH3_TX_USER_DATA_WIDTH_C1 int $dts_file
+
+	lappend mrmac_list "$node" "${mrmac1_node}" "${mrmac2_node}" "${mrmac3_node}"
+	set mcdma_ips [hsi::get_cells -hier -filter {IP_NAME == axi_mcdma}]
+	set len [llength $mcdma_ips]
+
+        set eoe_tcl_file "$path/axi_eoe/data/axi_eoe.tcl"
+        if {[file exists $eoe_tcl_file]} {
+            source $eoe_tcl_file
+            set eoe_ips [hsi::get_cells -hier -filter {IP_NAME == ethernet_offload}]
+            if {[llength $eoe_ips]} {
+                foreach eoe_ip $eoe_ips {
+                        regexp {^.*_.*_.*_.*_.*_(\d+)_.*$} $eoe_ip match digit
+                        for {set i 0} {$i < $len} {incr i} {
+                             set mcdma_node [lindex $mcdma_ips $i]
+                             set eth_dma [hsi get_property CONFIG.C_ETHERNET_DMA $mcdma_node]
+                             if {[string compare -nocase $digit $i] == 0} {
+                                 if {[string compare -nocase $eth_dma 1] == 0} {
+	                             set mrmac_node [lindex $mrmac_list $i]
+                                     axi_eoe_generate $eoe_ip $mrmac_node  $dts_file
+                                 } else {
+                                     error "ERROR: Ethernet Offload is not Supported"
+                                 }
+                             }
+                        }
+                }
+            }
+        }
     }
 
     proc mrmac_generate_reg_property {node base high} {
