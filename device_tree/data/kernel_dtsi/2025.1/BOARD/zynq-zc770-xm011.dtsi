@@ -5,7 +5,6 @@
  * (C) Copyright 2023 Advanced Micro Devices, Inc. All Rights Reserved.
  */
 
-/dts-v1/;
 #include "zynq-7000.dtsi"
 
 / {
