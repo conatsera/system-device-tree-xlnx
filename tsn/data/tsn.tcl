@@ -254,7 +254,9 @@
     return [list $intr_val $intr_parent $intr_names]
     }
 
-    proc tsn_pcspma_phy_node {slave tsn_inst_name} {
+    #The below addresses are derived based on the assumption that an Ethernet FMC card is connected.
+    #If the user connects a different PHY, they must manually update the PHY node accordingly.
+    proc tsn_ethernetfmc_phy_node {slave tsn_inst_name} {
         if {[string match -nocase $slave "${tsn_inst_name}_tsn_temac_2"]} {
                 set phyaddr "2"
         } else {
@@ -264,6 +266,8 @@
         return "$phyaddr $phymode"
     }
 
+    #This code is being added to support backward compatibility with DTG.
+    #Here, #PHY1 and #PHY2 are hardcoded to temac1 and temac2, respectively.
     proc tsn_gen_phy_node args {
         set mdio_node [lindex $args 0]
         set phy_name [lindex $args 1]
@@ -477,7 +481,7 @@
         add_prop "${tsn_mac_node}" "clock-frequency" $freq int $dts_file
         set dts_fil [set_drv_def_dts $dts_file]
         if {$phytype == "rgmii" || $phytype == "gmii"} {
-                set phynode [tsn_pcspma_phy_node $periph $tsn_inst_name]
+                set phynode [tsn_ethernetfmc_phy_node $periph $tsn_inst_name]
                 set phya [lindex $phynode 0]
                 if { $phya != "-1"} {
                         set phy_name "[lindex $phynode 1]"
@@ -582,7 +586,7 @@
         add_prop "${tsn_mac_node}" "interrupt-names" $mac1intr stringlist $dts_file
         add_prop "${tsn_mac_node}" "clock-frequency" $freq int $dts_file
         if {$phytype == "rgmii" || $phytype == "gmii"} {
-                set phynode [tsn_pcspma_phy_node $periph $tsn_inst_name]
+                set phynode [tsn_ethernetfmc_phy_node $periph $tsn_inst_name]
                 set phya [lindex $phynode 0]
                 if { $phya != "-1"} {
                         set phy_name "[lindex $phynode 1]"
