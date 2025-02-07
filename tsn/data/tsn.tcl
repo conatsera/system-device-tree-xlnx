@@ -384,6 +384,7 @@
         set switch_node [create_node -n "tsn_switch" -l epswitch -u $addr -p $parent_node -d $dts_file]
         set hwaddr_learn [hsi get_property CONFIG.EN_HW_ADDR_LEARNING $eth_ip]
         set mgmt_tag [hsi get_property CONFIG.EN_INBAND_MGMT_TAG $eth_ip]
+        set en_pkt_switch [hsi get_property CONFIG.EN_EP_PKT_SWITCH $eth_ip]
         if {[string match -nocase $proc_type "zynq"]} {
                 set switch_reg "0x$addr 0x$size"
         } else {
@@ -401,6 +402,9 @@
         set inhex [format %x 3]
         append numports "/bits/ 16 <0x$inhex>"
         add_prop "${switch_node}" "xlnx,num-ports" $numports noformating $dts_file
+        if {[string match -nocase $en_pkt_switch "true"]} {
+            add_prop "$switch_node" "xlnx,packet-switch" boolean $dts_file
+        }
         global tsn_ep_node
         global tsn_emac0_node
         global tsn_emac1_node
