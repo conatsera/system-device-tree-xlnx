@@ -1047,6 +1047,7 @@
 
 		mmi_usb {
 			compatible = "xlnx,versal2-mmi-dwc3";
+			status = "disabled";
 			ranges;
 			#address-cells = <2>;
 			#size-cells = <2>;
