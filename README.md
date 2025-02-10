@@ -196,11 +196,11 @@ export CUSTOM_SDT_REPO=/home/abc/local_sdt_repo/system-device-tree-xlnx
 The following shows how to use SDTGen with a helper script to create a
 System Device Tree from a `.xsa` file. 
 
-1. Determine the path of XSCT binary from the installed Vitis tool
+1. Determine the path of SDTGen binary path from the installed Vitis tool
 
 	For example
 	```
-	/home/abc/Xilinx/Vitis/2025.1/sdtgen/
+	/home/abc/Xilinx/Vitis/2025.1/bin/sdtgen
 	```
 
 2. Put the commands below in a TCL file (e.x. `sdt.tcl`)
