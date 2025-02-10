@@ -15,7 +15,7 @@
 	model = "AMD Versal VEK385 revA";
 
 	chosen {
-		bootargs = "earlycon=pl011,mmio32,0xf1930000 console=ttyAMA0,115200 rdinit=/bin/sh maxcpus=1";
+		bootargs = "earlycon=pl011,mmio32,0xf1930000 console=ttyAMA0,115200";
 	};
 
 	aliases {
