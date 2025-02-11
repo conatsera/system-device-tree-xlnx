@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -501,7 +501,57 @@ proc vproc_ss_update_endpoints {drv_handle} {
 		} else {
 			dtg_warning "$drv_handle pin s_axis is not connected..check your design"
 		}
-	} else {
+	}
+	if {($topology == 1) || ($topology ==2) || ($topology == 4) || ($topology ==5) || ($topology ==6)} {
+		puts "$drv_handle Printing remote endpoint in case of VPSS in FF only to validate Baremetal cases"
+		set ports_node [create_node -n "ports" -l vpss_ports$drv_handle -p $node -d $dts_file]
+		set port_node [create_node -n "port" -l vpss_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
+		add_prop "$port_node" "reg" 0 int $dts_file
+		set vpssinip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis"]
+		if {[llength $vpssinip]} {
+			foreach inip $vpssinip {
+				set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $inip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+				set ip_mem_handles [hsi::get_mem_ranges $inip]
+				if {[llength $ip_mem_handles]} {
+					set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
+					if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+						#not useful in baremetal case
+					#	gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+					}
+				} else {
+					set inip [get_in_connect_ip $inip $master_intf]
+					if {[llength $inip]} {
+						if {[string match -nocase [hsi get_property IP_NAME $inip] "system_ila"]} {
+							continue
+						}
+						if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+						#not useful in baremetal case
+						#	gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+						}
+					}
+				}
+			}
+		}
+		if {[llength $inip]} {
+			set vpss_in_end ""
+			set vpss_remo_in_end ""
+			if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
+				set vpss_in_end [dict get $end_mappings $inip]
+				dtg_verbose "drv:$drv_handle inend:$vpss_in_end"
+			}
+			if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
+				set vpss_remo_in_end [dict get $remo_mappings $inip]
+				dtg_verbose "drv:$drv_handle inremoend:$vpss_remo_in_end"
+			}
+			if {[llength $vpss_remo_in_end]} {
+				set vpssinnode [create_node -n "endpoint" -l $vpss_remo_in_end -p $port_node -d $dts_file]
+			}
+			if {[llength $vpss_in_end]} {
+				add_prop "$vpssinnode" "remote-endpoint" $vpss_in_end reference $dts_file
+			}
+		}
+	}  else {
+		puts "$drv_handle unsupported topology for linux driver"
 		dtg_warning "$drv_handle unsupportedd topology for linux driver"
 	}
 }
