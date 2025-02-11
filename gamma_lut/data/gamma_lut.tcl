@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -72,6 +72,19 @@
                 dtg_warning "$drv_handle pin m_axis_video is not connected..check your design"
             }
         }
+
+    gamma_lut_gen_gpio_reset $drv_handle $node $dts_file
+    }
+
+    proc gamma_lut_update_endpoints {drv_handle} {
+	global end_mappings
+	global remo_mappings
+        set node [get_node $drv_handle]
+        set dts_file [set_drv_def_dts $drv_handle]
+        if {$node == 0} {
+                return
+        }
+        set ports_node [create_node -n "ports" -l gamma_ports$drv_handle -p $node -d $dts_file]
         set port_node [create_node -n "port" -l gamma_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
         add_prop "$port_node" "reg" 0 int $dts_file
         set max_data_width [hsi::get_property CONFIG.MAX_DATA_WIDTH [hsi::get_cells -hier $drv_handle]]
@@ -112,8 +125,6 @@
         } else {
             dtg_warning "$drv_handle pin s_axis_video is not connected..check your design"
         }
-
-    gamma_lut_gen_gpio_reset $drv_handle $node $dts_file
     }
 
     proc gamma_lut_gen_frmbuf_wr_node {outip drv_handle dts_file} {
