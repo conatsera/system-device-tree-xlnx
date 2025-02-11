@@ -329,9 +329,8 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	set rm_xsa_name [file tail $rm_xsa]
 	set rm_xsa_path "$dir/$rm_xsa_name"
 	set rm_ws [file rootname $rm_xsa_name]
-	setws -switch "$dir/$rm_ws"
 
-	hsi::open_hw_design $rm_xsa_path
+	hsi::open_hw_design $rm_xsa_path -outdir $dir/$rm_ws
 	set rp_cell [hsi::get_property RP_INST_NAME [hsi::current_hw_design]]
 	set proctype [get_hw_family]
 	if {[is_zynqmp_platform $proctype]} {
@@ -426,5 +425,4 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	delete_tree pldt root
 	move_match_node_to_top pldt root "misc_clk_*"
 	write_rm_dt pldt root "$dir/$rm_ws/$partial_file"
-	file rename "$dir/$firmware_name" "$dir/$rm_ws/$firmware_name"
 }
