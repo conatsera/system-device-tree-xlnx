@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -106,7 +106,11 @@
                         if {[string match -nocase $ip_name "v_mix"] || [string match -nocase $ip_name "v_tpg"]} {
                             continue
                         }
-                        add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
+                        if {![string match -nocase [hsi get_property IP_NAME $out_ip] "v_axi4s_remap"]} {
+                            add_prop "$tpg_node" "remote-endpoint" $out_ip$drv_handle reference $dts_file
+                        } else {
+                            continue
+                        }
                         if {[string match -nocase [hsi get_property IP_NAME $out_ip] "v_frmbuf_wr"] || [string match -nocase [hsi get_property IP_NAME $out_ip] "axi_vdma"]} {
                             tpg_gen_frmbuf_node $out_ip $drv_handle $dts_file
                         }
@@ -149,7 +153,6 @@ proc tpg_update_endpoints {drv_handle} {
 
         global end_mappings
         global remo_mappings
-
         set ports_node [create_node -n "ports" -l tpg_ports$drv_handle -p $node -d $dts_file]
         set port0_node [create_node -n "port" -l tpg_port0$drv_handle -u 0 -p $ports_node -d $dts_file]
         add_prop "$port0_node" "reg" 0 int $dts_file 1
