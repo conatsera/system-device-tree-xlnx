@@ -88,7 +88,7 @@ proc sdi_txss_update_endpoints {drv_handle} {
 					continue
 				}
 				set inip [get_in_connect_ip $inip $master_intf]
-				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+				if {[llength $inip] && [string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
 					gen_frmbuf_rd_node $inip $drv_handle $sdi_port_node $dts_file
 				}
 			}
