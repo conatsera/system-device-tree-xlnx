@@ -88,7 +88,7 @@ proc sdi_rxss_generate {drv_handle} {
 					gen_frmbuf_node $ip $drv_handle $dts_file
                                 }
                         } else {
-				if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
+				if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"] || ![regexp -nocase ".*frmbuf_wr" $ip]} {
 					continue
 				}
                                 set connectip [get_connect_ip $ip $intfpins $dts_file]
