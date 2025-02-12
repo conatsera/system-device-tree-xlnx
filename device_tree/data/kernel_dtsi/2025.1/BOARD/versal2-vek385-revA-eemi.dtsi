@@ -134,10 +134,6 @@
 	};
 };
 
-&ufshc { /* PMC_MIO24-25 */
-	status = "disabled";
-};
-
 &usb1 { /* PMC_MIO27-39 */
 	status = "okay";
 };
