@@ -3055,8 +3055,7 @@ proc get_ip_type {ip_inst} {
 	# return 1 if it is soft ip
 	# return 0 if not
 	set ip_obj [hsi::get_cells -hier $ip_inst]
-	set ip_mem_map_obj [hsi::get_mem_ranges $ip_inst]
-	if {[llength $ip_obj] < 1 && [llength $ip_mem_map_obj] < 1} {
+	if {[llength $ip_obj] < 1} {
 		return -1
 	}
 	set family [get_hw_family]
@@ -3085,7 +3084,7 @@ proc is_pl_ip {ip_inst} {
 
 proc is_ps_ip {ip_inst} {
 	set type [get_ip_type $ip_inst]
-	if {$type == -1} return 0
+	if {$type == -1} {return 0}
 	return [expr !$type]
 }
 
