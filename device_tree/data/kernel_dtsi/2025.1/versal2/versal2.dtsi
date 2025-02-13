@@ -241,9 +241,20 @@
 		spi3 = &spi1;
 	};
 
+	fpga: fpga-region {
+		compatible = "fpga-region";
+		fpga-mgr = <&versal_fpga>;
+		#address-cells = <2>;
+		#size-cells = <2>;
+	};
+
 	timer: timer {
 		compatible = "arm,armv8-timer";
 		interrupts = <1 13 4>, <1 14 4>, <1 11 4>, <1 10 4>;
+	};
+
+	versal_fpga: versal-fpga {
+		compatible = "xlnx,versal-fpga";
 	};
 
 	amba_apu: apu-bus {
@@ -579,7 +590,7 @@
 
 		asu_dma0: asudma@ebe8c000 {
 			status = "disabled";
-			compatible = "xlnx,zynqmp-csudma-1.0";
+			compatible = "amd,versal2-asudma-1.0";
 			interrupt-parent = <&imux>;
 			interrupts = <0 190 4>;
 			reg = <0x0 0xebe8c000 0x0 0x1000>;
@@ -588,7 +599,7 @@
 
 		asu_dma1: asudma@ebe8d000 {
 			status = "disabled";
-			compatible = "xlnx,zynqmp-csudma-1.0";
+			compatible = "amd,versal2-asudma-1.0";
 			interrupt-parent = <&imux>;
 			interrupts = <0 191 4>;
 			reg = <0x0 0xebe8d000 0x0 0x1000>;

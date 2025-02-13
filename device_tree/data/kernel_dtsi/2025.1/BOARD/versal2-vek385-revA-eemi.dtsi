@@ -95,7 +95,6 @@
 };
 
 &ospi { /* PMC_MIO0-10, MIO12 */
-	status = "disabled";
 	reset-names = "disabled";
 	reset-gpios = <&gpio1 12 0>; /* FIXME reset via regs is possible too */
 	#address-cells = <1>;
@@ -115,6 +114,7 @@
 		#address-cells = <1>;
 		reg = <0>;
 		no-wp;
+		broken-flash-reset;
 
 		partitions {
 			#size-cells = <1>;
@@ -132,10 +132,6 @@
 			};
 		};
 	};
-};
-
-&ufshc { /* PMC_MIO24-25 */
-	status = "disabled";
 };
 
 &usb1 { /* PMC_MIO27-39 */
