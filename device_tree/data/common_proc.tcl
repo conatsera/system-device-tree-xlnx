@@ -7051,6 +7051,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		"pl_lpd_irq8" 51 "pl_lpd_irq9" 52 "pl_lpd_irq10" 53 "pl_lpd_irq11" 54
 		"pl_lpd_irq12" 82 "pl_lpd_irq13" 83 "pl_lpd_irq14" 84 "pl_lpd_irq15" 85 "pl_lpd_irq16" 86 "pl_lpd_irq17" 87
 		"pl_lpd_irq18" 88 "pl_lpd_irq19" 89 "pl_lpd_irq20" 90 "pl_lpd_irq21" 91 "pl_lpd_irq22" 92 "pl_lpd_irq23" 93
+		"pl_mmi_irq0" 163 "pl_mmi_irq1" 163
 	}
 	set versal_gen2_irq_names_list [dict keys $versal_gen2_irq_dict]
 	global or_id
@@ -7365,7 +7366,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		} else {
 			set ret [expr 84 + $number]
 		}
-	} elseif {[regexp "^pl_lpd_irq.*|^pl_fpd_irq.*" "$sink_pin" match]} {
+	} elseif {[regexp "^pl_lpd_irq.*|^pl_fpd_irq.*|^pl_mmi_irq.*" "$sink_pin" match]} {
 		if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
 			if {$concat_block == "0"} {
 				set ret [dict get $versal_gen2_irq_dict $sink_pin]
