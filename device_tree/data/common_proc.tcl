@@ -5410,7 +5410,15 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 	if {[string_is_empty $intr_info]} {
 		return -1
 	}
-	set_drv_prop $drv_handle interrupts $intr_info $node intlist
+	set interrupt_prop_data_type intlist
+	# When there is an interrupt port instead of a pin i.e. when $intrpin_width is defined,
+	# the intr_info already has the combination of numbers segragated with >, <. Such formation
+	# of numbers only need to be wrapped within <> and doesnt need any more formating which is
+	# available with intlist.
+	if {[regexp {>, <} $intr_info]} {
+		set interrupt_prop_data_type special
+	}
+	set_drv_prop $drv_handle interrupts $intr_info $node $interrupt_prop_data_type
 	if {[string_is_empty $intc_name]} {
 		return -1
 	}
@@ -6835,7 +6843,18 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
 					set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}
-					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$intr"]
+					# Encountered a design where dfx decoupler had two sets of interrupt ports.
+					# One port is directly connected to axi_intc_cascaded and another port is connected
+					# to xlconcat. xlconcat is getting input interrupts from axi_intc_cascaded and the
+					# second interrupt port of dfx_decoupler. Output of xlconcat is going into
+					# axi_intc_parent which is connected to gic. This design seems to be wrong from
+					# linux perspective as the same dfx_decoupler IP is having two different
+					# interrupt_parents axi_intc_cascaded for first interrupt port and axi_intc_parent
+					# for second interrupt port. Adding below logic to avoid issues during PLM generation,
+					# taking all interrupt pins into account.
+					foreach pin $intr {
+						lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$pin"]
+					}
 			}
 			if {[llength $intr_cntrl] > 1} {
 				foreach intc $intr_cntrl {
@@ -6894,7 +6913,18 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Q"]
 		} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
 			set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
-			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$intr"]
+			# Encountered a design where dfx decoupler had two sets of interrupt ports.
+			# One port is directly connected to axi_intc_cascaded and another port is connected
+			# to xlconcat. xlconcat is getting input interrupts from axi_intc_cascaded and the
+			# second interrupt port of dfx_decoupler. Output of xlconcat is going into
+			# axi_intc_parent which is connected to gic. This design seems to be wrong from
+			# linux perspective as the same dfx_decoupler IP is having two different
+			# interrupt_parents axi_intc_cascaded for first interrupt port and axi_intc_parent
+			# for second interrupt port. Adding below logic to avoid issues during PLM generation,
+			# taking all interrupt pins into account.
+			foreach pin $intr {
+				lappend intr_cntrl [get_intr_cntrl_name $sink_periph "$pin"]
+			}
 		}
 		if {[llength $intr_cntrl] > 1} {
 				foreach intc $intr_cntrl {
