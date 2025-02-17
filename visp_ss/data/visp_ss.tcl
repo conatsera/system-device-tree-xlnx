@@ -290,12 +290,12 @@ proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_nod
 				}
 				foreach iba $iba_values {
 					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
-					set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
+					set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
 					visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
 				}
 			} elseif {$port_idx % 5 == 0} {
 				set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
-				set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
+				set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
 				visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
 			} else {
 				if {$port_idx % 5 == 1} {
@@ -344,7 +344,7 @@ proc handle_io_mode_1 {drv_handle tile isp ports_node isp_id default_dts sub_nod
 	} else {
 		return
 	}
-	set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $pin_name]
+	set visp_inip [find_valid_visp_inip $drv_handle $pin_name]
 	visp_ss_inip_endpoints $drv_handle $ports_node $default_dts $sub_node_label $visp_inip
 	set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "TILE${tile}_ISP${isp}_VIDOUT_PO"]
 	visp_ss_outip_endpoints $drv_handle $port0 $default_dts $sub_node_label $outip
@@ -690,4 +690,41 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 	gen_endpoint $$sub_node_label "visp_out$sub_node_label"
 	add_prop "$vcap_in_node" "remote-endpoint" visp_out$sub_node_label reference $dts_file
 	gen_remoteendpoint $$sub_node_label "$outip$sub_node_label"
+}
+
+proc find_valid_visp_inip {drv_handle visp_ip_name} {
+    set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
+    set valid_patterns "^(axis_broadcaster|axis_switch|mipi_.*)\$"
+
+    # Check if any IP matches the valid patterns
+    set visp_list [split $visp_inip " "]
+    set match_found 0
+
+    foreach ip $visp_list {
+        if {[regexp $valid_patterns $ip]} {
+            set match_found 1
+            break
+        }
+    }
+
+    # If no match, enter the loop to update visp_inip
+    while {!$match_found} {
+        set new_visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_inip]
+        set new_visp_list [split $new_visp_inip " "]
+
+        foreach ip $new_visp_list {
+            if {[regexp $valid_patterns $ip]} {
+                set match_found 1
+                break
+            }
+        }
+
+        if {$match_found || $new_visp_inip eq $visp_inip} {
+            break
+        }
+
+        set visp_inip $new_visp_inip
+    }
+
+    return $visp_inip
 }
