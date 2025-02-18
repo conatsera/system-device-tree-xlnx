@@ -72,15 +72,17 @@
 
     proc emacps_generate {drv_handle} {
         global env
+        global is_versal_gen2_platform
         set node [get_node $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
+        set ip_name [get_ip_property  $drv_handle IP_NAME]
         set phymode [get_ip_param_value $slave "C_ETH_MODE"]
         if { $phymode == 0 } {
         add_prop $node "phy-mode" "gmii" string $dts_file
         } elseif { $phymode == 2 } {
         add_prop $node "phy-mode" "sgmii" string $dts_file
-        } else {
+        } elseif { !($is_versal_gen2_platform && [string match -nocase $ip_name "mmi_10gbe"]) } {
         add_prop $node "phy-mode" "rgmii-id" string $dts_file
         }
 
