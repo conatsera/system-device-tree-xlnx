@@ -3244,6 +3244,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ebe8d000 label asu_dma1
 				dict set def_ps_mapping f1a60000 label gem0
 				dict set def_ps_mapping f1a70000 label gem1
+				dict set def_ps_mapping ed920000 label mmi_10gbe
 				dict set def_ps_mapping f1a50000 label gpio0
 				dict set def_ps_mapping f1020000 label gpio1
 				dict set def_ps_mapping f1940000 label i2c0
