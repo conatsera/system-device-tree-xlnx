@@ -127,6 +127,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_ethernet" "emacps"
 	dict set ::sdtgen::namespacelist "psu_ethernet" "emacps"
 	dict set ::sdtgen::namespacelist "psv_ethernet" "emacps"
+	dict set ::sdtgen::namespacelist "mmi_10gbe" "emacps"
 	dict set ::sdtgen::namespacelist "ernic" "ernic"
 	dict set ::sdtgen::namespacelist "v_frmbuf_rd" "framebuf_rd"
 	dict set ::sdtgen::namespacelist "v_frmbuf_wr" "framebuf_wr"
