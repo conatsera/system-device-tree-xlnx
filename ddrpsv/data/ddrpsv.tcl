@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -13,537 +13,187 @@
 # GNU General Public License for more details.
 #
 
-    proc ddrpsv_generate {drv_handle} {
-        set ip_name [get_ip_property $drv_handle IP_NAME]
-        set supported_ip_feature [list "ddr"]
-        if {![string_is_empty [hsi get_mem_ranges -filter ADDRESS_BLOCK=~HBM*]]} {
-                lappend supported_ip_feature "hbm"
+proc ddrpsv_generate {drv_handle} {
+	set ip_name [get_ip_property $drv_handle IP_NAME]
+	set supported_ip_feature [list "ddr"]
+	if {![string_is_empty [hsi get_mem_ranges -filter ADDRESS_BLOCK=~HBM*]]} {
+		lappend supported_ip_feature "hbm"
+	}
+
+	foreach feature $supported_ip_feature {
+		ddrpsv_node_info_map $drv_handle $feature
+	}
+}
+
+proc ddrpsv_node_info_map {drv_handle feature} {
+	set label "${drv_handle}_${feature}_memory"
+	set hbm_ddr_filter ""
+	if {$feature == "hbm"} {
+		set hbm_ddr_filter "ADDRESS_BLOCK=~HBM*"
+	} else {
+		set hbm_ddr_filter "ADDRESS_BLOCK=~*DDR*"
+	}
+	set proclist [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR]
+	set a72 0
+	foreach procc $proclist {
+		set proc_name [get_ip_property $procc IP_NAME]
+		# If the mappings have already been found for a72_0, then ignore the process for a72_1
+		if {$a72 == 1 && ($proc_name in {"psv_cortexa72" "psx_cortexa78" "cortexa78"})} {
+			continue
+		}
+		if {$proc_name in {"psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
+			set a72 1
+		}
+		# Get all the NOC memory block instances mapped to the particular processor
+		set proc_noc_instances [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $procc] $drv_handle -filter $hbm_ddr_filter]
+		# Generate merged non-overlapping address list for NOC instances mapped to a particular processor
+		set addr_intervals [ddrpsv_process_addresses $proc_noc_instances]
+		if {$proc_name in {"psv_cortexr5" "psx_cortexr52" "cortexr52"} && [llength $addr_intervals] > 0 } {
+			set rpu_base_addr [lindex $addr_intervals 0 0]
+			lset addr_intervals 0 0 [ddrpsv_check_r5_tcm_overlapping $rpu_base_addr]
+		}
+		# Generate reg_property for the merged address list of each processor
+		set reg_val [ddrpsv_generate_reg_property $addr_intervals]
+		switch $proc_name {
+			"psv_cortexr5" - "psx_cortexr52" - "cortexr52" - "microblaze" - "microblaze_riscv" {
+				set_memmap "${label}" $procc $reg_val
+			}
+			"psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
+				set_memmap "${label}" a53 $reg_val
+			}
+			"psv_pmc" - "psx_pmc" - "pmc" {
+				set_memmap "${label}" pmc $reg_val
+			}
+			"psv_psm" - "psx_psm" - "psm" {
+				set_memmap "${label}" psm $reg_val
+			}
+			"asu" {
+				set_memmap "${label}" asu $reg_val
+			}
+			default {
+			}
+		}
+	}
+
+	# Generate overall system level memory reg
+	set overall_addr_intervals [ddrpsv_process_addresses [hsi get_mem_ranges $drv_handle -filter $hbm_ddr_filter]]
+	set overall_reg [ddrpsv_generate_reg_property $overall_addr_intervals]
+
+	if {[llength $overall_reg]} {
+		set global_node_base_addr [lindex $overall_addr_intervals 0 0]
+		set memory_node [create_node -n memory -l "${label}" -u [regsub -all {^0x} ${global_node_base_addr} {}] -p root -d "system-top.dts"]
+		add_prop "${memory_node}" "compatible" [gen_compatible_string $drv_handle] string "system-top.dts"
+		add_prop "${memory_node}" "device_type" "memory" string "system-top.dts"
+		add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string "system-top.dts"
+		add_prop "${memory_node}" "memory_type" "memory" string "system-top.dts"
+		add_prop "${memory_node}" "reg" $overall_reg  hexlist "system-top.dts"
+	}
+}
+
+# Generate list of unique, merged address intervals
+proc ddrpsv_process_addresses {instances} {
+	set addresses {}
+	for {set index 0} {$index < [llength $instances]} {incr index} {
+		set base_address [hsi get_property BASE_VALUE [lindex ${instances} $index]]
+                set high_address [hsi get_property HIGH_VALUE [lindex ${instances} $index]]
+                set local_list [list $base_address $high_address]
+                if {[lsearch -exact $addresses $local_list] == -1} {
+                      lappend addresses $local_list
+		}
+	}
+	set merged_intervals [ddrpsv_merge_intervals [lsort -index 0 -integer $addresses]]
+	return $merged_intervals
+}
+
+# Merge overlapping address ranges
+proc ddrpsv_merge_intervals {address} {
+	if {[llength $address] == 0} {
+		return {}
+	}
+	set union {}
+	set current_start [lindex [lindex $address 0] 0]
+	set current_end [lindex [lindex $address 0] 1]
+	if {[llength $address] > 1} {
+		foreach interval [lrange $address 1 end] {
+			set start [lindex $interval 0]
+			set end [lindex $interval 1]
+			if {$start <= $current_end} {
+				set current_end [format "0x%lx" [expr {max($end, $current_end)}]]
+			} else {
+				lappend union [list $current_start $current_end]
+				set current_start $start
+				set current_end $end
+			}
+		}
+	}
+	lappend union [list $current_start $current_end]
+	return $union
+}
+
+proc ddrpsv_generate_reg_property {addr_intervals} {
+	set reg_val ""
+	for {set i 0} {$i < [llength $addr_intervals]} {incr i} {
+		set base_addr [lindex $addr_intervals $i 0]
+		set high_addr [lindex $addr_intervals $i 1]
+		set reg [ddrpsv_generate_reg_format $base_addr $high_addr]
+		set reg_val [lappend reg_val $reg]
+	}
+	if {![string_is_empty $reg_val]} {
+                set reg_val [join $reg_val ">, <"]
         }
+	return $reg_val
+}
 
-        foreach feature $supported_ip_feature {
-                set supported_block_names [ddrpsv_get_memory_block_names $ip_name $feature]
-                ddrpsv_node_info_map $drv_handle $supported_block_names "${drv_handle}_${feature}_memory"
-        }
-    }
+proc ddrpsv_generate_reg_format {base high} {
+	set size [format 0x%lx [expr {${high} - ${base} + 1}]]
 
-    proc ddrpsv_get_memory_block_names {ip_name {feature ""}} {
-        # HW designs can have multiple NOC IPs, and each of them can be connected to
-        # same DDR segment with different address ranges, and through different
-        # master interface channels.
-        # For each DDR segment, NOC IP interface whose base address is lowest in the design
-        # would be stored in base_addr_list and highest high address would be stored in
-        # high_address_list. Index of base_address_list/high_address_list where base/high
-        # address for specific DDR segment/DDR region is stored is as given below. These
-        # lowest and highest addresses would be used to create canonical definitions, which
-        # would be consumed by MMU/MPU tables in Cortex-A72/Cortex-R5 BSP.
-        #
-        # NOC1 DDR Address blocks
-        # ------------------------------------------------------------------------
-        #  DDR segment       |    Start address  |   Size   | Index in addr_list |
-        # -------------------|-------------------|----------|--------------------|
-        #  DDR_LOW_0         |      0x0000_0000  |    2 GB  |         0          |
-        #  DDR_LOW_1         |    0x8_0000_0000  |   32 GB  |         1          |
-        #  DDR_LOW_2         |   0xC0_0000_0000  |  256 GB  |         2          |
-        #  DDR_LOW_3         |  0x100_0000_0000  |  734 GB  |         3          |
-        #  DDR_CH_1          |  0x500_0000_0000  |  512 GB  |         4          |
-        #  DDR_CH_2          |  0x600_0000_0000  |  512 GB  |         5          |
-        #  DDR_CH_3          |  0x700_0000_0000  |  512 GB  |         6          |
-        # ------------------------------------------------------------------------
-        #
-        # NOC1 HBM Address blocks
-        # ------------------------------------------------------------------------
-        #  HBM segment       |    Start address  |   Size   | Index in addr_list |
-        # -------------------|-------------------|----------|--------------------|
-        #  HBM0_PC0          |   0x40_0000_0000  |    1 GB  |         0          |
-        #  HBM0_PC1          |   0x40_4000_0000  |    1 GB  |         1          |
-        #  HBM1_PC0          |   0x40_8000_0000  |    1 GB  |         2          |
-        #  HBM1_PC1          |   0x40_C000_0000  |    1 GB  |         3          |
-        #  HBM2_PC0          |   0x41_0000_0000  |    1 GB  |         4          |
-        #  HBM2_PC1          |   0x41_4000_0000  |    1 GB  |         5          |
-        #  HBM3_PC0          |   0x41_8000_0000  |    1 GB  |         6          |
-        #  HBM3_PC1          |   0x41_C000_0000  |    1 GB  |         7          |
-        #  HBM4_PC0          |   0x42_0000_0000  |    1 GB  |         8          |
-        #  HBM4_PC1          |   0x42_4000_0000  |    1 GB  |         9          |
-        #  HBM5_PC0          |   0x42_8000_0000  |    1 GB  |        10          |
-        #  HBM5_PC1          |   0x42_C000_0000  |    1 GB  |        11          |
-        #  HBM6_PC0          |   0x43_0000_0000  |    1 GB  |        12          |
-        #  HBM6_PC1          |   0x43_4000_0000  |    1 GB  |        13          |
-        #  HBM7_PC0          |   0x43_8000_0000  |    1 GB  |        14          |
-        #  HBM7_PC1          |   0x43_C000_0000  |    1 GB  |        15          |
-        #  HBM8_PC0          |   0x44_0000_0000  |    1 GB  |        16          |
-        #  HBM8_PC1          |   0x44_4000_0000  |    1 GB  |        17          |
-        #  HBM9_PC0          |   0x44_8000_0000  |    1 GB  |        18          |
-        #  HBM9_PC1          |   0x44_C000_0000  |    1 GB  |        19          |
-        #  HBM10_PC0         |   0x45_0000_0000  |    1 GB  |        20          |
-        #  HBM10_PC1         |   0x45_4000_0000  |    1 GB  |        21          |
-        #  HBM11_PC0         |   0x45_8000_0000  |    1 GB  |        22          |
-        #  HBM11_PC1         |   0x45_C000_0000  |    1 GB  |        23          |
-        #  HBM12_PC0         |   0x46_0000_0000  |    1 GB  |        24          |
-        #  HBM12_PC1         |   0x46_4000_0000  |    1 GB  |        25          |
-        #  HBM13_PC0         |   0x46_8000_0000  |    1 GB  |        26          |
-        #  HBM13_PC1         |   0x46_C000_0000  |    1 GB  |        27          |
-        #  HBM14_PC0         |   0x47_0000_0000  |    1 GB  |        28          |
-        #  HBM14_PC1         |   0x47_4000_0000  |    1 GB  |        29          |
-        #  HBM15_PC0         |   0x47_8000_0000  |    1 GB  |        30          |
-        #  HBM15_PC1         |   0x47_C000_0000  |    1 GB  |        31          |
-        # ------------------------------------------------------------------------
-        #
-        # NOC2 DDR Address blocks
-        # ------------------------------------------------------------------------
-        #  DDR segment       |    Start address  |   Size   | Index in addr_list |
-        # -------------------|-------------------|----------|--------------------|
-        #  DDR_CH0_LEGACY    |      0x0000_0000  |    2 GB  |         0          |
-        #  DDR_CH0_MED       |    0x8_0000_0000  |   32 GB  |         1          |
-        #  DDR_CH0_HIGH0     |   0xC0_0000_0000  |  256 GB  |         2          |
-        #  DDR_CH0_HIGH1     |  0x100_0000_0000  |  734 GB  |         3          |
-        #  DDR_CH_1          |  0x500_0000_0000  |  512 GB  |         4          |
-        #  DDR_CH_1A         |  0x600_0000_0000  |  512 GB  |         5          |
-        #  DDR_CH_2          |  0x700_0000_0000  |  512 GB  |         6          |
-        #  DDR_CH_2A         | 0x1800_0000_0000  |  512 GB  |         7          |
-        #  DDR_CH_3          | 0x1880_0000_0000  |  512 GB  |         8          |
-        #  DDR_CH_3A         | 0x1900_0000_0000  |  512 GB  |         9          |
-        #  DDR_CH_4          | 0x1980_0000_0000  |  512 GB  |        10          |
-        # ------------------------------------------------------------------------
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+		set temp $base
+		set temp [string trimleft [string trimleft $temp 0] x]
+		set len [string length $temp]
+		set rem [expr {${len} - 8}]
+		set high_base "0x[string range $temp $rem $len]"
+		set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
+		set low_base [format 0x%08x $low_base]
+	} else {
+		set high_base $base
+		set low_base 0x0
+	}
 
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+		set temp $size
+		set temp [string trimleft [string trimleft $temp 0] x]
+		set len [string length $temp]
+		set rem [expr {${len} - 8}]
+		set high_size "0x[string range $temp $rem $len]"
+		set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
+		set low_size [format 0x%08x $low_size]
+	} else {
+		set high_size $size
+		set low_size 0x0
+	}
 
-        set supported_block_names [list]
+	set reg "$low_base $high_base $low_size $high_size"
 
-        set noc_instances_list [hsi get_mem_ranges [hsi get_cells -hier -filter IP_NAME==$ip_name]]
+	return $reg
+}
 
-        for {set index 0} {$index < [llength $noc_instances_list]} {incr index} {
-                set address_block [hsi get_property ADDRESS_BLOCK [lindex $noc_instances_list $index]]
-                if {[lsearch -exact $supported_block_names $address_block] == -1 && [string match *HBM* $address_block] != 1} {
-                        lappend supported_block_names $address_block
-                }
-        }
-
-        if {$feature == "hbm"} {
-                set supported_block_names { \
-                        "HBM0_*PC0*" "HBM0_*PC1*" "HBM1_*PC0*" "HBM1_*PC1*" "HBM2_*PC0*" "HBM2_*PC1*" "HBM3_*PC0*" "HBM3_*PC1*" "HBM4_*PC0*" \
-                        "HBM4_*PC1*" "HBM5_*PC0*" "HBM5_*PC1*" "HBM6_*PC0*" "HBM6_*PC1*" "HBM7_*PC0*" "HBM7_*PC1*" "HBM8_*PC0*" "HBM8_*PC1*" \
-                        "HBM9_*PC0*" "HBM9_*PC1*" "HBM10_*PC0*"  "HBM10_*PC1*" "HBM11_*PC0*" "HBM11_*PC1*" "HBM12_*PC0*" "HBM12_*PC1*" "HBM13_*PC0*" \
-                        "HBM13_*PC1*" "HBM14_*PC0*" "HBM14_*PC1*" "HBM15_*PC0*" "HBM15_*PC1*"
-                }
-        }
-
-        return $supported_block_names
-    }
-
-    proc ddrpsv_node_info_map {drv_handle supported_block_names label} {
-        set a72 0
-        set dts_file "system-top.dts"
-
-        # Get the periph_name from drv_handle (output is usually same as drv_handle)
-        set periph_name [hsi::get_cells -hier ${drv_handle}]
-        set vlnv [split [hsi get_property VLNV $periph_name] ":"]
-        set name [lindex $vlnv 2]
-        set ver [lindex $vlnv 3]
-
-        # Property for compatibility string
-        set comp_prop "xlnx,${name}-${ver}"
-        regsub -all {_} $comp_prop {-} comp_prop
-
-        # Defined at the top to avoid scope issue if no DDR region is mapped
-        set reg_val ""
-
-        # Number of known DDR regions is set to 7 for versal, 11 for Versal Net
-        # Check ddrpsv_number_of_memory_regions API for more details on the regions.
-        set num_of_known_regions [llength $supported_block_names]
-
-        # Need a dictionary to gather system level data using processor level data
-        set global_map_dict [dict create]
-        global set ddr_addr_list [dict create]
-
-        # list all the processors available in the design
-        set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
-        foreach procc $proclist {
-                # List to save the access status of each DDR region
-                # If the region is present, final status is set to 1
-                set region_accessed [lrepeat $num_of_known_regions 0]
-
-                # Set default values in global_map_dict to 0 for each DDR region for each proc
-                for {set index 0} {$index < $num_of_known_regions} {incr index} {
-                        # region_accessed base_addr high_addr
-                        dict set global_map_dict "$procc" $index "0 0 0"
-                        dict set ddr_addr_list "$procc" $index ""
-                }
-
-                # Get all the NOC memory instances mapped to the particular processor
-                set mapped_periph_list [hsi::get_mem_ranges -of_objects $procc $periph_name]
-
-                # If there is no instances mapped, then skip that processor
-                if { $mapped_periph_list eq "" } {
-                        continue
-                }
-
-                # Get the processor IP name (A72/R5/PMC/PSM)
-                set proc_ip_name [hsi get_property IP_NAME $procc]
-
-                # Get the interface block names
-                # (e.g. C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW0 C0_DDR_LOW1 C0_DDR_LOW1 C0_DDR_LOW1)
-                # Blocks with same name say C0_DDR_LOW0 will be having a different master interface
-                # FPD_CCI_NOC_0, FPD_CCI_NOC_1 are the examples of master interfaces
-                set interface_block_names [hsi get_property ADDRESS_BLOCK ${mapped_periph_list}]
-
-                # If the mappings have already been found for a72_0, then ignore the process for a72_1
-                if {$a72 == 1 && ($proc_ip_name in {"psv_cortexa72" "psx_cortexa78" "cortexa78"} ) } {
-                        continue
-                }
-                if {$proc_ip_name in {"psv_cortexa72" "psx_cortexa78" "cortexa78"}} {
-                       set a72 1
-                }
-
-
-                set region_accessed [ddrpsv_addr_params $mapped_periph_list $interface_block_names $region_accessed $supported_block_names $procc]
-
-
-                # Generate reg_property available for the processor, combining all the regions
-                set updat ""
-                set addr_list ""
-
-                for {set index 0} {$index < $num_of_known_regions} {incr index} {
-                    if {[lindex $region_accessed $index]} {
-                        lappend addr_list [dict get $ddr_addr_list $procc $index]
-                        dict set global_map_dict "$procc" "$index" "1 $addr_list"
-                    }
-                }
-
-                set addr_list [ddrpsv_get_sorted_list $addr_list]
-
-                set num_of_regions [llength $addr_list]
-                for {set i 0} {$i < $num_of_regions} {set i [expr $i+2]} {
-                    set base_value [lindex $addr_list $i]
-                    set base_value [ddrpsv_check_tcm_overlapping $procc $base_value]
-                    set high_value [lindex $addr_list [expr $i+1]]
-                    set reg_val [ddrpsv_generate_reg_property $base_value $high_value]
-                    set updat [lappend updat $reg_val]
-                }
-
-                set len [llength $updat]
-                set reg_val ""
-
-                if {$len} {
-                        set reg_val [join $updat ">, <"]
-                        ddrpsv_update_mc_ranges $drv_handle $reg_val
-                        switch $proc_ip_name {
-                                "psv_cortexr5" - "psx_cortexr52" - "cortexr52" - "microblaze" - "microblaze_riscv" {
-                                        set_memmap "${label}" $procc $reg_val
-                                }
-                                "psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
-                                        set_memmap "${label}" a53 $reg_val
-                                }
-                                "psv_pmc" - "psx_pmc" - "pmc" {
-                                        set_memmap "${label}" pmc $reg_val
-                                }
-                                "psv_psm" - "psx_psm" - "psm" {
-                                        set_memmap "${label}" psm $reg_val
-                                }
-                                "asu" {
-                                        set_memmap "${label}" asu $reg_val
-                                }
-                                default {
-                                }
-                        }
-                }
-        }
-
-        # Get the system level memory reg
-        set global_node_base_addr ""
-        set ov_update ""
-
-        for {set index 0} {$index < $num_of_known_regions} {incr index} {
-                # Flag to check the first access of the current region among diff procs and set the first base_addr for that region
-                # Also to differentiate the actually read 0 and default 0
-                set curr_region_access 0
-                set adrlist ""
-                foreach procc $proclist {
-                        if {[lindex [dict get $global_map_dict $procc $index] 0]} {
-                        set proc_reg_list [dict get $global_map_dict $procc $index]
-                        set count [llength $proc_reg_list]
-                        set count [expr $count-1]
-                        for {set i 0} { $i <= $count} {set i [expr $i+2]} {
-                            set curr_region_access 1
-                            set curr_base_addr [lindex [dict get $global_map_dict $procc $index] [expr $i+1]]
-                            set curr_high_addr [lindex [dict get $global_map_dict $procc $index] [expr $i+2]]
-                            lappend adrlist $curr_base_addr
-                            lappend adrlist $curr_high_addr
-                        }
-                    }
-                }
-                if {$curr_region_access} {
-                    set ov_update [ddrpsv_get_sorted_list $adrlist]
-                }
-        }
-
-        if {[llength $ov_update]} {
-            set global_node_base_addr [lindex $ov_update 0]
-            set tmplist ""
-            for {set i 0} {$i < [llength $ov_update]} {set i [expr $i+2]} {
-                lappend tmplist [ddrpsv_generate_reg_property [lindex $ov_update $i] [lindex $ov_update $i+1]]
-            }
-            set ov_update $tmplist
-            set memory_node [create_node -n memory -l "${label}" -u [regsub -all {^0x} ${global_node_base_addr} {}] -p root -d "system-top.dts"]
-            add_prop "${memory_node}" "compatible" $comp_prop string $dts_file
-            add_prop "${memory_node}" "device_type" "memory" string $dts_file
-            add_prop "${memory_node}" "xlnx,ip-name" [get_ip_property $drv_handle IP_NAME] string $dts_file
-            add_prop "${memory_node}" "memory_type" "memory" string $dts_file
-            add_prop "${memory_node}" "reg" [join $ov_update ">, <"] hexlist $dts_file
-        }
-    }
-
-    proc ddrpsv_get_sorted_list {adrlist} {
-        set base_addr ""
-        set sorted_list ""
-        set adrlist [join $adrlist]
-        for {set i 0} {$i < [llength $adrlist]} {set i [expr $i+2]} {
-            lappend base_addr [lindex $adrlist $i]
-        }
-        set base_addr [lsort -integer $base_addr]
-        set high "0x0"
-        for {set i 0} {$i < [llength $base_addr]} {incr i} {
-            if { [scan [lindex $base_addr $i] %lx] < [scan $high %lx] } {
-                continue
-            }
-            lappend sorted_list [lindex $base_addr $i]
-            set high [scan [lindex $adrlist [expr [lsearch $adrlist [lindex $base_addr $i]]+1]] %lx]
-            for {set j 0} {$j < [llength $adrlist]} {set j [expr $j+2]} {
-                set tlo [scan [lindex $adrlist $j] %lx]
-                set thi [scan [lindex $adrlist [expr $j+1]] %lx]
-                if {$high >= $tlo && $high <= $thi} {
-                    set high $thi
-                }
-            }
-            set high [format 0x%lx $high]
-            lappend sorted_list $high
-        }
-        return $sorted_list
-    }
-
-    proc ddrpsv_generate_reg_property {base high} {
-        set size [format 0x%lx [expr {${high} - ${base} + 1}]]
-
-        set proctype [get_hw_family]
-        if {[string match -nocase $proctype "versal"] || [string match -nocase $proctype "psv_pmc"] || [string match -nocase $proctype "psv_cortexr5"]} {
-                if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-                        set temp $base
-                        set temp [string trimleft [string trimleft $temp 0] x]
-                        set len [string length $temp]
-                        set rem [expr {${len} - 8}]
-                        set high_base "0x[string range $temp $rem $len]"
-                        set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                        set low_base [format 0x%08x $low_base]
-                } else {
-                        set high_base $base
-                        set low_base 0x0
-                }
-                if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
-                        set temp $size
-                        set temp [string trimleft [string trimleft $temp 0] x]
-                        set len [string length $temp]
-                        set rem [expr {${len} - 8}]
-                        set high_size "0x[string range $temp $rem $len]"
-                        set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
-                        set low_size [format 0x%08x $low_size]
-                } else {
-                        set high_size $size
-                        set low_size 0x0
-                }
-                set reg "$low_base $high_base $low_size $high_size"
-        } else {
-                set reg "0x0 $base 0x0 $size"
-        }
-        return $reg
-    }
-
-    proc ddrpsv_update_mc_ranges {drv_handle reg} {
-        global is_versal_net_platform
-        if { !$is_versal_net_platform } {
-                set num_mc [hsi get_property CONFIG.NUM_MC [hsi::get_cells -hier $drv_handle]]
-                set intrleave_size [hsi get_property CONFIG.MC_INTERLEAVE_SIZE [hsi::get_cells -hier $drv_handle]]
-                if {$num_mc >= 1} {
-                        if {[catch {set value [pcwdt get "&mc0" ranges]} msg]} {
-                                set node [create_node -n "&mc0" -d "pcw.dtsi" -p root]
-                                add_prop $node ranges $reg hexlist "pcw.dtsi" 1
-                                add_prop $node "status" "okay" string "pcw.dtsi" 1
-                                set mcnode [create_node -n "&ddrmc_xmpu_0" -d "pcw.dtsi" -p root]
-                                add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
-                        } else {
-                                set reg_val $value
-                                set reg_val [string trimleft $reg_val "<"]
-                                set reg_val [string trimright $reg_val ">"]
-                                append reg_val ">, <$reg"
-                                pcwdt unset "&mc0" ranges
-                                set reg_val [ddrpsv_remove_dup $reg_val]
-                                add_prop "&mc0" ranges $reg_val hexlist "pcw.dtsi" 1
-                                add_prop "&mc0" "status" "okay" string "pcw.dtsi" 1
-                        }
-                }
-
-                if {$num_mc >= 2} {
-                        if {[catch {set value [pcwdt get "&mc1" ranges]} msg]} {
-                                set node [create_node -n "&mc1" -d "pcw.dtsi" -p root]          
-                                add_prop $node ranges $reg hexlist "pcw.dtsi" 1
-                                add_prop $node "status" "okay" string "pcw.dtsi" 1
-                                set mcnode [create_node -n "&ddrmc_xmpu_1" -d "pcw.dtsi" -p root]               
-                                add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
-                        } else {
-                                set reg_val $value
-                                set reg_val [string trimleft $reg_val "<"]
-                                set reg_val [string trimright $reg_val ">"]
-                                append reg_val ">, <$reg"
-                                pcwdt unset "&mc1" ranges
-                                set reg_val [ddrpsv_remove_dup $reg_val]
-                                add_prop "&mc1" ranges $reg_val hexlist "pcw.dtsi" 1                    
-                                add_prop "&mc1" "status" "okay" string "pcw.dtsi" 1
-                        }
-                        add_prop "&mc0" interleave "$intrleave_size 0" hexlist "pcw.dtsi" 1
-                        add_prop "&mc1" interleave "$intrleave_size 1" hexlist "pcw.dtsi" 1
-                }
-                
-                if {$num_mc >= 4} {
-                        if {[catch {set value [pcwdt get "&mc2" ranges]} msg]} {
-                                set node [create_node -n "&mc2" -d "pcw.dtsi" -p root]
-                                add_prop $node ranges $reg hexlist "pcw.dtsi" 1
-                                add_prop $node "status" "okay" string "pcw.dtsi" 1
-                                set mcnode [create_node -n "&ddrmc_xmpu_2" -d "pcw.dtsi" -p root]
-                                add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
-                        } else {
-                                set reg_val $value
-                                set reg_val [string trimleft $reg_val "<"]
-                                set reg_val [string trimright $reg_val ">"]
-                                append reg_val ">, <$reg"
-                                pcwdt unset "&mc2" ranges
-                                set reg_val [ddrpsv_remove_dup $reg_val]
-                                add_prop "&mc2" ranges $reg_val hexlist "pcw.dtsi" 1               
-                                add_prop "&mc2" "status" "okay" string "pcw.dtsi" 1
-                        }
-                        add_prop "&mc2" interleave "$intrleave_size 2" hexlist "pcw.dtsi" 1
-                        if {[catch {set value [pcwdt get "&mc3" ranges]} msg]} {
-                                set node [create_node -n "&mc3" -d "pcw.dtsi" -p root]
-                                add_prop $node ranges $reg hexlist "pcw.dtsi" 1
-                                set mcnode [create_node -n "&ddrmc_xmpu_3" -d "pcw.dtsi" -p root]
-                                add_prop $mcnode "status" "okay" string "pcw.dtsi" 1
-                        } else {
-                                set reg_val $value
-                                set reg_val [string trimleft $reg_val "<"]
-                                set reg_val [string trimright $reg_val ">"]
-                                append reg_val ">, <$reg"
-                                pcwdt unset "&mc3" ranges
-                                set reg_val [ddrpsv_remove_dup $reg_val]
-                                add_prop "&mc3" ranges $reg_val hexlist "pcw.dtsi" 1             
-                                add_prop "&mc3" "status" "okay" string "pcw.dtsi" 1
-                        }
-
-                        add_prop "&mc3" interleave "$intrleave_size 3" hexlist "pcw.dtsi" 1
-                }
-        }
-
-    }
-
-    proc ddrpsv_remove_dup {reg} {
-        set list [ddrpsv_multisplit $reg ">, <"]
-        set list [lsort -unique $list]
-        set len [llength $list]
-        if {$len == 1} {
-                return $list
-        }
-        set first [lindex $list 0]
-        set list [lreplace $list 0 0]
-        foreach val $list {
-                append first ">, <$val"
-        }
-        return $first
-        
-    }
-
-    proc ddrpsv_multisplit "str splitStr {mc {\x00}}" {
-        return [split [string map [list $splitStr $mc] $str] $mc]
-    }                                                                                                                                                                           
-
-    proc ddrpsv_get_base_addr {mapped_periph_list index} {
-        # Get the Base address of the mapped DDR region
-        return [hsi get_property BASE_VALUE [lindex ${mapped_periph_list} $index]]
-    }
-
-    proc ddrpsv_get_high_addr {mapped_periph_list index} {
-        # Get the High address of the mapped DDR region
-        return [hsi get_property HIGH_VALUE [lindex ${mapped_periph_list} $index]]
-    }
-
-    proc ddrpsv_handle_address_details { index mapped_periph_list is_ddr_region_accessed ddr_region_id procc } {
-        #Variables to hold base address and high address of each DDR region
-        global ddr_addr_list
-
-        # Get the base address of the passed DDR region i.e. mapped_periph_list[index]
-        set temp [ddrpsv_get_base_addr $mapped_periph_list $index]
-
-        if {$is_ddr_region_accessed == 0} {
-            dict set ddr_addr_list $procc $ddr_region_id "$temp"
-        } else {
-            set test "[dict get $ddr_addr_list $procc $ddr_region_id]"
-            set test [lappend test $temp]
-            dict set ddr_addr_list $procc $ddr_region_id "$test"
-        }
-
-        # Get the High address of the passed DDR region i.e. mapped_periph_list[index]
-        set temp [ddrpsv_get_high_addr $mapped_periph_list $index]
-
-        set t1 "[dict get $ddr_addr_list $procc $ddr_region_id]"
-        set t1 [lappend t1 $temp]
-        dict set ddr_addr_list $procc $ddr_region_id "$t1"
-    }
-
-    proc ddrpsv_addr_params {mapped_periph_list interface_block_names region_accessed supported_block_names procc} {
-        # Loop variable to go over all the interface blocks
-        set i 0
-
-        # Loop through all the interface blocks mapped to the processor
-        foreach block_name $interface_block_names {
-                # ddr_region_id:
-                #        specifies index of base_addr_list/high_addr_list
-                #        for each DDR region.
-                # lindex $region_accessed $ddr_region_id:
-                #        status of each DDR region, if it is present or not.
-                # ddrpsv_handle_address_details:
-                #       to update the base_addr_list and high_ddr_list if needed.
-                # i:
-                #       loop variable to traverse across the mapped DDR region.
-                #       This is needed as block_name dont have unique names.
-                foreach entry $supported_block_names {
-                        if {[string match $entry $block_name]} {
-                                set ddr_region_id [lsearch -exact $supported_block_names $entry]
-                                if {$ddr_region_id >= 0} {
-                                        ddrpsv_handle_address_details $i $mapped_periph_list [lindex $region_accessed $ddr_region_id] $ddr_region_id $procc
-                                        lset region_accessed $ddr_region_id 1
-                                        break
-                                }
-                        }
-                }
-
-                incr i
-        }
-        return $region_accessed
-    }
-
-    # Vivado is allowing the DDR addresses accessible from RPU to start from 0.
-    # This leads to the DDR region's overlapping with the TCM region and results into linking error.
-    proc ddrpsv_check_tcm_overlapping {proc ddr_base_addr} {
-        global is_versal_gen2_platform
-        set proc_ip [get_ip_property $proc IP_NAME]
-        if {$proc_ip in {"psv_cortexr5" "psx_cortexr52" "cortexr52"}} {
-                set tcm_ip [hsi::get_cells -hier -filter {NAME=~"*tcm_ram_global" || NAME=~"*tcm_alias"}]
-                # For Versal Gen2, there are two TCM aliases coming, one generic and another mmi.
-                # To avoid confusion, maintain a separate condition.
-                if {[llength $tcm_ip] == 1} {
-                        set tcm_high_addr [get_highaddr $tcm_ip]
-                        set tcm_base_addr [get_baseaddr $tcm_ip]
-                        set tcm_size [format 0x%lx [expr {${tcm_high_addr} - ${tcm_base_addr} + 1}]]
-                        if {[scan $tcm_size %lx] > [scan $ddr_base_addr %lx]} {
-                                set ddr_base_addr $tcm_size
-                        }
-                } elseif {$is_versal_gen2_platform && [expr {$ddr_base_addr < "0x100000"}]} {
-                        set ddr_base_addr "0x100000"
-                }
-        }
-        return $ddr_base_addr
-    }
+# Vivado is allowing the DDR addresses accessible from RPU to start from 0.
+# This leads to the DDR region's overlapping with the TCM region and results into linking error.
+proc ddrpsv_check_r5_tcm_overlapping {r5_ddr_base_addr} {
+	global is_versal_gen2_platform
+	set tcm_ip [hsi::get_cells -hier -filter {NAME=~"*tcm_ram_global" || NAME=~"*tcm_alias"}]
+	# For Versal Gen2, there are two TCM aliases coming, one generic and another mmi.
+	# To avoid confusion, maintain a separate condition.
+	if {[llength $tcm_ip] == 1} {
+		set tcm_high_addr [get_highaddr $tcm_ip]
+		set tcm_base_addr [get_baseaddr $tcm_ip]
+		set tcm_size [format 0x%lx [expr {${tcm_high_addr} - ${tcm_base_addr} + 1}]]
+		if {[scan $tcm_size %lx] > [scan $r5_ddr_base_addr %lx]} {
+			set r5_ddr_base_addr $tcm_size
+		}
+	} elseif {$is_versal_gen2_platform && [expr {$r5_ddr_base_addr < "0x100000"}]} {
+		set r5_ddr_base_addr "0x100000"
+	}
+	return $r5_ddr_base_addr
+}
