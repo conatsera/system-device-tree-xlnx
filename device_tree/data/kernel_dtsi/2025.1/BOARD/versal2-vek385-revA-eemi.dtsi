@@ -192,10 +192,9 @@
 					#size-cells = <0>;
 					reg = <4>;
 					/* usb0_hub */
-					hub: usb-hub@74 { /* u111 - FIXME address is weird */
+					hub: usb-hub@2d {
 						compatible = "microchip,usb5744";
-						status = "disabled";
-						reg = <0x74>;
+						reg = <0x2d>;
 					};
 
 				};
