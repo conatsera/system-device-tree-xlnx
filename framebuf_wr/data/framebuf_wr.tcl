@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -87,10 +87,18 @@
         if {$has_y_uv10_420 == 1} {
                 append vid_formats " " "xv15"
         }
-            set has_y_u_v8 [hsi get_property CONFIG.HAS_Y_U_V8 [hsi::get_cells -hier $drv_handle]]
-            if {$has_y_u_v8 == 1} {
-                    append vid_formats " " "y_u_v8"
-            }
+        set has_y_u_v8 [hsi get_property CONFIG.HAS_Y_U_V8 [hsi::get_cells -hier $drv_handle]]
+        if {$has_y_u_v8 == 1} {
+                append vid_formats " " "y_u_v8"
+        }
+        set has_y_u_v10 [hsi get_property CONFIG.HAS_Y_U_V10 [hsi::get_cells -hier $drv_handle]]
+        if {$has_y_u_v10 == 1} {
+                append vid_formats " " "y_u_v10"
+        }
+        set has_y_u_v12 [hsi get_property CONFIG.HAS_Y_U_V12 [hsi::get_cells -hier $drv_handle]]
+        if {$has_y_u_v12 == 1} {
+                append vid_formats " " "y_u_v12"
+        }
         if {![string match $vid_formats ""]} {
                 add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
         }
