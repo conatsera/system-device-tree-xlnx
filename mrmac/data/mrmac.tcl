@@ -64,6 +64,17 @@
                    }
             }
             set connected_ip [get_connected_stream_ip $mrmac_ip "tx_axis_tdata0"]
+        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        set gt_mode [split $gt_mode " "]
+        set gt_mode [lindex $gt_mode 0]
+        add_prop "${node}" "xlnx,gt-mode" $gt_mode string $dts_file
+
+        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT0_C0  [hsi::get_cells -hier $drv_handle]]
+        set port0_dpath [split $port0_dpath " "]
+        set port0_dwidth [lindex $port0_dpath 1]
+        set port0_dwidth [string trimright $port0_dwidth "b"]
+        add_prop "${node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
+
         set FEC_SLICE0_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE0_CFG_C0 [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,flex-slice0-cfg-c0" $FEC_SLICE0_CFG_C0 string $dts_file
         set FEC_SLICE0_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE0_CFG_C1 [hsi::get_cells -hier $drv_handle]]
@@ -813,6 +824,17 @@
            add_prop "$mrmac1_node" "xlnx,phcindex" 1 int $dts_file
            add_prop "$mrmac1_node" "xlnx,gtlane" 1 int $dts_file
 
+        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        set gt_mode [split $gt_mode " "]
+        set gt_mode [lindex $gt_mode 0]
+        add_prop "${mrmac1_node}" "xlnx,gt-mode" $gt_mode string $dts_file
+
+        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT1_C0  [hsi::get_cells -hier $drv_handle]]
+        set port0_dpath [split $port0_dpath " "]
+        set port0_dwidth [lindex $port0_dpath 1]
+        set port0_dwidth [string trimright $port0_dwidth "b"]
+        add_prop "${mrmac1_node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
+
         set FEC_SLICE1_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE1_CFG_C0 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac1_node}" "xlnx,flex-slice1-cfg-c0" $FEC_SLICE1_CFG_C0 string $dts_file
         set FEC_SLICE1_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE1_CFG_C1 [hsi::get_cells -hier $drv_handle]]
@@ -1206,6 +1228,17 @@
            }
            add_prop "$mrmac2_node" "xlnx,phcindex" 2 int $dts_file
            add_prop "$mrmac2_node" "xlnx,gtlane" 2 int $dts_file
+        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        set gt_mode [split $gt_mode " "]
+        set gt_mode [lindex $gt_mode 0]
+        add_prop "${mrmac2_node}" "xlnx,gt-mode" $gt_mode string $dts_file
+
+        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT2_C0  [hsi::get_cells -hier $drv_handle]]
+        set port0_dpath [split $port0_dpath " "]
+        set port0_dwidth [lindex $port0_dpath 1]
+        set port0_dwidth [string trimright $port0_dwidth "b"]
+        add_prop "${mrmac2_node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
+
         set FEC_SLICE2_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE2_CFG_C0 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac2_node}" "xlnx,flex-slice2-cfg-c0" $FEC_SLICE2_CFG_C0 string $dts_file
         set FEC_SLICE2_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE2_CFG_C1 [hsi::get_cells -hier $drv_handle]]
@@ -1578,6 +1611,17 @@
         add_prop "${mrmac3_node}" "clocks" $clkvals3 noformating $dts_file
         add_prop "${mrmac3_node}" "clock-names" $clknames3 stringlist $dts_file
 
+
+        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        set gt_mode [split $gt_mode " "]
+        set gt_mode [lindex $gt_mode 0]
+        add_prop "${mrmac3_node}" "xlnx,gt-mode" $gt_mode string $dts_file
+
+        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT3_C0  [hsi::get_cells -hier $drv_handle]]
+        set port0_dpath [split $port0_dpath " "]
+        set port0_dwidth [lindex $port0_dpath 1]
+        set port0_dwidth [string trimright $port0_dwidth "b"]
+        add_prop "${mrmac3_node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
 
         set FEC_SLICE3_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE3_CFG_C0 [hsi::get_cells -hier $drv_handle]]
         add_prop "${mrmac3_node}" "xlnx,flex-slice3-cfg-c0" $FEC_SLICE3_CFG_C0 string $dts_file
