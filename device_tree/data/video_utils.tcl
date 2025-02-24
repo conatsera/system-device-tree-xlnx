@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -584,16 +584,6 @@ proc gen_axis_switch {ip} {
         set connectip ""
         foreach intf $master_intf {
             set connect [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
-            set len [llength $connectip]
-            if {$len > 1} {
-                for {set i 0 } {$i < $len} {incr i} {
-                    set ip [lindex $connectip $i]
-                    if {[regexp -nocase "ila" $ip match]} {
-                        continue
-                    }
-                    set connectip "$ip"
-                }
-            }
             foreach connectip $connect {
                 if {[llength $connectip]} {
                     if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_broadcaster"]} {
@@ -604,6 +594,16 @@ proc gen_axis_switch {ip} {
                         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
                         foreach intf $master_intf {
                             set connectip [get_connected_stream_ip [hsi::get_cells -hier $connectip] $intf]
+                            set len [llength $connectip]
+                            if {$len > 1} {
+                                for {set i 0 } {$i < $len} {incr i} {
+                                    set ip [lindex $connectip $i]
+                                    if {[regexp -nocase "ila" $ip match]} {
+                                        continue
+                                    }
+                                    set connectip "$ip"
+                                }
+                            }
                             foreach connect $connectip {
                                 if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_broadcaster"]} {
                                     return $connectip
@@ -624,6 +624,16 @@ proc gen_axis_switch {ip} {
                                 }
                             }
                             if {[llength $connectip]} {
+                                set len [llength $connectip]
+                                if {$len > 1} {
+                                    for {set i 0 } {$i < $len} {incr i} {
+                                        set ip [lindex $connectip $i]
+                                        if {[regexp -nocase "ila" $ip match]} {
+                                            continue
+                                        }
+                                        set connectip "$ip"
+                                    }
+                                }
                                 set ip_mem_handles [hsi::get_mem_ranges $connectip]
                                 if {![llength $ip_mem_handles]} {
                                     set master3_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==SLAVE || TYPE ==TARGET}]

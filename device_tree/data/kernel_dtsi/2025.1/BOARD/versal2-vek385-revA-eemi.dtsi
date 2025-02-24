@@ -192,10 +192,9 @@
 					#size-cells = <0>;
 					reg = <4>;
 					/* usb0_hub */
-					hub: usb-hub@74 { /* u111 - FIXME address is weird */
+					hub: usb-hub@2d {
 						compatible = "microchip,usb5744";
-						status = "disabled";
-						reg = <0x74>;
+						reg = <0x2d>;
 					};
 
 				};
@@ -239,5 +238,13 @@
 			reset-deassert-us = <280>;
 			reset-gpios = <&gpio0 25 GPIO_ACTIVE_LOW>;
 		};
+	};
+};
+
+&mmi_10gbe {
+	phy-mode = "10gbase-r";
+	fixed-link {
+		speed = <10000>;
+		duplex = "full";
 	};
 };

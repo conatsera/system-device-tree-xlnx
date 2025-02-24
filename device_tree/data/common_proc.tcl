@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -2470,6 +2470,26 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 		if {[llength $cpm_unit_addr]} {
 			set addr [string tolower $cpm_unit_addr]
 		}
+	} elseif {[string match -nocase $ip_name "mmi_pcie0_slcr"]} {
+		set cpm_unit_addr ""
+		set addr "0"
+		set mmi_port_type ""
+
+		set mmi_pcie0_ip [hsi::get_cells -hier -filter IP_NAME==mmi_pcie0]
+		set mmi_ip_name [get_ip_property [hsi::get_cells -hier $mmi_pcie0_ip] IP_NAME]
+
+		if {[string match -nocase $mmi_ip_name "mmi_pcie0"]} {
+			set mmi_port_type [hsi get_property CONFIG.C_MMI_PCIE0_PORT_TYPE [hsi::get_cells -hier $mmi_pcie0_ip]]
+		}
+
+		if {[string match -nocase $mmi_port_type "Root_Port_of_PCIe_Root_Port_Complex"]} {
+			if {[string match -nocase $ip_name "mmi_pcie0_slcr"]} {
+				set cpm_unit_addr [hsi get_property CONFIG.C_S_AXI_BASEADDR [hsi::get_cells -hier $slave_ip]]
+			}
+			if {[llength $cpm_unit_addr]} {
+				set addr [string tolower $cpm_unit_addr]
+			}
+		}
 	} else {
 		set ip_mem_handle [hsi::get_mem_ranges $slave_ip]
 		if {![string_is_empty $proc_handle]} {
@@ -3244,6 +3264,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ebe8d000 label asu_dma1
 				dict set def_ps_mapping f1a60000 label gem0
 				dict set def_ps_mapping f1a70000 label gem1
+				dict set def_ps_mapping ed920000 label mmi_10gbe
 				dict set def_ps_mapping f1a50000 label gpio0
 				dict set def_ps_mapping f1020000 label gpio1
 				dict set def_ps_mapping f1940000 label i2c0
