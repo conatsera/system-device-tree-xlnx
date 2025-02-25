@@ -1974,7 +1974,7 @@ proc proc_mapping {} {
 			}
 			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
-				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi pmc_qspi axi_emc ${linear_spi_list}"
+				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi pmc_qspi axi_emc ${linear_spi_list} tmr_manager"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
                               	} else {
                                 	continue
