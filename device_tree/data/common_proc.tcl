@@ -6281,6 +6281,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	}
 	# TODO: more ignore ip list?
 	set ip_type [hsi get_property IP_NAME $ip]
+	set node [get_node $drv_handle]
 	global env
 	set path $env(REPO)
 	set common_file "$path/device_tree/data/config.yaml"
@@ -6288,13 +6289,13 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	if {[string match -nocase $ip_type "psu_pcie"]} {
 		set pcie_config [hsi get_property CONFIG.C_PCIE_MODE [hsi::get_cells -hier $drv_handle]]
 		if {[string match -nocase $pcie_config "Endpoint Device"]} {
-			lappend ignore_list $ip_type
+			add_prop $node "xlnx,port-type" 0x0 hexint "pcw.dtsi" 1
+		} else {
+			add_prop $node "xlnx,port-type" 0x1 hexint "pcw.dtsi" 1
 		}
-		set node [get_node $drv_handle]
 		if {$node == 0} {
 			return
 		}
-		add_prop $node "xlnx,port-type" 0x1 hexint "pcw.dtsi" 1
 		add_prop $node "xlnx,dma-addr" 0xfd0f0000 hexint "pcw.dtsi" 1
 	}
 	if {[regexp "pmc_*" $ip_type match]} {
