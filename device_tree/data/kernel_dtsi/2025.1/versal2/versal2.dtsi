@@ -632,7 +632,7 @@
 			reg = <0 0xed920000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 164 4>, <0 164 4>, <0 164 4>, <0 164 4>;
-			clock-names = "pclk", "hclk", "tsu_clk";
+			clock-names = "pclk", "hclk", "tx_clk", "tsu_clk";
 		};
 
 		gpio0: gpio@f1a50000 {
