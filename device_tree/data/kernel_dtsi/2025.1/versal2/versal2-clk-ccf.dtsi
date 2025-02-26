@@ -52,6 +52,18 @@
 		clock-mult = <1>;
 	};
 
+	clk150: clk150 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <150000000>;
+	};
+
+	clk250: clk250 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <250000000>;
+	};
+
 	firmware {
 		versal2_firmware: versal2-firmware {
 			compatible = "xlnx,versal2-firmware";
@@ -222,6 +234,10 @@
 		 <&versal2_clk GEM1_REF>, <&versal2_clk GEM1_TX>,
 		 <&versal2_clk GEM1_RX>, <&versal2_clk GEM_TSU>;
 	power-domains = <&versal2_firmware PM_DEV_GEM_1>;
+};
+
+&mmi_10gbe {
+	clocks = <&clk150>, <&clk150>, <&clk150>, <&clk250>;
 };
 
 &gpio0 {
