@@ -97,7 +97,7 @@
 			<&xilinx_ams 27>, <&xilinx_ams 28>, <&xilinx_ams 29>;
 	};
 
-	pwm-fan {
+	pwm_fan: pwm-fan {
 		compatible = "pwm-fan";
 		pwms = <&ttc0 2 40000 1>;
 	};
