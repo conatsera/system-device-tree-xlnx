@@ -13,52 +13,70 @@
 # GNU General Public License for more details.
 #
 
-    proc ipipsu_generate {drv_handle} {
-        set ipi_list [hsi get_cells -hier -filter {IP_NAME == "psu_ipi" || IP_NAME == "psv_ipi" || IP_NAME == "psx_ipi" || IP_NAME == "ipi"}]
+proc ipipsu_generate {drv_handle} {
+	set ipi_list [hsi get_cells -hier -filter {IP_NAME == "psu_ipi" || IP_NAME == "psv_ipi" || IP_NAME == "psx_ipi" || IP_NAME == "ipi"}]
 	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52 || IP_NAME==cortexr52}]
-        set node [get_node $drv_handle]
+	set node [get_node $drv_handle]
 	set child_node_label [hsi get_property NAME $drv_handle]
 	set node_label [string trimleft $node "&"]
 	set buffer_base [hsi get_property CONFIG.C_BUFFER_BASE $drv_handle]
 	set base [get_baseaddr $drv_handle]
-        add_prop $node "xlnx,ipi-target-count" [llength $ipi_list] int "pcw.dtsi"
+	add_prop $node "xlnx,ipi-target-count" [llength $ipi_list] int "pcw.dtsi"
 	set node_space "_"
 	set src [hsi get_property CONFIG.C_BUFFER_INDEX [hsi get_cells -hier $drv_handle]]
 
 	if {[llength $node] > 1} {
-                 set node_label [lindex [split $node_label ":"] 0]
-        }
-        set cpu [hsi get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $drv_handle]]
-        set memmap_key ""
-        switch $cpu {
-                "APU" - "A72" - "A78_0" {
-                        set memmap_key "a53"
-                }
-                "RPU0" - "R5_0" - "R52_0" {
-                        set memmap_key [lindex $r5_procs 0]
-                }
-                "RPU1" - "R5_1" - "R52_1" {
-                        set memmap_key [lindex $r5_procs 1]
-                }
-                "R52_2" {
-                        set memmap_key [lindex $r5_procs 2]
-                }
-                "R52_3" {
-                        set memmap_key [lindex $r5_procs 3]
-                }
-                "PSM" {
-                        set memmap_key "psm"
-                }
-                "PMC" {
-                        set memmap_key "pmc"
-                }
-                "PMU" {
-                        set memmap_key "pmu"
-                }
-                "ASU" {
-                        set memmap_key "asu"
-                }
-        }
+		set node_label [lindex [split $node_label ":"] 0]
+	}
+	set cpu [hsi get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $drv_handle]]
+	set memmap_key ""
+	switch $cpu {
+		"APU" - "A72" - "A78_0" {
+			set memmap_key "a53"
+		}
+		"RPU0" - "R5_0" - "R52_0" {
+			set memmap_key [lindex $r5_procs 0]
+		}
+		"RPU1" - "R5_1" - "R52_1" {
+			set memmap_key [lindex $r5_procs 1]
+		}
+		"R52_2" {
+			set memmap_key [lindex $r5_procs 2]
+		}
+		"R52_3" {
+			set memmap_key [lindex $r5_procs 3]
+		}
+		"R52_4" {
+			set memmap_key [lindex $r5_procs 4]
+		}
+		"R52_5" {
+			set memmap_key [lindex $r5_procs 5]
+		}
+		"R52_6" {
+			set memmap_key [lindex $r5_procs 6]
+		}
+		"R52_7" {
+			set memmap_key [lindex $r5_procs 7]
+		}
+		"R52_8" {
+			set memmap_key [lindex $r5_procs 8]
+		}
+		"R52_9" {
+			set memmap_key [lindex $r5_procs 9]
+		}
+		"PSM" {
+			set memmap_key "psm"
+		}
+		"PMC" {
+			set memmap_key "pmc"
+		}
+		"PMU" {
+			set memmap_key "pmu"
+		}
+		"ASU" {
+			set memmap_key "asu"
+		}
+	}
 	if {![string_is_empty $memmap_key]} {
 		set high [get_highaddr $drv_handle]
 		set size [format 0x%x [expr {${high} - ${base} + 1}]]
@@ -101,4 +119,4 @@
 		incr idx
 	}
 
-    }
+}
