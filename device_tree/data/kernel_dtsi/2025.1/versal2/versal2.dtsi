@@ -438,6 +438,11 @@
 					<0x0 0xa5 0x0 &gic_r52 0x0 0xa5 0x1>;
 		};
 
+		mmi_gpu_slcr@ed720000 {
+			reg = <0x00 0xed720000 0x00 0x20000>;
+			no-map;
+		};
+
 		adma0: dma-controller@ebd00000 {
 			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
