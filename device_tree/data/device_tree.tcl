@@ -2181,7 +2181,6 @@ proc update_memory_node {} {
 	# e.g. Two microblazes connected to one BRAM each. Each BRAM can start from 0. It leads to overwriting
 	# of one node by other. Thus, update their addresses with incremental leading zeroes.
 	set root_child_nodes [systemdt children root]
-	set axi_noc_baseaddr_dict [dict create]
 	set mem_addr_counter [dict create]
 	foreach node $root_child_nodes {
 		if [regexp -nocase "memory@" $node match] {
@@ -2197,30 +2196,6 @@ proc update_memory_node {} {
 			} else {
 				dict set mem_addr_counter $mem_addr 0
 			}
-			if {[regexp -nocase "axi_noc" [systemdt get $node "xlnx,ip-name"] match]} {
-				dict set axi_noc_baseaddr_dict $mem_addr $node
-			}
-		}
-	}
-
-	# Linux/u-boot expects DDR with lower addresses to be the first one among all the memory
-	# nodes available. Without below sorting, these nodes appear in the alphabetical order
-	# i.e. the order in which hsi get_cells returns the cell names. If the cell names have
-	# been updated in design like axi_noc2_s0_ddr_memory: memory@00000000 and
-	# axi_noc2_1_ddr_memory: memory@60000000000, higher memory is getting picked up by
-	# u-boot as that comes first in alphabetical order.
-
-	if {[llength [dict keys $axi_noc_baseaddr_dict]] > 1 } {
-		# Sorting it in decreasing order to push the nodes back to SDT as stack.
-		set sorted_noc_addr_List [lsort -decreasing -integer [dict keys $axi_noc_baseaddr_dict]]
-		set sorted_noc_node_list [list]
-
-		foreach key $sorted_noc_addr_List {
-		    lappend sorted_noc_node_list [dict get $axi_noc_baseaddr_dict $key]
-		}
-
-		foreach node $sorted_noc_node_list {
-			systemdt move root 0 $node
 		}
 	}
 }
