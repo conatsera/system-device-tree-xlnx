@@ -1329,10 +1329,10 @@ proc gen_opp_freq {} {
 	}
 
 	if {[llength $opp_freq]} {
-		set opp00_result [expr int ([expr $opp_freq / 1])]
-		set opp01_result [expr int ([expr $opp_freq / 2])]
-		set opp02_result [expr int ([expr $opp_freq / 3])]
-		set opp03_result [expr int ([expr $opp_freq / 4])]
+		set opp00_result [expr round([expr $opp_freq / 1])]
+		set opp01_result [expr round([expr $opp_freq / 2])]
+		set opp02_result [expr round([expr $opp_freq / 3])]
+		set opp03_result [expr round([expr $opp_freq / 4])]
 		set opp00 "/bits/ 64 <$opp00_result>"
 		set opp01 "/bits/ 64 <$opp01_result>"
 		set opp02 "/bits/ 64 <$opp02_result>"
