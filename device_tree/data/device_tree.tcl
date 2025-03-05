@@ -45,6 +45,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "canfd" "axi_can"
 	dict set ::sdtgen::namespacelist "axi_cdma" "axi_cdma"
 	dict set ::sdtgen::namespacelist "clk_wiz" "axi_clk_wiz"
+	dict set ::sdtgen::namespacelist "clkx5_wiz" "axi_clk_wiz"
 	dict set ::sdtgen::namespacelist "clk_wizard" "axi_clk_wiz"
 	dict set ::sdtgen::namespacelist "axi_fifo_mm_s" "axi_fifo_mm_s"
 	dict set ::sdtgen::namespacelist "mutex" "mutex"
