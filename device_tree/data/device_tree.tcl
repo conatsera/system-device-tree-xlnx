@@ -45,6 +45,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "canfd" "axi_can"
 	dict set ::sdtgen::namespacelist "axi_cdma" "axi_cdma"
 	dict set ::sdtgen::namespacelist "clk_wiz" "axi_clk_wiz"
+	dict set ::sdtgen::namespacelist "clkx5_wiz" "axi_clk_wiz"
 	dict set ::sdtgen::namespacelist "clk_wizard" "axi_clk_wiz"
 	dict set ::sdtgen::namespacelist "axi_fifo_mm_s" "axi_fifo_mm_s"
 	dict set ::sdtgen::namespacelist "mutex" "mutex"
@@ -1329,10 +1330,10 @@ proc gen_opp_freq {} {
 	}
 
 	if {[llength $opp_freq]} {
-		set opp00_result [expr int ([expr $opp_freq / 1])]
-		set opp01_result [expr int ([expr $opp_freq / 2])]
-		set opp02_result [expr int ([expr $opp_freq / 3])]
-		set opp03_result [expr int ([expr $opp_freq / 4])]
+		set opp00_result [expr round([expr $opp_freq / 1])]
+		set opp01_result [expr round([expr $opp_freq / 2])]
+		set opp02_result [expr round([expr $opp_freq / 3])]
+		set opp03_result [expr round([expr $opp_freq / 4])]
 		set opp00 "/bits/ 64 <$opp00_result>"
 		set opp01 "/bits/ 64 <$opp01_result>"
 		set opp02 "/bits/ 64 <$opp02_result>"
@@ -2181,6 +2182,7 @@ proc update_memory_node {} {
 	# e.g. Two microblazes connected to one BRAM each. Each BRAM can start from 0. It leads to overwriting
 	# of one node by other. Thus, update their addresses with incremental leading zeroes.
 	set root_child_nodes [systemdt children root]
+	set axi_noc_baseaddr_dict [dict create]
 	set mem_addr_counter [dict create]
 	foreach node $root_child_nodes {
 		if [regexp -nocase "memory@" $node match] {
@@ -2196,6 +2198,32 @@ proc update_memory_node {} {
 			} else {
 				dict set mem_addr_counter $mem_addr 0
 			}
+			if {![catch {set memory_ip_name [systemdt get $node "xlnx,ip-name"]} msg]} {
+				if {[regexp -nocase "axi_noc" $memory_ip_name match]} {
+					dict set axi_noc_baseaddr_dict $mem_addr $node
+				}
+			}
+		}
+	}
+
+	# Linux/u-boot expects DDR with lower addresses to be the first one among all the memory
+	# nodes available. Without below sorting, these nodes appear in the alphabetical order
+	# i.e. the order in which hsi get_cells returns the cell names. If the cell names have
+	# been updated in design like axi_noc2_s0_ddr_memory: memory@00000000 and
+	# axi_noc2_1_ddr_memory: memory@60000000000, higher memory is getting picked up by
+	# u-boot as that comes first in alphabetical order.
+
+	if {[llength [dict keys $axi_noc_baseaddr_dict]] > 1 } {
+		# Sorting it in decreasing order to push the nodes back to SDT as stack.
+		set sorted_noc_addr_List [lsort -decreasing -integer [dict keys $axi_noc_baseaddr_dict]]
+		set sorted_noc_node_list [list]
+
+		foreach key $sorted_noc_addr_List {
+		    lappend sorted_noc_node_list [dict get $axi_noc_baseaddr_dict $key]
+		}
+
+		foreach node $sorted_noc_node_list {
+			systemdt move root 0 $node
 		}
 	}
 }

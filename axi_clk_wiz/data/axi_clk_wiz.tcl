@@ -19,7 +19,7 @@
                 return
         }
         set compatible [get_comp_str $drv_handle]
-        if {[string equal $compatible "xlnx,clk-wizard-1.0"]} {
+        if {[string equal $compatible "xlnx,clk-wizard-1.0"] || [string equal $compatible "xlnx,clkx5-wiz-1.0"]} {
                set keyval [pldt append $node compatible "\ \, \"xlnx,versal-clk-wizard\""]
         } else {
                set keyval [pldt append $node compatible "\ \, \"xlnx,clocking-wizard\""]
