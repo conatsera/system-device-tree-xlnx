@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -730,6 +730,15 @@
                     }
                     "29" {
                             append vid_formats " " "RG24"
+                    }
+                    "42" {
+                            append vid_formats " " "Y_U_V8"
+                    }
+                    "43" {
+                            append vid_formats " " "Y_U_V10"
+                    }
+                    "44" {
+                            append vid_formats " " "Y_U_V12"
                     }
                     default {
                             dtg_warning "Not supported format:$num"
