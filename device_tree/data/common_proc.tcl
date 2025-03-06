@@ -3244,39 +3244,6 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping eb390000 label ipi_pmc_nobuf
 				dict set def_ps_mapping e2000000 label gic_a78
 				dict set def_ps_mapping eb9a0000 label gic_r52
-
-				dict set def_ps_mapping eba00000 label r52_0a_atcm_global
-				dict set def_ps_mapping eba10000 label r52_0a_btcm_global
-				dict set def_ps_mapping eba20000 label r52_0a_ctcm_global
-				dict set def_ps_mapping eba80000 label r52_0b_atcm_global
-				dict set def_ps_mapping eba90000 label r52_0b_btcm_global
-				dict set def_ps_mapping ebaa0000 label r52_0b_ctcm_global
-				dict set def_ps_mapping ebb00000 label r52_0c_atcm_global
-				dict set def_ps_mapping ebb10000 label r52_0c_btcm_global
-				dict set def_ps_mapping ebb20000 label r52_0c_ctcm_global
-				dict set def_ps_mapping ebb80000 label r52_0d_atcm_global
-				dict set def_ps_mapping ebb90000 label r52_0d_btcm_global
-				dict set def_ps_mapping ebba0000 label r52_0d_ctcm_global
-				dict set def_ps_mapping ebc00000 label r52_0e_atcm_global
-				dict set def_ps_mapping ebc10000 label r52_0e_btcm_global
-				dict set def_ps_mapping ebc20000 label r52_0e_ctcm_global
-
-				dict set def_ps_mapping eba40000 label r52_1a_atcm_global
-				dict set def_ps_mapping eba50000 label r52_1a_btcm_global
-				dict set def_ps_mapping eba60000 label r52_1a_ctcm_global
-				dict set def_ps_mapping ebac0000 label r52_1b_atcm_global
-				dict set def_ps_mapping ebad0000 label r52_1b_btcm_global
-				dict set def_ps_mapping ebae0000 label r52_1b_ctcm_global
-				dict set def_ps_mapping ebb40000 label r52_1c_atcm_global
-				dict set def_ps_mapping ebb50000 label r52_1c_btcm_global
-				dict set def_ps_mapping ebb60000 label r52_1c_ctcm_global
-				dict set def_ps_mapping ebbc0000 label r52_1d_atcm_global
-				dict set def_ps_mapping ebbd0000 label r52_1d_btcm_global
-				dict set def_ps_mapping ebbe0000 label r52_1d_ctcm_global
-				dict set def_ps_mapping ebc40000 label r52_1e_atcm_global
-				dict set def_ps_mapping ebc50000 label r52_1e_btcm_global
-				dict set def_ps_mapping ebc60000 label r52_1e_ctcm_global
-
 				dict set def_ps_mapping ebd00000 label adma0
 				dict set def_ps_mapping ebd10000 label adma1
 				dict set def_ps_mapping ebd20000 label adma2
@@ -3796,9 +3763,6 @@ proc gen_ps7_mapping {} {
 				set unit_addr ""
 			}
 			set node_name [hsi get_property NODE_NAME $node]
-			if  {[ regexp "tcm" $node_name ]} {
-				set $node_name [dict get $ps_mapping $node_unit_addr label]
-			}
 			set node_label [hsi get_property NODE_LABEL $node]
 			if {[catch {set status_prop [hsi get_property CONFIG.status $node]} msg]} {
 				set status_prop "enable"
