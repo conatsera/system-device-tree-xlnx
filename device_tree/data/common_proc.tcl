@@ -2817,7 +2817,7 @@ proc set_drv_def_dts {drv_handle} {
 	set family [get_hw_family]
 	global bus_clk_list
 	set pl_ip [is_pl_ip $drv_handle]
-	if {$pl_ip} {
+	if {$pl_ip || [regexp -nocase "microblaze" $family match]} {
 		set default_dts "pl.dtsi"
 		update_system_dts_include $default_dts
 	} else {
