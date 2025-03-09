@@ -23,142 +23,138 @@
         set ip [hsi::get_cells -hier $drv_handle]
         set_drv_conf_prop $drv_handle C_S_AXI_CTRL_ADDR_WIDTH xlnx,s-axi-ctrl-addr-width $node
         set_drv_conf_prop $drv_handle C_S_AXI_CTRL_DATA_WIDTH xlnx,s-axi-ctrl-data-width $node
+	set tile_mode [hsi get_property CONFIG.IS_TILE_FORMAT [hsi::get_cells -hier $drv_handle]]
         set vid_formats ""
         set has_bgr8 [hsi get_property CONFIG.HAS_BGR8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_bgr8 == 1} {
-                append vid_formats " " "rgb888"
-        }
         set has_rgbx8 [hsi get_property CONFIG.HAS_RGBX8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_rgbx8 == 1} {
-                append vid_formats " " "xbgr8888"
-        }
         set has_bgra8 [hsi get_property CONFIG.HAS_BGRA8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_bgra8 == 1} {
-                append vid_formats " " "argb8888"
-        }
         set has_bgrx8 [hsi get_property CONFIG.HAS_BGRX8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_bgrx8 == 1} {
-                append vid_formats " " "xrgb8888"
-        }
         set has_rgb8 [hsi get_property CONFIG.HAS_RGB8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_rgb8 == 1} {
-                append vid_formats " " "bgr888"
-        }
         set has_rgba8 [hsi get_property CONFIG.HAS_RGBA8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_rgba8 == 1} {
-                append vid_formats " " "abgr8888"
-        }
         set has_bgrx10 [hsi get_property CONFIG.HAS_RGBX10 [hsi::get_cells -hier $drv_handle]]
-        if {$has_bgrx10 == 1} {
-                append vid_formats " " "xbgr2101010"
-        }
         set has_uyvy8 [hsi get_property CONFIG.HAS_UYVY8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_uyvy8 == 1} {
-                append vid_formats " " "uyvy"
-        }
         set has_y8 [hsi get_property CONFIG.HAS_Y8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y8 == 1} {
-                append vid_formats " " "y8"
-        }
-        if {$has_y8 == 1 && $tile_mode} {
-                append vid_formats " " "y8_t"
-        }
         set has_y10 [hsi get_property CONFIG.HAS_Y10 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y10 == 1} {
-                append vid_formats " " "y10"
-        }
-        if {$has_y10 == 1 && $tile_mode} {
-                append vid_formats " " "y10_t"
-        }
         set has_y12 [hsi get_property CONFIG.HAS_Y12 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y12 == 1} {
-                append vid_formats " " "y12"
-        }
-        if {$has_y12 == 1 && $tile_mode} {
-                append vid_formats " " "y12_t"
-        }
         set has_yuv8 [hsi get_property CONFIG.HAS_YUV8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_yuv8 == 1} {
-                append vid_formats " " "vuy888"
-        }
         set has_yuvx8 [hsi get_property CONFIG.HAS_YUVX8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_yuvx8 == 1} {
-                append vid_formats " " "xvuy8888"
-        }
         set has_yuvx10 [hsi get_property CONFIG.HAS_YUVX10 [hsi::get_cells -hier $drv_handle]]
-        if {$has_yuvx10 == 1} {
-                append vid_formats " " "yuvx2101010"
-        }
         set has_yuyv8 [hsi get_property CONFIG.HAS_YUYV8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_yuyv8 == 1} {
-                append vid_formats " " "yuyv"
-        }
         set has_y_uv8_420 [hsi get_property CONFIG.HAS_Y_UV8_420 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_uv8_420 == 1} {
-                append vid_formats " " "nv12"
-        }
-        if {$has_y_uv8_420 == 1 && $tile_mode} {
-                append vid_formats " " "nv12_t"
-        }
         set has_y_uv8 [hsi get_property CONFIG.HAS_Y_UV8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_uv8 == 1} {
-                append vid_formats " " "nv16"
-        }
-        if {$has_y_uv8 == 1 && $tile_mode} {
-                append vid_formats " " "nv16_t"
-        }
         set has_y_uv10 [hsi get_property CONFIG.HAS_Y_UV10 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_uv10 == 1} {
-                append vid_formats " " "xv20"
-        }
-        if {$has_y_uv10 == 1 && $tile_mode} {
-                append vid_formats " " "xv20_t"
-        }
         set has_y_uv10_420 [hsi get_property CONFIG.HAS_Y_UV10_420 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_uv10_420 == 1} {
-                append vid_formats " " "xv15"
-        }
-        if {$has_y_uv10_420 == 1 && $tile_mode} {
-                append vid_formats " " "xv15_t"
-        }
         set has_y_u_v8 [hsi get_property CONFIG.HAS_Y_U_V8 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_u_v8 == 1} {
-                append vid_formats " " "y_u_v8"
-        }
-        if {$has_y_u_v8 == 1 && $tile_mode} {
-                append vid_formats " " "y_u_v8_t"
-        }
         set has_y_u_v10 [hsi get_property CONFIG.HAS_Y_U_V10 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_u_v10 == 1} {
-                append vid_formats " " "y_u_v10"
-        }
-        if {$has_y_u_v10 == 1 && $tile_mode} {
-                append vid_formats " " "y_u_v10_t"
-        }
         set has_y_u_v12 [hsi get_property CONFIG.HAS_Y_U_V12 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_u_v12 == 1} {
-                append vid_formats " " "y_u_v12"
-        }
-        if {$has_y_u_v12 == 1 && $tile_mode} {
-                append vid_formats " " "y_u_v12_t"
-        }
         set has_y_uv12 [hsi get_property CONFIG.HAS_Y_UV12 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_uv12 == 1} {
-                append vid_formats " " "x212m"
-        }
-        if {$has_y_uv12 == 1 && $tile_mode} {
-                append vid_formats " " "x212m_t"
-        }
         set has_y_uv12_420 [hsi get_property CONFIG.HAS_Y_UV12_420 [hsi::get_cells -hier $drv_handle]]
-        if {$has_y_uv12_420 == 1} {
-                append vid_formats " " "x012m"
-        }
-        if {$has_y_uv12_420 == 1 && $tile_mode} {
-                append vid_formats " " "x012m_t"
-        }
-        if {![string match $vid_formats ""]} {
-                add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
-        }
+        if {!$tile_mode} {
+		if {$has_bgr8 == 1} {
+			append vid_formats " " "rgb888"
+		}
+		if {$has_rgbx8 == 1} {
+			append vid_formats " " "xbgr8888"
+		}
+		if {$has_bgra8 == 1} {
+			append vid_formats " " "argb8888"
+		}
+		if {$has_bgrx8 == 1} {
+			append vid_formats " " "xrgb8888"
+		}
+		if {$has_rgb8 == 1} {
+			append vid_formats " " "bgr888"
+		}
+		if {$has_rgba8 == 1} {
+			append vid_formats " " "abgr8888"
+		}
+		if {$has_bgrx10 == 1} {
+			append vid_formats " " "xbgr2101010"
+		}
+		if {$has_uyvy8 == 1} {
+			append vid_formats " " "uyvy"
+		}
+		if {$has_y8 == 1} {
+			append vid_formats " " "y8"
+		}
+		if {$has_y10 == 1} {
+			append vid_formats " " "y10"
+		}
+		if {$has_y12 == 1} {
+			append vid_formats " " "y12"
+		}
+		if {$has_yuv8 == 1} {
+			append vid_formats " " "vuy888"
+		}
+		if {$has_yuvx8 == 1} {
+			append vid_formats " " "xvuy8888"
+		}
+		if {$has_yuvx10 == 1} {
+			append vid_formats " " "yuvx2101010"
+		}
+		if {$has_yuyv8 == 1} {
+			append vid_formats " " "yuyv"
+		}
+		if {$has_y_uv8_420 == 1} {
+			append vid_formats " " "nv12"
+		}
+		if {$has_y_uv8 == 1} {
+			append vid_formats " " "nv16"
+		}
+		if {$has_y_uv10 == 1} {
+			append vid_formats " " "xv20"
+		}
+		if {$has_y_uv10_420 == 1} {
+			append vid_formats " " "xv15"
+		}
+		if {$has_y_u_v8 == 1} {
+			append vid_formats " " "y_u_v8"
+		}
+		if {$has_y_u_v10 == 1} {
+			append vid_formats " " "y_u_v10"
+		}
+		if {$has_y_u_v12 == 1} {
+			append vid_formats " " "y_u_v12"
+		}
+		if {$has_y_uv12 == 1} {
+			append vid_formats " " "x212m"
+		}
+		if {$has_y_uv12_420 == 1} {
+			append vid_formats " " "x012m"
+		}
+		if {![string match $vid_formats ""]} {
+			add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
+		}
+	}
+        if {$tile_mode} {
+		if {$has_y8 == 1} {
+			append vid_formats " " "y8_32t y8_64t"
+		}
+		if {$has_y10} {
+			append vid_formats " " "y10_32t y10_64t"
+		}
+		if {$has_y12} {
+			append vid_formats " " "y12_32t y12_64t"
+		}
+		if {$has_y_uv8_420} {
+			append vid_formats " " "nv12_32t nv12_64t"
+		}
+		if {$has_y_uv8} {
+			append vid_formats " " "nv16_32t nv16_64t"
+		}
+		if {$has_y_u_v8} {
+			append vid_formats " " "y_u_v8_32t y_u_v8_64t"
+		}
+		if {$has_y_u_v10} {
+			append vid_formats " " "y_u_v10_32t y_u_v10_64t"
+		}
+		if {$has_y_u_v12} {
+			append vid_formats " " "y_u_v12_32t y_u_v12_64t"
+		}
+		if {![string match $vid_formats ""]} {
+			add_prop "${node}" "xlnx,vid-formats" $vid_formats stringlist $dts_file
+		}
+	}
         set samples_per_clk [hsi get_property CONFIG.SAMPLES_PER_CLOCK [hsi::get_cells -hier $drv_handle]]
         add_prop "$node" "xlnx,pixels-per-clock" $samples_per_clk int $dts_file
         set dma_align [expr $samples_per_clk * 8]
