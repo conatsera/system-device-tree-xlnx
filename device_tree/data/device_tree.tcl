@@ -1163,7 +1163,7 @@ proc gen_versal_clk {} {
 					set freq [dict get $ps_wizard_params PMC_REF_CLK_FREQMHZ]
 					if {![string match -nocase $freq "33.333"]} {
 						dtg_warning "Frequency $freq used instead of 33.333"
-						set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
+						set ref_node [create_node -n "&ref" -d $default_dts -p root]
 						add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
 					}
 				}
@@ -1171,7 +1171,7 @@ proc gen_versal_clk {} {
 					set freq [dict get $ps_wizard_params PMC_PL_ALT_REF_CLK_FREQMHZ]
 					if {![string match -nocase $freq "33.333"]} {
 						dtg_warning "Frequency $freq used instead of 33.333"
-						set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
+						set pl_alt_ref_node [create_node -n "&pl_alt_ref" -d $default_dts -p root]
 						add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
 					}
 				}
@@ -1185,7 +1185,7 @@ proc gen_versal_clk {} {
                                        set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
                                        if {![string match -nocase $freq "33.333"]} {
                                                dtg_warning "Frequency $freq used instead of 33.333"
-                                               set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
+                                               set ref_node [create_node -n "&ref" -d $default_dts -p root]
                                                add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                        }
                                }
@@ -1193,7 +1193,7 @@ proc gen_versal_clk {} {
                                        set freq [hsi get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi get_cells -hier $periph]]
                                        if {![string match -nocase $freq "33.333"]} {
                                                dtg_warning "Frequency $freq used instead of 33.333"
-                                               set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
+                                               set pl_alt_ref_node [create_node -n "&pl_alt_ref" -d $default_dts -p root]
                                                add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                        }
                                }
@@ -1205,7 +1205,7 @@ proc gen_versal_clk {} {
                                set freq [hsi get_property CONFIG.PMC_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
                                if {![string match -nocase $freq "33.333"]} {
                                        dtg_warning "Frequency $freq used instead of 33.333"
-                                       set ref_node [create_node -n "&ref_clk" -d $default_dts -p root]
+                                       set ref_node [create_node -n "&ref" -d $default_dts -p root]
                                        add_prop "${ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                }
                        }
@@ -1213,7 +1213,7 @@ proc gen_versal_clk {} {
                                set freq [hsi get_property CONFIG.PMC_PL_ALT_REF_CLK_FREQMHZ [hsi::get_cells -hier $periph]]
                                if {![string match -nocase $freq "33.333"]} {
                                        dtg_warning "Frequency $freq used instead of 33.333"
-                                       set pl_alt_ref_node [create_node -n "&pl_alt_ref_clk" -d $default_dts -p root]
+                                       set pl_alt_ref_node [create_node -n "&pl_alt_ref" -d $default_dts -p root]
                                        add_prop "${pl_alt_ref_node}" "clock-frequency" [scan [expr $freq * 1000000] "%d"] int $default_dts
                                }
                        }
