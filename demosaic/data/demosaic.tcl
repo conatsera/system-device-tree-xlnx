@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -322,6 +322,12 @@ proc demosaic_update_endpoints {drv_handle} {
 			}
 		}
 	}
+		set demo_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "s_axis_video"]
+		if {[string match -nocase [hsi get_property IP_NAME $demo_inip] "axis_subset_converter"]} {
+			set subset_sink_node [create_node -n "endpoint" -l $drv_handle$demo_inip -p $port_node -d $dts_file]
+			add_prop "$subset_sink_node" "remote-endpoint" $demo_inip$drv_handle reference $dts_file
+			break
+		}
 
 		set inip ""
 		if {[llength $demo_inip]} {

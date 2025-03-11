@@ -8,7 +8,7 @@
  */
 
 #include "include/dt-bindings/net/ti-dp83867.h"
-#include "zynqmp-sm-k24-revA.dtsi"
+#include "zynqmp-sm-k24-reva.dtsi"
 
 /delete-node/ &eeprom_cc;
 
