@@ -3457,6 +3457,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ff120000 label "watchdog1: watchdog"
 			dict set def_ps_mapping fca10000 label "cpm_pciea: pci"
 			dict set def_ps_mapping fcdd0000 label "cpm5_pcie: pci"
+			dict set def_ps_mapping e4a10000 label "cpm5nc: pci"
 			dict set def_ps_mapping ff060000 label "can0: can"
 			dict set def_ps_mapping ff070000 label "can1: can"
 			dict set def_ps_mapping ff330000 label "ipi0: mailbox"
