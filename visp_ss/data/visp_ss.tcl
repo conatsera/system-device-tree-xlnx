@@ -642,7 +642,15 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub visp_inip} {
 }
 
 proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip} {
-	set outipname [hsi get_property IP_NAME $outip]
+	if {![llength $outip]} {
+		puts "Error: outip is empty or not valid. Exiting..."
+		return
+	}
+	set outipname ""
+	if {[catch {hsi get_property IP_NAME $outip} outipname]} {
+		puts "Error: Failed to get IP_NAME for outip: $outip"
+		return
+	}
 	set valid_mmip_list "v_frmbuf_wr mipi_dsi_tx_subsystem"
 	if {[lsearch  -nocase $valid_mmip_list $outipname] >= 0} {
 		foreach ip $outip {
