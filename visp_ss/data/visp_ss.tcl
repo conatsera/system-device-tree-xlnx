@@ -236,6 +236,7 @@ proc visp_ss_generate {drv_handle} {
 		}
 	}
 	generate_reserved_memory $rpu_ids $default_dts $bus_name
+	generate_remoteproc_node $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	foreach proc $proclist {
@@ -812,4 +813,128 @@ proc generate_reserved_memory {rpu_ids default_dts bus_name} {
 	set rpu_share_mem_node [create_node -l "rpu_shared_mem" -n "rpu_shared_mem@2493C000" -p $reserved_mem_node -d $default_dts]
 	add_prop "$rpu_share_mem_node" "no-map" "" noformating $default_dts
     add_prop "$rpu_share_mem_node" "reg" [list 0x0 0x2493C000 0x0 0x6C3FFF] hexlist $default_dts
+}
+
+proc generate_remoteproc_node {rpu_ids default_dts bus_name} {
+    set unique_rpu_ids [lsort -unique $rpu_ids]
+    set cluster_count 0
+    #set base_addr 0xebac0000
+	set base_addr 0xebb80000
+	set base_addr1 0xebac0000
+    set rpu_list [list]
+
+    foreach rpu_id $unique_rpu_ids {
+        lappend rpu_list $rpu_id
+        if {[llength $rpu_list] == 2} {
+            set cluster_label "versal2_r52f_cluster${cluster_count}_split"
+            set cluster_addr [format 0x%08x [expr {$base_addr + ($cluster_count * 0x100000)}]]
+			set cluster_addr1 [format remoteproc@%08x [expr {$base_addr1 + ($cluster_count * 0x100000)}]]
+
+            # Create remoteproc cluster node
+            set remoteproc_node [create_node -l $cluster_label -n "$cluster_addr1" -p $bus_name -d $default_dts]
+            add_prop "$remoteproc_node" "compatible" "xlnx,versal2-r52fss" string $default_dts
+            add_prop "$remoteproc_node" "#address-cells" 2 int $default_dts
+            add_prop "$remoteproc_node" "#size-cells" 2 int $default_dts
+            add_prop "$remoteproc_node" "xlnx,cluster-mode" 0 int $default_dts
+
+            # Define ranges dynamically based on RPU IDs
+            set ranges [list]
+            set rpu_id1 [lindex $rpu_list 0]
+            set rpu_id2 [lindex $rpu_list 1]
+
+            foreach {rpu_id offset} [list $rpu_id1 0 $rpu_id2 0x20000] {
+                lappend ranges [format "<0x%x 0x0 0x0 0x%08x 0x0 0x10000>" $rpu_id [expr {$cluster_addr + $offset}]]
+                lappend ranges [format "<0x%x 0x10000 0x0 0x%08x 0x0 0x8000>" $rpu_id [expr {$cluster_addr + $offset + 0x10000}]]
+                lappend ranges [format "<0x%x 0x18000 0x0 0x%08x 0x0 0x8000>" $rpu_id [expr {$cluster_addr + $offset + 0x20000}]]
+            }
+            add_prop "$remoteproc_node" "ranges" [join $ranges ", "] noformating $default_dts
+
+
+            # Generate R5F nodes
+            generate_r5f_node $rpu_id1 $remoteproc_node $default_dts
+            generate_r5f_node $rpu_id2 $remoteproc_node $default_dts
+
+            # Reset list and increment cluster count
+            set rpu_list [list]
+            incr cluster_count
+        }
+    }
+
+    # Handle an unpaired RPU ID
+    if {[llength $rpu_list] == 1} {
+        set rpu_id1 [lindex $rpu_list 0]
+        set cluster_label "versal2_r52f_cluster${cluster_count}_split"
+        set cluster_addr [format 0x%08x [expr {$base_addr + ($cluster_count * 0x40000)}]]
+        set cluster_addr1 [format remoteproc@%08x [expr {$base_addr + ($cluster_count * 0x40000)}]]
+
+        set remoteproc_node [create_node -l $cluster_label -n "$cluster_addr1" -p $bus_name -d $default_dts]
+        add_prop "$remoteproc_node" "compatible" "xlnx,versal2-r52fss" string $default_dts
+        add_prop "$remoteproc_node" "#address-cells" 2 int $default_dts
+        add_prop "$remoteproc_node" "#size-cells" 2 int $default_dts
+        add_prop "$remoteproc_node" "xlnx,cluster-mode" 0 int $default_dts
+
+        # Define ranges for single-node cluster
+        set ranges [list]
+        set offset 0
+        lappend ranges [format "<0x%x 0x0 0x0 0x%08x 0x0 0x10000>" $rpu_id1 [expr {$cluster_addr + $offset}]]
+        lappend ranges [format "<0x%x 0x10000 0x0 0x%08x 0x0 0x8000>" $rpu_id1 [expr {$cluster_addr + $offset + 0x10000}]]
+        lappend ranges [format "<0x%x 0x18000 0x0 0x%08x 0x0 0x8000>" $rpu_id1 [expr {$cluster_addr + $offset + 0x20000}]]
+        add_prop "$remoteproc_node" "ranges" [join $ranges ", "] noformating $default_dts
+
+        generate_r5f_node $rpu_id1 $remoteproc_node $default_dts
+    }
+}
+
+
+proc generate_r5f_node {rpu_id parent_node default_dts} {
+    set r5f_label "r52f_${rpu_id}"
+    set r5f_node [create_node -l $r5f_label -n "$r5f_label" -p $parent_node -d $default_dts]
+    add_prop "$r5f_node" "compatible" "xlnx,versal2-r52f" string $default_dts
+	# Define reg properties based on index
+    set base_offset [expr {$rpu_id * 0x40000}]
+    set reg [list \
+        [format "<0x%x 0x0 0x0 0x10000>" $rpu_id] \
+        [format "<0x%x 0x10000 0x0 0x8000>" $rpu_id] \
+        [format "<0x%x 0x18000 0x0 0x8000>" $rpu_id]
+    ]
+    add_prop "$r5f_node" "reg" [join $reg ", "] noformating $default_dts
+    add_prop "$r5f_node" "reg-names" "atcm, btcm, ctcm" string $default_dts
+	switch $rpu_id {
+        6 {
+            set rprocn "D_0_$rpu_id"
+        }
+        7 {
+            set rprocn "D_1_$rpu_id"
+        }
+        8 {
+            set rprocn "E_0_$rpu_id"
+        }
+        9 {
+            set rprocn "E_1_$rpu_id"
+		}
+	}
+    # Define memory regions
+    set memory_regions [list \
+        "&rproc_${rprocn}_reserved_rpu_fw" \
+        "&rproc_${rprocn}_hal_mem_priv" \
+        "&rproc_${rprocn}vdev0vring0" \
+        "&rproc_${rprocn}vdev0vring1"
+    ]
+    set formatted_memory_regions [join [lmap region $memory_regions {format "<%s>" $region}] ", "]
+    add_prop "$r5f_node" "memory-region" $formatted_memory_regions noformating $default_dts
+	switch $rpu_id {
+        6 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_D_0>, <&versal2_firmware PM_DEV_TCM_D_0A>, <&versal2_firmware PM_DEV_TCM_D_0B>, <&versal2_firmware PM_DEV_TCM_D_0C>"
+        }
+        7 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_D_1>, <&versal2_firmware PM_DEV_TCM_D_1A>, <&versal2_firmware PM_DEV_TCM_D_1B>, <&versal2_firmware PM_DEV_TCM_D_1C>"
+        }
+        8 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_E_0>, <&versal2_firmware PM_DEV_TCM_E_0A>, <&versal2_firmware PM_DEV_TCM_E_0B>, <&versal2_firmware PM_DEV_TCM_E_0C>"
+        }
+        9 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_E_1>, <&versal2_firmware PM_DEV_TCM_E_1A>, <&versal2_firmware PM_DEV_TCM_E_1B>, <&versal2_firmware PM_DEV_TCM_E_1C>"
+		}
+	}
+	#add_prop "$r5f_node" "power-domains" $power_domains noformating $default_dts
 }
