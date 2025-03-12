@@ -1573,122 +1573,152 @@
 		r52_0a_atcm_global: r52_0a_atcm_global@eba00000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA00000 0x0 0x10000>;
 		};
 		r52_0a_btcm_global: r52_0a_btcm_global@eba10000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA10000 0x0 0x8000>;
 		};
 		r52_0a_ctcm_global: r52_0a_ctcm_global@eba20000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA20000 0x0 0x8000>;
 		};
 		r52_0b_atcm_global: r52_0b_atcm_global@eba80000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA80000 0x0 0x10000>;
 		};
 		r52_0b_btcm_global: r52_0b_btcm_global@eba90000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA90000 0x0 0x8000>;
 		};
 		r52_0b_ctcm_global: r52_0b_ctcm_global@ebaa0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBAA0000 0x0 0x8000>;
 		};
 		r52_0c_atcm_global: r52_0c_atcm_global@ebb00000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB00000 0x0 0x10000>;
 		};
 		r52_0c_btcm_global: r52_0c_btcm_global@ebb10000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB10000 0x0 0x8000>;
 		};
 		r52_0c_ctcm_global: r52_0c_ctcm_global@ebb20000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB20000 0x0 0x8000>;
 		};
 		r52_0d_atcm_global: r52_0d_atcm_global@ebb80000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB80000 0x0 0x10000>;
 		};
 		r52_0d_btcm_global: r52_0d_btcm_global@ebb90000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB90000 0x0 0x8000>;
 		};
 		r52_0d_ctcm_global: r52_0d_ctcm_global@ebba0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBBA0000 0x0 0x8000>;
 		};
 		r52_0e_atcm_global: r52_0e_atcm_global@ebc00000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBC00000 0x0 0x10000>;
 		};
 		r52_0e_btcm_global: r52_0e_btcm_global@ebc10000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBC10000 0x0 0x8000>;
 		};
 		r52_0e_ctcm_global: r52_0e_ctcm_global@ebc20000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBC20000 0x0 0x8000>;
 		};
 		r52_1a_atcm_global: r52_1a_atcm_global@eba40000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA40000 0x0 0x10000>;
 		};
 		r52_1a_btcm_global: r52_1a_btcm_global@eba50000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA50000 0x0 0x8000>;
 		};
 		r52_1a_ctcm_global: r52_1a_ctcm_global@eba60000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBA60000 0x0 0x8000>;
 		};
 		r52_1b_atcm_global: r52_1b_atcm_global@ebac0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBAC0000 0x0 0x10000>;
 		};
 		r52_1b_btcm_global: r52_1b_btcm_global@ebad0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBAD0000 0x0 0x8000>;
 		};
 		r52_1b_ctcm_global: r52_1b_ctcm_global@ebae0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBAE0000 0x0 0x8000>;
 		};
 		r52_1c_atcm_global: r52_1c_atcm_global@ebb40000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB40000 0x0 0x10000>;
 		};
 		r52_1c_btcm_global: r52_1c_btcm_global@ebb50000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB50000 0x0 0x8000>;
 		};
 		r52_1c_ctcm_global: r52_1c_ctcm_global@ebb60000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBB60000 0x0 0x8000>;
 		};
 		r52_1d_atcm_global: r52_1d_atcm_global@ebbc0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBBC0000 0x0 0x10000>;
 		};
 		r52_1d_btcm_global: r52_1d_btcm_global@ebbd0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBBD0000 0x0 0x8000>;
 		};
 		r52_1d_ctcm_global: r52_1d_ctcm_global@ebbe0000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBBE0000 0x0 0x8000>;
 		};
 		r52_1e_atcm_global: r52_1e_atcm_global@ebc40000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBC40000 0x0 0x10000>;
 		};
 		r52_1e_btcm_global: r52_1e_btcm_global@ebc50000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBC50000 0x0 0x8000>;
 		};
 		r52_1e_ctcm_global: r52_1e_ctcm_global@ebc60000 {
 			status = "disabled";
 			compatible = "xlnx,tcm";
+			reg = <0x0 0xEBC60000 0x0 0x8000>;
 		};
 	};
 };
