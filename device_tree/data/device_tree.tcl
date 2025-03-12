@@ -375,9 +375,26 @@ proc set_dt_param args {
                         }
                         switch -glob -- [lindex $args 0] {
                                 -force {set force_create 1}
-                                -xsa {set env(xsa) [Pop args 1]}
-				-rm_xsa {set env(rm_xsa) [Pop args 1]}
-                                -board_dts {set env(board) [Pop args 1]}
+                                -xsa {
+					set xsa_file [Pop args 1]
+					if {[file type $xsa_file] ne "file"} {
+						error "ERROR: set_dt_param expects an XSA file as an input. Please check -xsa argument."
+					}
+					set env(xsa) $xsa_file
+				}
+				-rm_xsa {
+					set rm_xsa_file [Pop args 1]
+					if {[file type $rm_xsa_file] ne "file"} {
+						 error "ERROR: set_dt_param expects an XSA file as an input. Please check -rm_xsa argument."
+					}
+					 set env(rm_xsa) $rm_xsa_file
+				}
+				-board_dts {
+					set board_dts_file [Pop args 1]
+					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
+						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
+					}
+				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
                                 -dir {set env(dir) [Pop args 1]}
