@@ -1668,14 +1668,14 @@ proc write_dt args {
 		puts $fd "\};"
 	}
 	# Windows treats an empty env variable as not defined
-	if {[catch {set include_dts $env(include_dts)} msg]} {
-		set include_dts ""
+	if {[catch {set user_dts $env(user_dts)} msg]} {
+		set user_dts ""
 	}
 	if {[string match -nocase $dt "systemdt"]} {
 		if {![string_is_empty $board_dtsi_file]} {
 			puts $fd "#include \"${board_dtsi_file}.dtsi\""
 		}
-		foreach include_dts_file [split $include_dts] {
+		foreach include_dts_file [split $user_dts] {
 			set include_dts_filename [file tail $include_dts_file]
 			puts $fd "#include \"$include_dts_filename\""
 		}
