@@ -280,13 +280,14 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 	for {set iba 0} {$iba < $live_stream} {incr iba} {
 		for {set j 0} {$j < 5} {incr j} {
 			set port_idx [expr $iba * 5 + $j]
-			add_iba_properties $drv_handle $sub_node $default_dts $isp $iba $tile
 			if {$isp == 1 && $io_mode == 2 && $live_stream <= 2 && $port_idx % 5 == 0} {
 				set iba_values {}
 				if {$live_stream == 1} {
 					lappend iba_values 4
+					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
 				} elseif {$live_stream == 2} {
 					lappend iba_values 4 3
+					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
 				}
 				foreach iba $iba_values {
 					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
@@ -294,6 +295,7 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 					visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
 				}
 			} elseif {$port_idx % 5 == 0} {
+				add_iba_properties $drv_handle $sub_node $default_dts $isp $iba $tile
 				set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
 				set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
 				visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
