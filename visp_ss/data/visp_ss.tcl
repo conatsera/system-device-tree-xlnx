@@ -277,6 +277,7 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
 	set reg_counter 1
+	set vcap_reg_counter 1
 	for {set iba 0} {$iba < $live_stream} {incr iba} {
 		for {set j 0} {$j < 5} {incr j} {
 			set port_idx [expr $iba * 5 + $j]
@@ -302,11 +303,11 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 			} else {
 				if {$port_idx % 5 == 1} {
 					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $port_idx int $default_dts
+					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
+					incr vcap_reg_counter
 					set endpoint_node_mp [create_node -n "vvcam_isp${isp_id}_port${tile}${isp}${iba}_mp: endpoint" -p $port -d $default_dts]
 					add_prop "$endpoint_node_mp" "remote-endpoint" vvcam_video_${isp_id}_${iba}_0 reference $default_dts
 					add_prop "$endpoint_node_mp" "type" "output" string $default_dts
-
 
 					set vcp_ports [create_node -n "v_port${tile}${isp}@${port_idx}" -p $vcap_ports_node -d $default_dts]
 					add_prop "$vcp_ports" "reg" $reg_counter int $default_dts
@@ -316,7 +317,8 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 				}
 				if {$port_idx % 5 == 2} {
 					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $port_idx int $default_dts
+					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
+					incr vcap_reg_counter
 					set endpoint_node_sp [create_node -n "vvcam_isp${isp_id}_port${tile}${isp}${iba}_sp: endpoint" -p $port -d $default_dts]
 					add_prop "$endpoint_node_sp" "remote-endpoint" vvcam_video_${isp_id}_${iba}_1 reference $default_dts
 					add_prop "$endpoint_node_sp" "type" "output" string $default_dts
