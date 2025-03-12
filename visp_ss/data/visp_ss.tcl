@@ -121,31 +121,39 @@ proc visp_ss_generate {drv_handle} {
 	set bus_name [detect_bus_name $drv_handle]
 	set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
 	set sub_region_size 0x10000  ;# 64 KB
-	set intr_val [pldt get $node interrupts]
-	set intr_val [string trimright $intr_val ">"]
-	set intr_val [string trimleft $intr_val "<"]
-	set intr_parent [pldt get $node interrupt-parent]
-	# Get interrupt names
-	set intr_names [pldt get $node interrupt-names]
-	set intr_names [string map {"," "" "\"" ""} $intr_names]
-	set num_interrupts [llength $intr_names]
-	set num_cells [llength $intr_val]
-	if {[expr $num_interrupts * 2] == $num_cells} {
-		set cell_count 2
-	} elseif {[expr $num_interrupts * 3] == $num_cells} {
-		set cell_count 3
-	} else {
-		set cell_count -1
-	}
-	if {$cell_count == -1} {
-		puts "Warning: Could not determine the Interrupt parent for $node. Interrupts may not function correctly."
-	}
+	# Try to get interrupts, if not present, skip processing
+	set intr_val ""
 	set intr_mapping {}
-	if {$cell_count > 0} {
-		for {set i 0} {$i < $num_interrupts} {incr i} {
-			# Extract corresponding interrupt values
-			set value [lrange $intr_val [expr $i * $cell_count] [expr $i * $cell_count + ($cell_count - 1)]]
-			dict set intr_mapping [lindex $intr_names $i] $value
+	if {[catch {set intr_val [pldt get $node interrupts]}]} {
+		puts "Interrupts are not available. Skipping interrupt processing."
+	} elseif {$intr_val ne ""} {
+		set intr_val [string trimright $intr_val ">"]
+		set intr_val [string trimleft $intr_val "<"]
+		set intr_parent [pldt get $node interrupt-parent]
+		# Get interrupt names
+		set intr_names [pldt get $node interrupt-names]
+		set intr_names [string map {"," "" "\"" ""} $intr_names]
+
+		# Validate interrupt data
+		set num_interrupts [llength $intr_names]
+		set num_cells [llength $intr_val]
+
+		if {[expr $num_interrupts * 2] == $num_cells} {
+			set cell_count 2
+		} elseif {[expr $num_interrupts * 3] == $num_cells} {
+			set cell_count 3
+		} else {
+			set cell_count -1
+		}
+
+		if {$cell_count == -1} {
+			puts "Warning: Could not determine the Interrupt parent for $node. Interrupts may not function correctly."
+		} else {
+			# Populate intr_mapping
+			for {set i 0} {$i < $num_interrupts} {incr i} {
+				set value [lrange $intr_val [expr $i * $cell_count] [expr $i * $cell_count + ($cell_count - 1)]]
+				dict set intr_mapping [lindex $intr_names $i] $value
+			}
 		}
 	}
 	set reg_mapping {}
@@ -1005,12 +1013,6 @@ proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
 
 proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
     set ipi_node [create_node -n "&ipi_nobuf1" -p $bus_name -d $default_dts]
-    #add_prop "$ipi_node" "compatible" "xlnx,isp-ipi-mailbox" string $default_dts
-    #add_prop "$ipi_node" "interrupt-parent" "$intr_parent" noformating $default_dts
-    #add_prop "$ipi_node" "interrupts" "0 33 4" intlist $default_dts
-    #add_prop "$ipi_node" "#address-cells" "1" int $default_dts
-    #add_prop "$ipi_node" "#size-cells" "1" int $default_dts
-    #add_prop "$ipi_node" "ranges" "" noformating $default_dts
 	add_prop "$ipi_node" "status" "okay" string $default_dts
 	set ipi_base_id 6
 	set rpu_base_addresses {
