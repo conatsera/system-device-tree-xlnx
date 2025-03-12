@@ -346,7 +346,7 @@ proc print_usage args {
             -mainline_kernel  mainline kernel version
             -kernel_ver       kernel version
             -dir              Directory where the dt files will be generated
-	    -include_dts      DTS file to be include into final device tree
+            -user_dts         DTS file to be include into final device tree
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
             -zocl             Create zocl node in device tree. Possible options: enable/disable. Default option: disable
@@ -383,7 +383,8 @@ proc set_dt_param args {
                                 -dir {set env(dir) [Pop args 1]}
                                 -repo {set env(REPO) [Pop args 1]}
                                 -zocl {set env(zocl) [Pop args 1]}
-                                -include_dts {set env(include_dts) [Pop args 1]}
+                                -user_dts {set env(user_dts) [Pop args 1]}
+                                -include_dts {set env(user_dts) [Pop args 1]}
                                 -debug {set env(debug) [Pop args 1]}
                                 -verbose {set env(verbose) [Pop args 1]}
                                 -trace {set env(trace) [Pop args 1]}
@@ -433,8 +434,10 @@ proc get_dt_param args {
                        if {[catch {set val $env(zocl)} msg ]} {
 				set val "disable"
                        }
+               } -user_dts {
+			if {[catch {set val $env(user_dts)} msg ]} {}
                } -include_dts {
-                       if {[catch {set val $env(include_dts)} msg ]} {}
+                       if {[catch {set val $env(user_dts)} msg ]} {}
                } -help {
 	               set val [print_usage] 
                } default {
@@ -683,11 +686,11 @@ proc include_custom_dts {} {
 	global env
 	set path $env(REPO)
 	# Windows treats an empty env variable as not defined
-	if {[catch {set include_dts $env(include_dts)} msg]} {
-		set include_dts ""
+	if {[catch {set user_dts $env(user_dts)} msg]} {
+		set user_dts ""
 	}
 	set dir_name $env(dir)
-	foreach include_dts_file [split $include_dts] {
+	foreach include_dts_file [split $user_dts] {
 		if {[file exists $include_dts_file]} {
 			file normalize $include_dts_file
 			file copy -force $include_dts_file $dir_name
