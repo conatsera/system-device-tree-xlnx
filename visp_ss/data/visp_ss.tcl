@@ -172,9 +172,6 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "reg" $reg_value hexlist $default_dts
 			add_prop "$sub_node" "status" "okay" string $default_dts
 			dict set reg_mapping $sub_node_label $reg_value
-			set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
-			add_prop "$ports_node" "#address-cells" 1 int $default_dts
-			add_prop "$ports_node" "#size-cells" 0 int $default_dts
 			set live_stream [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_LIVE_INPUTS]
 			set io_mode [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
 			set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
@@ -233,7 +230,7 @@ proc visp_ss_generate {drv_handle} {
 			}
 
 			add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
-			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $ports_node $default_dts $sub_node $sub_node_label $bus_name
+			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
 
@@ -271,7 +268,10 @@ proc create_vcp_node {sub_node default_dts isp_id bus_name} {
 }
 
 #IO_MODE==2 (LIMO)
-proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
+proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
+	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	add_prop "$ports_node" "#address-cells" 1 int $default_dts
+	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 	set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
 	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp}" -n "ports" -p $vcp_node -d $default_dts]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
@@ -331,7 +331,10 @@ proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_nod
 }
 
 # IO_MODE==1 (LILO)
-proc handle_io_mode_1 {drv_handle tile isp ports_node isp_id default_dts sub_node sub_node_label bus_name} {
+proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
+	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	add_prop "$ports_node" "#address-cells" 1 int $default_dts
+	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 	set port0 [create_node -n "port${tile}${isp}" -p $ports_node -d $default_dts]
 	add_prop "$port0" "reg" 1 int $default_dts
 	set pin_name ""
@@ -356,12 +359,12 @@ proc handle_io_mode_1 {drv_handle tile isp ports_node isp_id default_dts sub_nod
 }
 
 #conditions
-proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id ports_node default_dts sub_node sub_node_label bus_name} {
+proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id default_dts sub_node sub_node_label bus_name} {
 	if {$isp == 0 || $isp == 1} {
 		if {$io_mode == 1} {
-			handle_io_mode_1 $drv_handle $tile $isp $ports_node $isp_id $default_dts $sub_node $sub_node_label $bus_name
+			handle_io_mode_1 $drv_handle $tile $isp $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		} elseif {$io_mode == 2} {
-			handle_io_mode_2 $drv_handle $tile $isp $ports_node $isp_id $default_dts $sub_node $sub_node_label $live_stream $bus_name $io_mode
+			handle_io_mode_2 $drv_handle $tile $isp $isp_id $default_dts $sub_node $sub_node_label $live_stream $bus_name $io_mode
 		} else {
 		}
 	}
