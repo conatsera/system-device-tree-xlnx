@@ -196,6 +196,21 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "xlnx,netfps" $net_fps int $default_dts
 			add_prop "$sub_node" "xlnx,rpu" $rpu int $default_dts
 			add_prop "$sub_node" "isp_id" $isp_id int $default_dts
+			switch $rpu {
+				6 {
+					set rprocn "D_0_$rpu"
+				}
+				7 {
+					set rprocn "D_1_$rpu"
+				}
+				8 {
+					set rprocn "E_0_$rpu"
+				}
+				9 {
+					set rprocn "E_1_$rpu"
+				}
+			}
+			add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
 			if {[dict size $intr_mapping] > 0} {
 				set tile_intrnames ""
 				dict for {key value} $intr_mapping {
