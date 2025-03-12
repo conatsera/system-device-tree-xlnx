@@ -1867,6 +1867,11 @@ proc gen_r5_trustzone_config {} {
         if {[string match -nocase $family "versal"]} {
                 set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psv_cortexr5"}]
                 set r5proc_name "psv_cortexr5"
+                # There is a P80 HAPS design in Vivado suite where all PS Wizard IPs are
+                # having multiple entries, one starting with pmcps_0_<ip> and one with
+                # ps_wizard_0_pmcps_0. Below call fixes the R5 proc list to have two
+                # entries for Versal.
+                set cortexr5proc [lrange $cortexr5proc 0 1]
         } elseif {[is_zynqmp_platform $family]} {
                 set cortexr5proc [hsi::get_cells -hier -filter {IP_NAME=="psu_cortexr5"}]
                 set r5proc_name "psu_cortexr5"
