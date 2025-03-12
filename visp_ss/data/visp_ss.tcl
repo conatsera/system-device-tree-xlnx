@@ -239,6 +239,7 @@ proc visp_ss_generate {drv_handle} {
 	generate_remoteproc_node $rpu_ids $default_dts $bus_name
 	generate_tcm_nodes $rpu_ids $default_dts $bus_name
 	generate_mbox_nodes $rpu_ids $default_dts $bus_name
+	generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	foreach proc $proclist {
@@ -984,5 +985,34 @@ proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
         set mbox_names [list "tx" "rx"]
         add_prop "$mbox_node" "mbox-names" $mbox_names stringlist $default_dts
         add_prop "$mbox_node" "status" "okay" string $default_dts
+    }
+}
+
+proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
+    set ipi_node [create_node -n "&ipi_nobuf1" -p $bus_name -d $default_dts]
+    #add_prop "$ipi_node" "compatible" "xlnx,isp-ipi-mailbox" string $default_dts
+    #add_prop "$ipi_node" "interrupt-parent" "$intr_parent" noformating $default_dts
+    #add_prop "$ipi_node" "interrupts" "0 33 4" intlist $default_dts
+    #add_prop "$ipi_node" "#address-cells" "1" int $default_dts
+    #add_prop "$ipi_node" "#size-cells" "1" int $default_dts
+    #add_prop "$ipi_node" "ranges" "" noformating $default_dts
+	add_prop "$ipi_node" "status" "okay" string $default_dts
+	set ipi_base_id 6
+	set rpu_base_addresses {
+		6 12 0xeb3b2000
+		7 13 0xeb3b3000
+		8 14 0xeb3b4000
+		9 15 0xeb3b5000
+	}
+	set reg_size 0x1000
+	foreach {rpu_id ipi_id rpu_base_addresses1} $rpu_base_addresses {
+        if {$rpu_id in $rpu_ids} {
+            set mailbox_label "ipi_mailbox_rpu${rpu_id}"
+	    set mailbox_name [format "mailbox@%08x" [expr {$rpu_base_addresses1}]]
+            set mailbox_node [create_node -l $mailbox_label -n $mailbox_name -p $ipi_node -d $default_dts]
+            add_prop $mailbox_node "xlnx,ipi-id" $ipi_id int $default_dts
+	    add_prop $mailbox_node reg "0x0 $rpu_base_addresses1 0x0 $reg_size" hexlist $default_dts
+            add_prop $mailbox_node "reg-names" "ctrl" string $default_dts
+        }
     }
 }
