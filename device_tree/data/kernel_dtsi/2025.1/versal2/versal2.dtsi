@@ -1569,5 +1569,126 @@
 			#size-cells = <2>;
 			ranges;
 		};
+
+		r52_0a_atcm_global: r52_0a_atcm_global@eba00000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0a_btcm_global: r52_0a_btcm_global@eba10000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0a_ctcm_global: r52_0a_ctcm_global@eba20000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0b_atcm_global: r52_0b_atcm_global@eba80000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0b_btcm_global: r52_0b_btcm_global@eba90000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0b_ctcm_global: r52_0b_ctcm_global@ebaa0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0c_atcm_global: r52_0c_atcm_global@ebb00000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0c_btcm_global: r52_0c_btcm_global@ebb10000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0c_ctcm_global: r52_0c_ctcm_global@ebb20000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0d_atcm_global: r52_0d_atcm_global@ebb80000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0d_btcm_global: r52_0d_btcm_global@ebb90000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0d_ctcm_global: r52_0d_ctcm_global@ebba0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0e_atcm_global: r52_0e_atcm_global@ebc00000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0e_btcm_global: r52_0e_btcm_global@ebc10000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_0e_ctcm_global: r52_0e_ctcm_global@ebc20000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1a_atcm_global: r52_1a_atcm_global@eba40000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1a_btcm_global: r52_1a_btcm_global@eba50000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1a_ctcm_global: r52_1a_ctcm_global@eba60000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1b_atcm_global: r52_1b_atcm_global@ebac0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1b_btcm_global: r52_1b_btcm_global@ebad0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1b_ctcm_global: r52_1b_ctcm_global@ebae0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1c_atcm_global: r52_1c_atcm_global@ebb40000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1c_btcm_global: r52_1c_btcm_global@ebb50000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1c_ctcm_global: r52_1c_ctcm_global@ebb60000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1d_atcm_global: r52_1d_atcm_global@ebbc0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1d_btcm_global: r52_1d_btcm_global@ebbd0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1d_ctcm_global: r52_1d_ctcm_global@ebbe0000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1e_atcm_global: r52_1e_atcm_global@ebc40000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1e_btcm_global: r52_1e_btcm_global@ebc50000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
+		r52_1e_ctcm_global: r52_1e_ctcm_global@ebc60000 {
+			status = "disabled";
+			compatible = "xlnx,tcm";
+		};
 	};
 };
