@@ -237,6 +237,7 @@ proc visp_ss_generate {drv_handle} {
 	}
 	generate_reserved_memory $rpu_ids $default_dts $bus_name
 	generate_remoteproc_node $rpu_ids $default_dts $bus_name
+	generate_tcm_nodes $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	foreach proc $proclist {
@@ -937,4 +938,30 @@ proc generate_r5f_node {rpu_id parent_node default_dts} {
 		}
 	}
 	#add_prop "$r5f_node" "power-domains" $power_domains noformating $default_dts
+}
+
+proc generate_tcm_nodes {rpu_ids default_dts bus_name} {
+    # Define base addresses and sizes for TCMs
+	set tcm_nodes {
+		6 0xeb5b8000
+		7 0xeb5bc000
+		8 0xeb5c8000
+		9 0xeb5cc000
+    }
+    set tcm_size 0x40000  ; # 256 KB
+	foreach {rpu_id tcm_nodes1} $tcm_nodes {
+        # Calculate base address for each RPU's TCM
+		if {$rpu_id in $rpu_ids} {
+			set size [format "0x%X" $tcm_size]
+			set label "tcm_rpu${rpu_id}"
+			set name "tcm_rpu${rpu_id}@$tcm_nodes1"
+			# Create the node under reserved-memory
+			set tcm_node [create_node -l $label -n $name -p $bus_name -d $default_dts]
+			# Add properties to the node
+			add_prop $tcm_node compatible "mmio-sram" string $default_dts
+			add_prop $tcm_node reg "0x0 $tcm_nodes1 0x0 $size" hexlist $default_dts
+			add_prop $tcm_node no-map "" noformating $default_dts
+			add_prop $tcm_node status "okay" string $default_dts
+		}
+	}
 }
