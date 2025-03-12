@@ -149,6 +149,7 @@ proc visp_ss_generate {drv_handle} {
 		}
 	}
 	set reg_mapping {}
+	set rpu_ids {}
 	pldt delete $node
 	for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
@@ -188,6 +189,7 @@ proc visp_ss_generate {drv_handle} {
 			set mem_inputs [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_MEM_INPUTS]
 			set net_fps [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_NETFPS]
 			set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
+			lappend rpu_ids $rpu
 			add_prop "$sub_node" "xlnx,io_mode" "$io_mode_name" string $default_dts
 			add_prop "$sub_node" "xlnx,num_streams" $live_inputs int $default_dts
 			add_prop "$sub_node" "xlnx,mem_inputs" $mem_inputs int $default_dts
@@ -233,6 +235,7 @@ proc visp_ss_generate {drv_handle} {
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
+	generate_reserved_memory $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	foreach proc $proclist {
@@ -742,4 +745,71 @@ proc find_valid_visp_inip {drv_handle visp_ip_name} {
     }
 
     return $visp_inip
+}
+
+proc generate_reserved_memory {rpu_ids default_dts bus_name} {
+	set reserved_mem_node [create_node -l "reserved_memory" -n "reserved_memory" -p $bus_name -d $default_dts]
+    add_prop "$reserved_mem_node" "#address-cells" 2 int $default_dts
+    add_prop "$reserved_mem_node" "#size-cells" 2 int $default_dts
+    add_prop "$reserved_mem_node" "ranges" "" noformating $default_dts
+	# Address mapping for RPU IDs
+    set rpu_addr_map {
+        6 {fw 0x0C000000 vring0 0x24FF8000 vring1 0x24FF9000 hal_priv 0x1114E000 load_calib 0x11126000}
+        7 {fw 0x1214F000 vring0 0x24FFA000 vring1 0x24FFB000 hal_priv 0x1729D000 load_calib 0x17275000}
+        8 {fw 0x1829E000 vring0 0x24FFC000 vring1 0x24FFD000 hal_priv 0x1D3EC000 load_calib 0x1D3C4000}
+		9 {fw 0x1E3ED000 vring0 0x24FFE000 vring1 0x24FFF000 hal_priv 0x2353B000 load_calib 0x23513000}
+    }
+    foreach rpu_id $rpu_ids {
+		if {![dict exists $rpu_addr_map $rpu_id]} {
+            puts "Unknown RPU ID: $rpu_id - Skipping"
+            continue
+        }
+        # Extract RPU memory regions dynamically
+        set rpu_values [dict get $rpu_addr_map $rpu_id]
+        set fw_addr [dict get $rpu_values fw]
+        set vring0_addr [dict get $rpu_values vring0]
+        set vring1_addr [dict get $rpu_values vring1]
+        set hal_priv_addr [dict get $rpu_values hal_priv]
+        set load_calib_addr [dict get $rpu_values load_calib]
+		switch $rpu_id {
+        6 {
+            set rprocn "D_0_$rpu_id"
+        }
+        7 {
+            set rprocn "D_1_$rpu_id"
+        }
+        8 {
+            set rprocn "E_0_$rpu_id"
+        }
+        9 {
+            set rprocn "E_1_$rpu_id"
+		}
+	}
+		# Reserved firmware memory
+        set rpu_fw_node [create_node -l "rproc_${rprocn}_reserved_rpu_fw" -n "rproc_${rpu_id}_reserved_rpu_fw" -p $reserved_mem_node -d $default_dts]
+        add_prop "$rpu_fw_node" "no-map" "" noformating $default_dts
+        add_prop "$rpu_fw_node" "reg" <[list 0x0 $fw_addr 0x0 0x5126000]> noformating $default_dts
+        # calb_memory
+        set load_calib_node [create_node -l "rproc_${rprocn}_calib_load" -n "rpu${rpu_id}_calib_load" -p $reserved_mem_node -d $default_dts]
+        add_prop "$load_calib_node" "no-map" "" noformating $default_dts
+        add_prop "$load_calib_node" "reg" <[list 0x0 $load_calib_addr 0x0 0x28000]> noformating $default_dts
+        # HAL private memory
+        set hal_mem_priv_node [create_node -l "rproc_${rprocn}_hal_mem_priv" -n "rpu${rpu_id}_hal_mem_priv" -p $reserved_mem_node -d $default_dts]
+        add_prop "$hal_mem_priv_node" "no-map" "" noformating $default_dts
+        add_prop "$hal_mem_priv_node" "reg" <[list 0x0 $hal_priv_addr 0x0 0x01001000]> noformating $default_dts
+		# VRing 0
+        set vring0_node [create_node -l "rproc_${rprocn}vdev0vring0" -n "rpu${rpu_id}vdev0vring0" -p $reserved_mem_node -d $default_dts]
+        add_prop "$vring0_node" "no-map" "" noformating $default_dts
+        add_prop "$vring0_node" "reg" <[list 0x0 $vring0_addr 0x0 0x1000]> noformating $default_dts
+        # VRing 1
+        set vring1_node [create_node -l "rproc_${rprocn}vdev0vring1" -n "rpu${rpu_id}vdev0vring1" -p $reserved_mem_node -d $default_dts]
+        add_prop "$vring1_node" "no-map" "" noformating $default_dts
+        add_prop "$vring1_node" "reg" <[list 0x0 $vring1_addr 0x0 0x1000]> noformating $default_dts
+    }
+	set rpu_mbox_node [create_node -l "isp_mbox_buffer" -n "isp_mbox_buffer@2453C000" -p $reserved_mem_node -d $default_dts]
+	add_prop "$rpu_mbox_node" "no-map" "" noformating $default_dts
+    add_prop "$rpu_mbox_node" "reg" [list 0x0 0x2453C000 0x0 0x400000] hexlist $default_dts
+	set rpu_share_mem_node [create_node -l "rpu_shared_mem" -n "rpu_shared_mem@2493C000" -p $reserved_mem_node -d $default_dts]
+	add_prop "$rpu_share_mem_node" "no-map" "" noformating $default_dts
+    add_prop "$rpu_share_mem_node" "reg" [list 0x0 0x2493C000 0x0 0x6C3FFF] hexlist $default_dts
 }
