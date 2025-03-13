@@ -24,7 +24,7 @@
 
 		/* TF-A, TEE, RPUs */
 		/* FIXME Uncomment after VNC */
-		/* memory@20000000 {
+		/*res:  memory@0 {
 			no-map;
 			reg = <0 0 0 0x20000000>;
 		}; */
