@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -319,7 +319,6 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "asu" "asu"
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
 	dict set ::sdtgen::namespacelist "axis_broadcaster" "axis_broadcaster"
-	dict set ::sdtgen::namespacelist "axis_subset_converter" "axis_subset_converter"
 	dict set ::sdtgen::namespacelist "ISPPipeline_accel" "isppipeline"
 	dict set ::sdtgen::namespacelist "hdmi_acr_ctrl" "hdmi_ctrl"
 	dict set ::sdtgen::namespacelist "dfx_axi_shutdown_manager" "dfx_axi_shutdown_manager"
@@ -1750,7 +1749,7 @@ Generates system device tree based on args given in:
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip2 1
 		}
-		if { $skip2 == 0 || $ip_name in {"axis_switch" "axis_broadcaster" "axis_subset_converter"}} {
+		if { $skip2 == 0 || $ip_name in {"axis_switch" "axis_broadcaster"}} {
 			if { [dict exists $::sdtgen::namespacelist $ip_name] } {
 				set drvname [dict get $::sdtgen::namespacelist $ip_name]
 				source [file join $path $drvname "data" "${drvname}.tcl"]
@@ -1936,6 +1935,7 @@ proc gen_r5_trustzone_config {} {
 proc proc_mapping {} {
 	global is_versal_net_platform
 	global linear_spi_list
+	global monitor_ip_exclusion_list
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -1977,13 +1977,16 @@ proc proc_mapping {} {
 				)"
 			append periph_list " [hsi::get_cells -hier -filter $hier_mem_filter]"
 		}
-
 		foreach periph $periph_list {
 			# There can be a custom IP which is appearing in the output of get_mem_ranges
 			# but is missing in get_cells -hier. Such IP's base address and high address
 			# is generated in Vitis classic via the cpu tcls using xdefine_addr_params_for_ext_intf
 			# proc.
-			if {[lsearch $overall_periph_list $periph] < 0} {
+			set ip_type [get_ip_property [hsi::get_cells -hier $periph] IP_TYPE]
+			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
+			if {[lsearch $overall_periph_list $periph] < 0 || \
+				([string match -nocase $ip_type "MONITOR"] && \
+					!($ipname in $monitor_ip_exclusion_list))} {
 				set base_addr [get_baseaddr $periph "no_prefix"]
 				if {[string_is_empty $base_addr]} {
 					continue
@@ -2000,9 +2003,8 @@ proc proc_mapping {} {
 				add_prop $node "xlnx,name" "${periph}" string ${exception_dts}
 				add_prop $node status okay string ${exception_dts}
 			}
-			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
-				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi pmc_qspi axi_emc ${linear_spi_list}"
+				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi pmc_qspi axi_emc ${linear_spi_list} tmr_manager"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
                               	} else {
                                 	continue
