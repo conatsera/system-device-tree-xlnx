@@ -46,6 +46,10 @@
         set has_y_u_v12 [hsi get_property CONFIG.HAS_Y_U_V12 [hsi::get_cells -hier $drv_handle]]
         set has_y_uv12 [hsi get_property CONFIG.HAS_Y_UV12 [hsi::get_cells -hier $drv_handle]]
         set has_y_uv12_420 [hsi get_property CONFIG.HAS_Y_UV12_420 [hsi::get_cells -hier $drv_handle]]
+	if {$tile_mode == ""} {
+		set tile_mode 0
+	}
+
         if {!$tile_mode} {
 		if {$has_bgr8 == 1} {
 			append vid_formats " " "rgb888"
