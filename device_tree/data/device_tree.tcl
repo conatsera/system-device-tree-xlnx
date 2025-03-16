@@ -376,17 +376,20 @@ proc set_dt_param args {
                                 -force {set force_create 1}
                                 -xsa {
 					set xsa_file [Pop args 1]
-					if {[file type $xsa_file] ne "file"} {
+					if {![regexp {^(file|link)$} [file type $xsa_file]] } {
 						error "ERROR: set_dt_param expects an XSA file as an input. Please check -xsa argument."
 					}
 					set env(xsa) $xsa_file
 				}
 				-rm_xsa {
 					set rm_xsa_file [Pop args 1]
-					if {[file type $rm_xsa_file] ne "file"} {
-						 error "ERROR: set_dt_param expects an XSA file as an input. Please check -rm_xsa argument."
-					}
-					 set env(rm_xsa) $rm_xsa_file
+                    set rm_xsa_list [split $rm_xsa_file " "]
+                    foreach xsa $rm_xsa_list {
+					    if {![regexp {^(file|link)$} [file type $xsa]]} {
+						    error "ERROR: set_dt_param expects an XSA file as an input. Please check -rm_xsa argument."
+					    }
+                    }
+					set env(rm_xsa) $rm_xsa_file
 				}
 				-board_dts {
 					set board_dts_file [Pop args 1]
