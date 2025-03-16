@@ -1055,7 +1055,7 @@
 
 		cpm5nc: pcie@e4a10000 {
 			status = "disabled";
-			compatible = "xlnx,versal-cpm-host-1.00";
+			compatible = "xlnx,versal-cpm5nc-host";
 			#address-cells = <0x03>;
 			#size-cells = <0x02>;
 			interrupt-parent = <&imux>;
@@ -1064,7 +1064,7 @@
 				 < 0x43000000 0x1010 0x00 0x1010 0x00 0x08 0x00 >;
 			reg = < 0x00 0xe4a10000 0x00 0x10000 >,
 			      < 0x00 0xa0000000 0x00 0x8000000 >;
-			reg-names = "cfg", "cpm_slcr";
+			reg-names = "cpm_slcr", "cfg";
 		};
 
 		ospi: spi@f1010000 {
