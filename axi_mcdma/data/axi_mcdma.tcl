@@ -159,6 +159,9 @@
         } else {
                 # dma connected via interconnects
                 set dma_pin "M_AXIS"
+		if {$iptype == "ethernet_offload"} {
+                      set dma_pin "tx_axis"
+                }
                 axi_mcdma_get_connected_ip $connected_ip $dma_pin
         }
     }
