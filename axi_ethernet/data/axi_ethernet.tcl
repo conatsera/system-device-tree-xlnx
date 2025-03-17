@@ -814,6 +814,11 @@
         set p2p_busifs_i [hsi::get_intf_pins -of_objects $ip -filter "TYPE==INITIATOR || TYPE==MASTER"]
         set target_periph ""
         foreach p2p_busif $p2p_busifs_i {
+            set ip_name [hsi get_property IP_NAME [hsi::get_cells -hier $ip]]
+            if {$ip_name == "ethernet_offload" && $p2p_busif == "tx_axis"} {
+                   continue;
+            }
+
             set busif_name [string toupper [hsi get_property NAME  $p2p_busif]]
             set conn_busif_handle [get_connected_intf $ip $busif_name]
             if {[string_is_empty $conn_busif_handle] != 0} {
