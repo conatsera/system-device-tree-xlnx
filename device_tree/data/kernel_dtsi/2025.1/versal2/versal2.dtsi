@@ -240,6 +240,12 @@
 		spi2 = &spi0;
 		spi3 = &spi1;
 	};
+	firmware {
+		psci: psci { /* Should be injected by firmware */
+			compatible = "arm,psci-1.0";
+			method = "smc";
+		};
+	};
 
 	fpga: fpga-region {
 		compatible = "fpga-region";
@@ -720,7 +726,7 @@
 		};
 
 		mmi_10gbe: ethernet@ed920000 {
-			compatible = "amd,versal2-10gbe";
+			compatible = "amd,versal2-10gbe", "cdns,gem";
 			status = "disabled";
 			reg = <0 0xed920000 0 0x1000>;
 			interrupt-parent = <&imux>;
@@ -911,6 +917,8 @@
 			cdns,fifo-width = <4>;
 			cdns,is-dma = <1>; /* u-boot specific */
 			cdns,trigger-address = <0xc0000000>;
+			clock-names = "ref";
+			reset-names = "qspi", "qspi-ocp";
 		};
 
 		pmc_wwdt: watchdog@f03f0000 {
@@ -1115,6 +1123,7 @@
 			status = "disabled";
 			reg = <0 0xf1ee0000 0 0x100>;
 			clock-names = "bus_clk", "ref_clk";
+			reset-names = "usb_crst";
 			ranges;
 			#address-cells = <2>;
 			#size-cells = <2>;
@@ -1158,7 +1167,7 @@
 			};
 		};
 
-		mmi_usb {
+		usb_mmi: mmi_usb {
 			compatible = "xlnx,versal2-mmi-dwc3";
 			status = "disabled";
 			ranges;
