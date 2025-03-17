@@ -37,7 +37,7 @@
 	};
 
 	firmware {
-		versal2_firware: versal2_firmware {
+		versal2_firmware: versal2_firmware {
 			compatible = "xlnx,versal2-firmware";
 			method = "smc";
 		};
@@ -240,6 +240,6 @@
 	phy-mode = "10gbase-r";
 	fixed-link {
 		speed = <10000>;
-		full-duplex;
+		duplex = "full";
 	};
 };
