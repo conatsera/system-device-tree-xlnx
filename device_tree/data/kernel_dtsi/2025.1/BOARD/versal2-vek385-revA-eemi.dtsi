@@ -245,6 +245,6 @@
 	phy-mode = "10gbase-r";
 	fixed-link {
 		speed = <10000>;
-		duplex = "full";
+		full-duplex;
 	};
 };
