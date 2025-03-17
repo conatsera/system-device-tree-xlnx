@@ -41,12 +41,6 @@
 			compatible = "xlnx,versal2-firmware";
 			method = "smc";
 		};
-
-		optee: optee { /* Should be injected by firmware */
-			compatible = "linaro,optee-tz";
-			method = "smc";
-		};
-
 		psci: psci { /* Should be injected by firmware */
 			compatible = "arm,psci-1.0";
 			method = "smc";
