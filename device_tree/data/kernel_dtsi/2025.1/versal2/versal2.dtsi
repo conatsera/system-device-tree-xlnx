@@ -301,14 +301,15 @@
 		u-boot,dm-pre-reloc;
 
 		gic_r52: interrupt-controller@e2000000 {
-			compatible = "arm,pl390";
+			compatible = "arm,gic-v3", "arm,gic";
 			#interrupt-cells = <3>;
 			interrupt-controller;
 			interrupt-parent = <&gic_r52>;
 			interrupts = <1 9 4>;
 			#address-cells = <2>;
 			#size-cells = <2>;
-			reg = <0x0 0xe2000000 0x0 0x1000>;
+			reg = <0x0 0xe2000000 0x0 0x10000>,
+			      <0x0 0xe2100000 0x0 0x80000>;
 		};
 	};
 
