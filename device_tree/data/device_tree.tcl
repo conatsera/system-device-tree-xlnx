@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -272,6 +272,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "ps7_xadc" "xadcps"
 	dict set ::sdtgen::namespacelist "qdma" "xdmapcie"
+	dict set ::sdtgen::namespacelist "psv_cpm" "cpm_pcie"
 
 	dict set ::sdtgen::namespacelist "psu_qspi_linear" "linear_spi"
 	dict set ::sdtgen::namespacelist "ps7_qspi_linear" "linear_spi"
@@ -318,7 +319,6 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "asu" "asu"
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
 	dict set ::sdtgen::namespacelist "axis_broadcaster" "axis_broadcaster"
-	dict set ::sdtgen::namespacelist "axis_subset_converter" "axis_subset_converter"
 	dict set ::sdtgen::namespacelist "ISPPipeline_accel" "isppipeline"
 	dict set ::sdtgen::namespacelist "hdmi_acr_ctrl" "hdmi_ctrl"
 	dict set ::sdtgen::namespacelist "dfx_axi_shutdown_manager" "dfx_axi_shutdown_manager"
@@ -345,7 +345,7 @@ proc print_usage args {
             -mainline_kernel  mainline kernel version
             -kernel_ver       kernel version
             -dir              Directory where the dt files will be generated
-	    -include_dts      DTS file to be include into final device tree
+            -user_dts         DTS file to be include into final device tree
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
             -zocl             Create zocl node in device tree. Possible options: enable/disable. Default option: disable
@@ -374,15 +374,36 @@ proc set_dt_param args {
                         }
                         switch -glob -- [lindex $args 0] {
                                 -force {set force_create 1}
-                                -xsa {set env(xsa) [Pop args 1]}
-				-rm_xsa {set env(rm_xsa) [Pop args 1]}
-                                -board_dts {set env(board) [Pop args 1]}
+                                -xsa {
+					set xsa_file [Pop args 1]
+					if {![regexp {^(file|link)$} [file type $xsa_file]] } {
+						error "ERROR: set_dt_param expects an XSA file as an input. Please check -xsa argument."
+					}
+					set env(xsa) $xsa_file
+				}
+				-rm_xsa {
+					set rm_xsa_file [Pop args 1]
+                    set rm_xsa_list [split $rm_xsa_file " "]
+                    foreach xsa $rm_xsa_list {
+					    if {![regexp {^(file|link)$} [file type $xsa]]} {
+						    error "ERROR: set_dt_param expects an XSA file as an input. Please check -rm_xsa argument."
+					    }
+                    }
+					set env(rm_xsa) $rm_xsa_file
+				}
+				-board_dts {
+					set board_dts_file [Pop args 1]
+					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
+						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
+					}
+				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
                                 -dir {set env(dir) [Pop args 1]}
                                 -repo {set env(REPO) [Pop args 1]}
                                 -zocl {set env(zocl) [Pop args 1]}
-                                -include_dts {set env(include_dts) [Pop args 1]}
+                                -user_dts {set env(user_dts) [Pop args 1]}
+                                -include_dts {set env(user_dts) [Pop args 1]}
                                 -debug {set env(debug) [Pop args 1]}
                                 -verbose {set env(verbose) [Pop args 1]}
                                 -trace {set env(trace) [Pop args 1]}
@@ -432,8 +453,10 @@ proc get_dt_param args {
                        if {[catch {set val $env(zocl)} msg ]} {
 				set val "disable"
                        }
+               } -user_dts {
+			if {[catch {set val $env(user_dts)} msg ]} {}
                } -include_dts {
-                       if {[catch {set val $env(include_dts)} msg ]} {}
+                       if {[catch {set val $env(user_dts)} msg ]} {}
                } -help {
 	               set val [print_usage] 
                } default {
@@ -682,11 +705,11 @@ proc include_custom_dts {} {
 	global env
 	set path $env(REPO)
 	# Windows treats an empty env variable as not defined
-	if {[catch {set include_dts $env(include_dts)} msg]} {
-		set include_dts ""
+	if {[catch {set user_dts $env(user_dts)} msg]} {
+		set user_dts ""
 	}
 	set dir_name $env(dir)
-	foreach include_dts_file [split $include_dts] {
+	foreach include_dts_file [split $user_dts] {
 		if {[file exists $include_dts_file]} {
 			file normalize $include_dts_file
 			file copy -force $include_dts_file $dir_name
@@ -1729,7 +1752,7 @@ Generates system device tree based on args given in:
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip2 1
 		}
-		if { $skip2 == 0 || $ip_name in {"axis_switch" "axis_broadcaster" "axis_subset_converter"}} {
+		if { $skip2 == 0 || $ip_name in {"axis_switch" "axis_broadcaster"}} {
 			if { [dict exists $::sdtgen::namespacelist $ip_name] } {
 				set drvname [dict get $::sdtgen::namespacelist $ip_name]
 				source [file join $path $drvname "data" "${drvname}.tcl"]
@@ -1915,6 +1938,7 @@ proc gen_r5_trustzone_config {} {
 proc proc_mapping {} {
 	global is_versal_net_platform
 	global linear_spi_list
+	global monitor_ip_exclusion_list
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -1956,13 +1980,16 @@ proc proc_mapping {} {
 				)"
 			append periph_list " [hsi::get_cells -hier -filter $hier_mem_filter]"
 		}
-
 		foreach periph $periph_list {
 			# There can be a custom IP which is appearing in the output of get_mem_ranges
 			# but is missing in get_cells -hier. Such IP's base address and high address
 			# is generated in Vitis classic via the cpu tcls using xdefine_addr_params_for_ext_intf
 			# proc.
-			if {[lsearch $overall_periph_list $periph] < 0} {
+			set ip_type [get_ip_property [hsi::get_cells -hier $periph] IP_TYPE]
+			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
+			if {[lsearch $overall_periph_list $periph] < 0 || \
+				([string match -nocase $ip_type "MONITOR"] && \
+					!($ipname in $monitor_ip_exclusion_list))} {
 				set base_addr [get_baseaddr $periph "no_prefix"]
 				if {[string_is_empty $base_addr]} {
 					continue
@@ -1979,9 +2006,8 @@ proc proc_mapping {} {
 				add_prop $node "xlnx,name" "${periph}" string ${exception_dts}
 				add_prop $node status okay string ${exception_dts}
 			}
-			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
 			if {[lsearch $periphs_list $periph] >= 0} {
-				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi pmc_qspi axi_emc ${linear_spi_list}"
+				set valid_periph "psv_pmc_qspi axi_quad_spi psx_pmc_qspi pmc_qspi axi_emc ${linear_spi_list} tmr_manager"
                               	if {[lsearch $valid_periph $ipname] >= 0} {
                               	} else {
                                 	continue

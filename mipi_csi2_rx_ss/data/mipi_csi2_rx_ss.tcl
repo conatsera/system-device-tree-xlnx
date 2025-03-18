@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -184,7 +184,6 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
                                 }
 			} else {
 				set connectip [get_connect_ip $ip $intfpins $dts_file]
-				set connectip1 [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "video_out"]
 				if {[llength $connectip]} {
 					if {[string match -nocase [hsi get_property IP_NAME $connectip] "axis_switch"]} {
 						set ip_mem_handles [hsi get_mem_ranges $connectip]
@@ -194,14 +193,15 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 							add_prop "$mipi_node" "remote-endpoint" $connectip$drv_handle reference $dts_file 1
 							gen_axis_switch_in_remo_endpoint $drv_handle "$connectip$drv_handle"
 						}
+
 					} elseif {[string match -nocase [hsi get_property IP_NAME $connectip] "ISPPipeline_accel"]} {
-						set isppipeline_node [create_node -n "endpoint" -l $drv_handle$connectip1 -p $port_node -d $dts_file]
-						add_prop "$isppipeline_node" "remote-endpoint" $connectip1$drv_handle reference $dts_file 1
+						set isppipeline_node [create_node -n "endpoint" -l isppipeline_in$connectip -p $port_node -d $dts_file]
+						add_prop "$isppipeline_node" "remote-endpoint" $connectip$drv_handle reference $dts_file 1
 
 					} else {
-					set csi_rx_node [create_node -n "endpoint" -l $drv_handle$connectip1 -p $port_node -d $dts_file]
+					set csi_rx_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
 					gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
-					add_prop "$csi_rx_node" "remote-endpoint" $connectip1$drv_handle reference $dts_file 1
+					add_prop "$csi_rx_node" "remote-endpoint" $connectip$drv_handle reference $dts_file 1
 					gen_remoteendpoint $drv_handle $connectip$drv_handle
 					if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
 						mipi_csi2_rx_ss_gen_frmbuf_node $connectip $drv_handle $dts_file

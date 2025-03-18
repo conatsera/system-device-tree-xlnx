@@ -25,8 +25,8 @@ proc write_rm_dt args {
 	global env
 	set path $env(REPO)
 	# Windows treats an empty env variable as not defined
-	if {[catch {set include_dts $env(include_dts)} msg]} {
-		set include_dts ""
+	if {[catch {set user_dts $env(user_dts)} msg]} {
+		set user_dts ""
 	}
 
 	set common_file "$path/device_tree/data/config.yaml"

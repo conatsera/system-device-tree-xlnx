@@ -121,34 +121,43 @@ proc visp_ss_generate {drv_handle} {
 	set bus_name [detect_bus_name $drv_handle]
 	set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
 	set sub_region_size 0x10000  ;# 64 KB
-	set intr_val [pldt get $node interrupts]
-	set intr_val [string trimright $intr_val ">"]
-	set intr_val [string trimleft $intr_val "<"]
-	set intr_parent [pldt get $node interrupt-parent]
-	# Get interrupt names
-	set intr_names [pldt get $node interrupt-names]
-	set intr_names [string map {"," "" "\"" ""} $intr_names]
-	set num_interrupts [llength $intr_names]
-	set num_cells [llength $intr_val]
-	if {[expr $num_interrupts * 2] == $num_cells} {
-		set cell_count 2
-	} elseif {[expr $num_interrupts * 3] == $num_cells} {
-		set cell_count 3
-	} else {
-		set cell_count -1
-	}
-	if {$cell_count == -1} {
-		puts "Warning: Could not determine the Interrupt parent for $node. Interrupts may not function correctly."
-	}
+	# Try to get interrupts, if not present, skip processing
+	set intr_val ""
 	set intr_mapping {}
-	if {$cell_count > 0} {
-		for {set i 0} {$i < $num_interrupts} {incr i} {
-			# Extract corresponding interrupt values
-			set value [lrange $intr_val [expr $i * $cell_count] [expr $i * $cell_count + ($cell_count - 1)]]
-			dict set intr_mapping [lindex $intr_names $i] $value
+	if {[catch {set intr_val [pldt get $node interrupts]}]} {
+		puts "Interrupts are not available. Skipping interrupt processing."
+	} elseif {$intr_val ne ""} {
+		set intr_val [string trimright $intr_val ">"]
+		set intr_val [string trimleft $intr_val "<"]
+		set intr_parent [pldt get $node interrupt-parent]
+		# Get interrupt names
+		set intr_names [pldt get $node interrupt-names]
+		set intr_names [string map {"," "" "\"" ""} $intr_names]
+
+		# Validate interrupt data
+		set num_interrupts [llength $intr_names]
+		set num_cells [llength $intr_val]
+
+		if {[expr $num_interrupts * 2] == $num_cells} {
+			set cell_count 2
+		} elseif {[expr $num_interrupts * 3] == $num_cells} {
+			set cell_count 3
+		} else {
+			set cell_count -1
+		}
+
+		if {$cell_count == -1} {
+			puts "Warning: Could not determine the Interrupt parent for $node. Interrupts may not function correctly."
+		} else {
+			# Populate intr_mapping
+			for {set i 0} {$i < $num_interrupts} {incr i} {
+				set value [lrange $intr_val [expr $i * $cell_count] [expr $i * $cell_count + ($cell_count - 1)]]
+				dict set intr_mapping [lindex $intr_names $i] $value
+			}
 		}
 	}
 	set reg_mapping {}
+	set rpu_ids {}
 	pldt delete $node
 	for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
@@ -172,9 +181,6 @@ proc visp_ss_generate {drv_handle} {
 			add_prop "$sub_node" "reg" $reg_value hexlist $default_dts
 			add_prop "$sub_node" "status" "okay" string $default_dts
 			dict set reg_mapping $sub_node_label $reg_value
-			set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
-			add_prop "$ports_node" "#address-cells" 1 int $default_dts
-			add_prop "$ports_node" "#size-cells" 0 int $default_dts
 			set live_stream [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_LIVE_INPUTS]
 			set io_mode [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
 			set io_type [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_IO_TYPE]
@@ -191,12 +197,28 @@ proc visp_ss_generate {drv_handle} {
 			set mem_inputs [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_MEM_INPUTS]
 			set net_fps [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_NETFPS]
 			set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
+			lappend rpu_ids $rpu
 			add_prop "$sub_node" "xlnx,io_mode" "$io_mode_name" string $default_dts
 			add_prop "$sub_node" "xlnx,num_streams" $live_inputs int $default_dts
 			add_prop "$sub_node" "xlnx,mem_inputs" $mem_inputs int $default_dts
 			add_prop "$sub_node" "xlnx,netfps" $net_fps int $default_dts
 			add_prop "$sub_node" "xlnx,rpu" $rpu int $default_dts
 			add_prop "$sub_node" "isp_id" $isp_id int $default_dts
+			switch $rpu {
+				6 {
+					set rprocn "D_0_$rpu"
+				}
+				7 {
+					set rprocn "D_1_$rpu"
+				}
+				8 {
+					set rprocn "E_0_$rpu"
+				}
+				9 {
+					set rprocn "E_1_$rpu"
+				}
+			}
+			add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
 			if {[dict size $intr_mapping] > 0} {
 				set tile_intrnames ""
 				dict for {key value} $intr_mapping {
@@ -233,9 +255,14 @@ proc visp_ss_generate {drv_handle} {
 			}
 
 			add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
-			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $ports_node $default_dts $sub_node $sub_node_label $bus_name
+			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
+	generate_reserved_memory $rpu_ids $default_dts $bus_name
+	generate_remoteproc_node $rpu_ids $default_dts $bus_name
+	generate_tcm_nodes $rpu_ids $default_dts $bus_name
+	generate_mbox_nodes $rpu_ids $default_dts $bus_name
+	generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	foreach proc $proclist {
@@ -264,29 +291,34 @@ proc visp_ss_generate {drv_handle} {
 }
 
 proc create_vcp_node {sub_node default_dts isp_id bus_name} {
-	set vcp_node [create_node -l vvcam_video_${isp_id} -n "vvcam_video.${isp_id}" -p $bus_name -d $default_dts]
+	set vcp_node [create_node -l visp_video_${isp_id} -n "visp_video.${isp_id}" -p $bus_name -d $default_dts]
 	add_prop "$vcp_node" "compatible" "xlnx,visp-video" string $default_dts
 	add_prop "$vcp_node" "status" "okay" string $default_dts
 	return $vcp_node
 }
 
 #IO_MODE==2 (LIMO)
-proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
+proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
+	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	add_prop "$ports_node" "#address-cells" 1 int $default_dts
+	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 	set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
 	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp}" -n "ports" -p $vcp_node -d $default_dts]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
 	set reg_counter 1
+	set vcap_reg_counter 1
 	for {set iba 0} {$iba < $live_stream} {incr iba} {
 		for {set j 0} {$j < 5} {incr j} {
 			set port_idx [expr $iba * 5 + $j]
-			add_iba_properties $drv_handle $sub_node $default_dts $isp $iba $tile
 			if {$isp == 1 && $io_mode == 2 && $live_stream <= 2 && $port_idx % 5 == 0} {
 				set iba_values {}
 				if {$live_stream == 1} {
 					lappend iba_values 4
+					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
 				} elseif {$live_stream == 2} {
 					lappend iba_values 4 3
+					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
 				}
 				foreach iba $iba_values {
 					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
@@ -294,36 +326,38 @@ proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_nod
 					visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
 				}
 			} elseif {$port_idx % 5 == 0} {
+				add_iba_properties $drv_handle $sub_node $default_dts $isp $iba $tile
 				set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
 				set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
 				visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
 			} else {
 				if {$port_idx % 5 == 1} {
 					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $port_idx int $default_dts
-					set endpoint_node_mp [create_node -n "vvcam_isp${isp_id}_port${tile}${isp}${iba}_mp: endpoint" -p $port -d $default_dts]
-					add_prop "$endpoint_node_mp" "remote-endpoint" vvcam_video_${isp_id}_${iba}_0 reference $default_dts
+					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
+					incr vcap_reg_counter
+					set endpoint_node_mp [create_node -n "visp_isp${isp_id}_port${tile}${isp}${iba}_mp: endpoint" -p $port -d $default_dts]
+					add_prop "$endpoint_node_mp" "remote-endpoint" visp_video_${isp_id}_${iba}_0 reference $default_dts
 					add_prop "$endpoint_node_mp" "type" "output" string $default_dts
-
 
 					set vcp_ports [create_node -n "v_port${tile}${isp}@${port_idx}" -p $vcap_ports_node -d $default_dts]
 					add_prop "$vcp_ports" "reg" $reg_counter int $default_dts
 					incr reg_counter
-					set vcp_endpoint_node_mp [create_node -n "vvcam_video_${isp_id}_${iba}_0: endpoint" -p $vcp_ports -d $default_dts]
-					add_prop "$vcp_endpoint_node_mp" "remote-endpoint" vvcam_isp${isp_id}_port${tile}${isp}${iba}_mp reference $default_dts
+					set vcp_endpoint_node_mp [create_node -n "visp_video_${isp_id}_${iba}_0: endpoint" -p $vcp_ports -d $default_dts]
+					add_prop "$vcp_endpoint_node_mp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_mp reference $default_dts
 				}
 				if {$port_idx % 5 == 2} {
 					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $port_idx int $default_dts
-					set endpoint_node_sp [create_node -n "vvcam_isp${isp_id}_port${tile}${isp}${iba}_sp: endpoint" -p $port -d $default_dts]
-					add_prop "$endpoint_node_sp" "remote-endpoint" vvcam_video_${isp_id}_${iba}_1 reference $default_dts
+					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
+					incr vcap_reg_counter
+					set endpoint_node_sp [create_node -n "visp_isp${isp_id}_port${tile}${isp}${iba}_sp: endpoint" -p $port -d $default_dts]
+					add_prop "$endpoint_node_sp" "remote-endpoint" visp_video_${isp_id}_${iba}_1 reference $default_dts
 					add_prop "$endpoint_node_sp" "type" "output" string $default_dts
 
 					set vcp_ports1 [create_node -n "v_port${tile}${isp}@${port_idx}" -p $vcap_ports_node -d $default_dts]
 					add_prop "$vcp_ports1" "reg" $reg_counter int $default_dts
 					incr reg_counter
-					set vcp_endpoint_node_sp [create_node -n "vvcam_video_${isp_id}_${iba}_1: endpoint" -p $vcp_ports1 -d $default_dts]
-					add_prop "$vcp_endpoint_node_sp" "remote-endpoint" vvcam_isp${isp_id}_port${tile}${isp}${iba}_sp reference $default_dts
+					set vcp_endpoint_node_sp [create_node -n "visp_video_${isp_id}_${iba}_1: endpoint" -p $vcp_ports1 -d $default_dts]
+					add_prop "$vcp_endpoint_node_sp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_sp reference $default_dts
 				}
 			}
 		}
@@ -331,7 +365,10 @@ proc handle_io_mode_2 {drv_handle tile isp ports_node isp_id default_dts sub_nod
 }
 
 # IO_MODE==1 (LILO)
-proc handle_io_mode_1 {drv_handle tile isp ports_node isp_id default_dts sub_node sub_node_label bus_name} {
+proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
+	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	add_prop "$ports_node" "#address-cells" 1 int $default_dts
+	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 	set port0 [create_node -n "port${tile}${isp}" -p $ports_node -d $default_dts]
 	add_prop "$port0" "reg" 1 int $default_dts
 	set pin_name ""
@@ -356,12 +393,12 @@ proc handle_io_mode_1 {drv_handle tile isp ports_node isp_id default_dts sub_nod
 }
 
 #conditions
-proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id ports_node default_dts sub_node sub_node_label bus_name} {
+proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id default_dts sub_node sub_node_label bus_name} {
 	if {$isp == 0 || $isp == 1} {
 		if {$io_mode == 1} {
-			handle_io_mode_1 $drv_handle $tile $isp $ports_node $isp_id $default_dts $sub_node $sub_node_label $bus_name
+			handle_io_mode_1 $drv_handle $tile $isp $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		} elseif {$io_mode == 2} {
-			handle_io_mode_2 $drv_handle $tile $isp $ports_node $isp_id $default_dts $sub_node $sub_node_label $live_stream $bus_name $io_mode
+			handle_io_mode_2 $drv_handle $tile $isp $isp_id $default_dts $sub_node $sub_node_label $live_stream $bus_name $io_mode
 		} else {
 		}
 	}
@@ -635,7 +672,15 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub visp_inip} {
 }
 
 proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip} {
-	set outipname [hsi get_property IP_NAME $outip]
+	if {![llength $outip]} {
+		puts "Error: outip is empty or not valid. Exiting..."
+		return
+	}
+	set outipname ""
+	if {[catch {hsi get_property IP_NAME $outip} outipname]} {
+		puts "Error: Failed to get IP_NAME for outip: $outip"
+		return
+	}
 	set valid_mmip_list "v_frmbuf_wr mipi_dsi_tx_subsystem"
 	if {[lsearch  -nocase $valid_mmip_list $outipname] >= 0} {
 		foreach ip $outip {
@@ -727,4 +772,264 @@ proc find_valid_visp_inip {drv_handle visp_ip_name} {
     }
 
     return $visp_inip
+}
+
+proc generate_reserved_memory {rpu_ids default_dts bus_name} {
+	set reserved_mem_node [create_node -l "reserved_memory" -n "reserved_memory" -p $bus_name -d $default_dts]
+    add_prop "$reserved_mem_node" "#address-cells" 2 int $default_dts
+    add_prop "$reserved_mem_node" "#size-cells" 2 int $default_dts
+    add_prop "$reserved_mem_node" "ranges" "" noformating $default_dts
+	# Address mapping for RPU IDs
+    set rpu_addr_map {
+        6 {fw 0x0C000000 vring0 0x24FF8000 vring1 0x24FF9000 hal_priv 0x1114E000 load_calib 0x11126000}
+        7 {fw 0x1214F000 vring0 0x24FFA000 vring1 0x24FFB000 hal_priv 0x1729D000 load_calib 0x17275000}
+        8 {fw 0x1829E000 vring0 0x24FFC000 vring1 0x24FFD000 hal_priv 0x1D3EC000 load_calib 0x1D3C4000}
+		9 {fw 0x1E3ED000 vring0 0x24FFE000 vring1 0x24FFF000 hal_priv 0x2353B000 load_calib 0x23513000}
+    }
+    foreach rpu_id $rpu_ids {
+		if {![dict exists $rpu_addr_map $rpu_id]} {
+            puts "Unknown RPU ID: $rpu_id - Skipping"
+            continue
+        }
+        # Extract RPU memory regions dynamically
+        set rpu_values [dict get $rpu_addr_map $rpu_id]
+        set fw_addr [dict get $rpu_values fw]
+        set vring0_addr [dict get $rpu_values vring0]
+        set vring1_addr [dict get $rpu_values vring1]
+        set hal_priv_addr [dict get $rpu_values hal_priv]
+        set load_calib_addr [dict get $rpu_values load_calib]
+		switch $rpu_id {
+        6 {
+            set rprocn "D_0_$rpu_id"
+        }
+        7 {
+            set rprocn "D_1_$rpu_id"
+        }
+        8 {
+            set rprocn "E_0_$rpu_id"
+        }
+        9 {
+            set rprocn "E_1_$rpu_id"
+		}
+	}
+		# Reserved firmware memory
+        set rpu_fw_node [create_node -l "rproc_${rprocn}_reserved_rpu_fw" -n "rproc_${rpu_id}_reserved_rpu_fw" -p $reserved_mem_node -d $default_dts]
+        add_prop "$rpu_fw_node" "no-map" "" noformating $default_dts
+        add_prop "$rpu_fw_node" "reg" <[list 0x0 $fw_addr 0x0 0x5126000]> noformating $default_dts
+        # calb_memory
+        set load_calib_node [create_node -l "rproc_${rprocn}_calib_load" -n "rpu${rpu_id}_calib_load" -p $reserved_mem_node -d $default_dts]
+        add_prop "$load_calib_node" "no-map" "" noformating $default_dts
+        add_prop "$load_calib_node" "reg" <[list 0x0 $load_calib_addr 0x0 0x28000]> noformating $default_dts
+        # HAL private memory
+        set hal_mem_priv_node [create_node -l "rproc_${rprocn}_hal_mem_priv" -n "rpu${rpu_id}_hal_mem_priv" -p $reserved_mem_node -d $default_dts]
+        add_prop "$hal_mem_priv_node" "no-map" "" noformating $default_dts
+        add_prop "$hal_mem_priv_node" "reg" <[list 0x0 $hal_priv_addr 0x0 0x01001000]> noformating $default_dts
+		# VRing 0
+        set vring0_node [create_node -l "rproc_${rprocn}vdev0vring0" -n "rpu${rpu_id}vdev0vring0" -p $reserved_mem_node -d $default_dts]
+        add_prop "$vring0_node" "no-map" "" noformating $default_dts
+        add_prop "$vring0_node" "reg" <[list 0x0 $vring0_addr 0x0 0x1000]> noformating $default_dts
+        # VRing 1
+        set vring1_node [create_node -l "rproc_${rprocn}vdev0vring1" -n "rpu${rpu_id}vdev0vring1" -p $reserved_mem_node -d $default_dts]
+        add_prop "$vring1_node" "no-map" "" noformating $default_dts
+        add_prop "$vring1_node" "reg" <[list 0x0 $vring1_addr 0x0 0x1000]> noformating $default_dts
+    }
+	set rpu_mbox_node [create_node -l "isp_mbox_buffer" -n "isp_mbox_buffer@2453C000" -p $reserved_mem_node -d $default_dts]
+	add_prop "$rpu_mbox_node" "no-map" "" noformating $default_dts
+    add_prop "$rpu_mbox_node" "reg" [list 0x0 0x2453C000 0x0 0x400000] hexlist $default_dts
+	set rpu_share_mem_node [create_node -l "rpu_shared_mem" -n "rpu_shared_mem@2493C000" -p $reserved_mem_node -d $default_dts]
+	add_prop "$rpu_share_mem_node" "no-map" "" noformating $default_dts
+    add_prop "$rpu_share_mem_node" "reg" [list 0x0 0x2493C000 0x0 0x6C3FFF] hexlist $default_dts
+}
+
+proc generate_remoteproc_node {rpu_ids default_dts bus_name} {
+    set unique_rpu_ids [lsort -unique $rpu_ids]
+    set cluster_count 0
+    #set base_addr 0xebac0000
+	set base_addr 0xebb80000
+	set base_addr1 0xebac0000
+    set rpu_list [list]
+
+    foreach rpu_id $unique_rpu_ids {
+        lappend rpu_list $rpu_id
+        if {[llength $rpu_list] == 2} {
+            set cluster_label "versal2_r52f_cluster${cluster_count}_split"
+            set cluster_addr [format 0x%08x [expr {$base_addr + ($cluster_count * 0x100000)}]]
+			set cluster_addr1 [format remoteproc@%08x [expr {$base_addr1 + ($cluster_count * 0x100000)}]]
+
+            # Create remoteproc cluster node
+            set remoteproc_node [create_node -l $cluster_label -n "$cluster_addr1" -p $bus_name -d $default_dts]
+            add_prop "$remoteproc_node" "compatible" "xlnx,versal2-r52fss" string $default_dts
+            add_prop "$remoteproc_node" "#address-cells" 2 int $default_dts
+            add_prop "$remoteproc_node" "#size-cells" 2 int $default_dts
+            add_prop "$remoteproc_node" "xlnx,cluster-mode" 0 int $default_dts
+
+            # Define ranges dynamically based on RPU IDs
+            set ranges [list]
+            set rpu_id1 [lindex $rpu_list 0]
+            set rpu_id2 [lindex $rpu_list 1]
+
+            foreach {rpu_id offset} [list $rpu_id1 0 $rpu_id2 0x20000] {
+                lappend ranges [format "<0x%x 0x0 0x0 0x%08x 0x0 0x10000>" $rpu_id [expr {$cluster_addr + $offset}]]
+                lappend ranges [format "<0x%x 0x10000 0x0 0x%08x 0x0 0x8000>" $rpu_id [expr {$cluster_addr + $offset + 0x10000}]]
+                lappend ranges [format "<0x%x 0x18000 0x0 0x%08x 0x0 0x8000>" $rpu_id [expr {$cluster_addr + $offset + 0x20000}]]
+            }
+            add_prop "$remoteproc_node" "ranges" [join $ranges ", "] noformating $default_dts
+
+
+            # Generate R5F nodes
+            generate_r5f_node $rpu_id1 $remoteproc_node $default_dts
+            generate_r5f_node $rpu_id2 $remoteproc_node $default_dts
+
+            # Reset list and increment cluster count
+            set rpu_list [list]
+            incr cluster_count
+        }
+    }
+
+    # Handle an unpaired RPU ID
+    if {[llength $rpu_list] == 1} {
+        set rpu_id1 [lindex $rpu_list 0]
+        set cluster_label "versal2_r52f_cluster${cluster_count}_split"
+        set cluster_addr [format 0x%08x [expr {$base_addr + ($cluster_count * 0x40000)}]]
+        set cluster_addr1 [format remoteproc@%08x [expr {$base_addr + ($cluster_count * 0x40000)}]]
+
+        set remoteproc_node [create_node -l $cluster_label -n "$cluster_addr1" -p $bus_name -d $default_dts]
+        add_prop "$remoteproc_node" "compatible" "xlnx,versal2-r52fss" string $default_dts
+        add_prop "$remoteproc_node" "#address-cells" 2 int $default_dts
+        add_prop "$remoteproc_node" "#size-cells" 2 int $default_dts
+        add_prop "$remoteproc_node" "xlnx,cluster-mode" 0 int $default_dts
+
+        # Define ranges for single-node cluster
+        set ranges [list]
+        set offset 0
+        lappend ranges [format "<0x%x 0x0 0x0 0x%08x 0x0 0x10000>" $rpu_id1 [expr {$cluster_addr + $offset}]]
+        lappend ranges [format "<0x%x 0x10000 0x0 0x%08x 0x0 0x8000>" $rpu_id1 [expr {$cluster_addr + $offset + 0x10000}]]
+        lappend ranges [format "<0x%x 0x18000 0x0 0x%08x 0x0 0x8000>" $rpu_id1 [expr {$cluster_addr + $offset + 0x20000}]]
+        add_prop "$remoteproc_node" "ranges" [join $ranges ", "] noformating $default_dts
+
+        generate_r5f_node $rpu_id1 $remoteproc_node $default_dts
+    }
+}
+
+
+proc generate_r5f_node {rpu_id parent_node default_dts} {
+    set r5f_label "r52f_${rpu_id}"
+    set r5f_node [create_node -l $r5f_label -n "$r5f_label" -p $parent_node -d $default_dts]
+    add_prop "$r5f_node" "compatible" "xlnx,versal2-r52f" string $default_dts
+	# Define reg properties based on index
+    set base_offset [expr {$rpu_id * 0x40000}]
+    set reg [list \
+        [format "<0x%x 0x0 0x0 0x10000>" $rpu_id] \
+        [format "<0x%x 0x10000 0x0 0x8000>" $rpu_id] \
+        [format "<0x%x 0x18000 0x0 0x8000>" $rpu_id]
+    ]
+    add_prop "$r5f_node" "reg" [join $reg ", "] noformating $default_dts
+    add_prop "$r5f_node" "reg-names" "atcm, btcm, ctcm" string $default_dts
+	switch $rpu_id {
+        6 {
+            set rprocn "D_0_$rpu_id"
+        }
+        7 {
+            set rprocn "D_1_$rpu_id"
+        }
+        8 {
+            set rprocn "E_0_$rpu_id"
+        }
+        9 {
+            set rprocn "E_1_$rpu_id"
+		}
+	}
+    # Define memory regions
+    set memory_regions [list \
+        "&rproc_${rprocn}_reserved_rpu_fw" \
+        "&rproc_${rprocn}_hal_mem_priv" \
+        "&rproc_${rprocn}vdev0vring0" \
+        "&rproc_${rprocn}vdev0vring1"
+    ]
+    set formatted_memory_regions [join [lmap region $memory_regions {format "<%s>" $region}] ", "]
+    add_prop "$r5f_node" "memory-region" $formatted_memory_regions noformating $default_dts
+	switch $rpu_id {
+        6 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_D_0>, <&versal2_firmware PM_DEV_TCM_D_0A>, <&versal2_firmware PM_DEV_TCM_D_0B>, <&versal2_firmware PM_DEV_TCM_D_0C>"
+        }
+        7 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_D_1>, <&versal2_firmware PM_DEV_TCM_D_1A>, <&versal2_firmware PM_DEV_TCM_D_1B>, <&versal2_firmware PM_DEV_TCM_D_1C>"
+        }
+        8 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_E_0>, <&versal2_firmware PM_DEV_TCM_E_0A>, <&versal2_firmware PM_DEV_TCM_E_0B>, <&versal2_firmware PM_DEV_TCM_E_0C>"
+        }
+        9 {
+            set power_domains "<&versal2_firmware PM_DEV_RPU_E_1>, <&versal2_firmware PM_DEV_TCM_E_1A>, <&versal2_firmware PM_DEV_TCM_E_1B>, <&versal2_firmware PM_DEV_TCM_E_1C>"
+		}
+	}
+	#add_prop "$r5f_node" "power-domains" $power_domains noformating $default_dts
+}
+
+proc generate_tcm_nodes {rpu_ids default_dts bus_name} {
+    # Define base addresses and sizes for TCMs
+	set tcm_nodes {
+		6 0xeb5b8000
+		7 0xeb5bc000
+		8 0xeb5c8000
+		9 0xeb5cc000
+    }
+    set tcm_size 0x40000  ; # 256 KB
+	foreach {rpu_id tcm_nodes1} $tcm_nodes {
+        # Calculate base address for each RPU's TCM
+		if {$rpu_id in $rpu_ids} {
+			set size [format "0x%X" $tcm_size]
+			set label "tcm_rpu${rpu_id}"
+			set name "tcm_rpu${rpu_id}@$tcm_nodes1"
+			# Create the node under reserved-memory
+			set tcm_node [create_node -l $label -n $name -p $bus_name -d $default_dts]
+			# Add properties to the node
+			add_prop $tcm_node compatible "mmio-sram" string $default_dts
+			add_prop $tcm_node reg "0x0 $tcm_nodes1 0x0 $size" hexlist $default_dts
+			add_prop $tcm_node no-map "" noformating $default_dts
+			add_prop $tcm_node status "okay" string $default_dts
+		}
+	}
+}
+
+proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
+    foreach rpu_id $rpu_ids {
+        set mbox_label "visp_mbox_rpu${rpu_id}"
+        set mbox_name "visp_mbox_rpu.${rpu_id}"
+        # Create the mailbox node under the bus
+        set mbox_node [create_node -l $mbox_label -n $mbox_name -p $bus_name -d $default_dts]
+        add_prop "$mbox_node" "compatible" "xlnx,mbox" string $default_dts
+        add_prop "$mbox_node" "rpu_id" "$rpu_id" int $default_dts
+        # Reference to the corresponding RPU node
+        add_prop "$mbox_node" "isp,rproc" "<&r52f_${rpu_id}>" noformating $default_dts
+        # Set mailbox properties dynamically
+        set mboxes "<&ipi_mailbox_rpu${rpu_id} 0>, <&ipi_mailbox_rpu${rpu_id} 1>"
+        add_prop "$mbox_node" "mboxes" $mboxes noformating $default_dts
+		# Define mbox-names properly as a list
+        set mbox_names [list "tx" "rx"]
+        add_prop "$mbox_node" "mbox-names" $mbox_names stringlist $default_dts
+        add_prop "$mbox_node" "status" "okay" string $default_dts
+    }
+}
+
+proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
+    set ipi_node [create_node -n "&ipi_nobuf1" -p $bus_name -d $default_dts]
+	add_prop "$ipi_node" "status" "okay" string $default_dts
+	set ipi_base_id 6
+	set rpu_base_addresses {
+		6 12 0xeb3b2000
+		7 13 0xeb3b3000
+		8 14 0xeb3b4000
+		9 15 0xeb3b5000
+	}
+	set reg_size 0x1000
+	foreach {rpu_id ipi_id rpu_base_addresses1} $rpu_base_addresses {
+        if {$rpu_id in $rpu_ids} {
+            set mailbox_label "ipi_mailbox_rpu${rpu_id}"
+	    set mailbox_name [format "mailbox@%08x" [expr {$rpu_base_addresses1}]]
+            set mailbox_node [create_node -l $mailbox_label -n $mailbox_name -p $ipi_node -d $default_dts]
+            add_prop $mailbox_node "xlnx,ipi-id" $ipi_id int $default_dts
+	    add_prop $mailbox_node reg "0x0 $rpu_base_addresses1 0x0 $reg_size" hexlist $default_dts
+            add_prop $mailbox_node "reg-names" "ctrl" string $default_dts
+        }
+    }
 }

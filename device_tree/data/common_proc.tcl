@@ -1668,14 +1668,14 @@ proc write_dt args {
 		puts $fd "\};"
 	}
 	# Windows treats an empty env variable as not defined
-	if {[catch {set include_dts $env(include_dts)} msg]} {
-		set include_dts ""
+	if {[catch {set user_dts $env(user_dts)} msg]} {
+		set user_dts ""
 	}
 	if {[string match -nocase $dt "systemdt"]} {
 		if {![string_is_empty $board_dtsi_file]} {
 			puts $fd "#include \"${board_dtsi_file}.dtsi\""
 		}
-		foreach include_dts_file [split $include_dts] {
+		foreach include_dts_file [split $user_dts] {
 			set include_dts_filename [file tail $include_dts_file]
 			puts $fd "#include \"$include_dts_filename\""
 		}
@@ -3457,6 +3457,7 @@ proc gen_ps_mapping {} {
 			dict set def_ps_mapping ff120000 label "watchdog1: watchdog"
 			dict set def_ps_mapping fca10000 label "cpm_pciea: pci"
 			dict set def_ps_mapping fcdd0000 label "cpm5_pcie: pci"
+			dict set def_ps_mapping e4a10000 label "cpm5nc: pci"
 			dict set def_ps_mapping ff060000 label "can0: can"
 			dict set def_ps_mapping ff070000 label "can1: can"
 			dict set def_ps_mapping ff330000 label "ipi0: mailbox"

@@ -48,7 +48,7 @@ tree generation.
   	specific DTSI file available at `<this
   	repo>/device_tree/data/kernel_dtsi/<release>/<board>` inside the
   	final SDT
-  * `-include_dts` : Includes a user defined custom `.dtsi` file inside the
+  * `-user_dts` : Includes a user defined custom `.dtsi` file inside the
   	final SDT 
 	* Can be used to workaround when SDTGen tool is generating
   	incorrect data, can be used to override the existing data in the
@@ -79,7 +79,7 @@ sdtgen% set_dt_param -board_dts zcu102-rev1.0
 
 # Include a user defined custom dtsi file inside the final SDT
 # Below command copies the custom.dtsi file into SDT output directory and add include statement in system-top.dts
-sdtgen% set_dt_param -include_dts <path>/custom.dtsi
+sdtgen% set_dt_param -user_dts <path>/custom.dtsi
 
 # Enable the trace i.e. the flow of TCL procs that are getting invoked during SDT generation. The default trace option is "disable".
 sdtgen% set_dt_param -trace enable
@@ -93,12 +93,12 @@ sdtgen% set_dt_param -help
             -xsa              Vivado hw design file
             -board_dts        board specific file
             -dir              Directory where the dt files will be generated
-            -include_dts      DTS file to be include into final device tree
+            -user_dts         DTS file to be include into final device tree
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
 
 # Combining everything in one command
-sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -include_dts ./custom.dtsi -trace enable -debug enable
+sdtgen% set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -user_dts ./custom.dtsi -trace enable -debug enable
 ```
 ### get_dt_param
 Returns the values set for the given argument. Returns the default
@@ -113,7 +113,7 @@ sdtgen% get_dt_param -help
             -xsa              Vivado hw design file
             -board_dts        board specific file
             -dir              Directory where the dt files will be generated
-            -include_dts      DTS file to be include into final device tree
+            -user_dts         DTS file to be include into final device tree
             -debug            Enable DTG++ debug
             -trace            Enable DTG++ traces
 
