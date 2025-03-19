@@ -396,6 +396,7 @@ proc set_dt_param args {
 					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
 						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
 					}
+					set env(board) $board_dts_file
 				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}

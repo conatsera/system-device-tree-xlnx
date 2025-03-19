@@ -2,7 +2,7 @@
 /*
  * dts file for AMD VEK385 revA
  *
- * Copyright (C) 2024-2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2024, Advanced Micro Devices, Inc.
  *
  * Michal Simek <michal.simek@amd.com>
  */
@@ -16,10 +16,7 @@
 
 	chosen {
 		bootargs = "earlycon=pl011,mmio32,0xf1930000 console=ttyAMA0,115200";
-	};
-
-	aliases {
-		nvmem1 = &eeprom;
+		stdout-path = "serial0:115200n8";
 	};
 
 	reserved-memory {
@@ -29,7 +26,7 @@
 
 		/* TF-A, TEE, RPUs */
 		/* FIXME Uncomment after VNC */
-		/* memory@20000000 {
+		/* res: memory@0 {
 			no-map;
 			reg = <0 0 0 0x20000000>;
 		};
@@ -37,11 +34,6 @@
 	};
 
 	firmware {
-		versal2_firware: versal2_firmware {
-			compatible = "xlnx,versal2-firmware";
-			method = "smc";
-		};
-
 		optee: optee { /* Should be injected by firmware */
 			compatible = "linaro,optee-tz";
 			method = "smc";
@@ -64,33 +56,8 @@
 /* CAN at LPD_MIO12-13 FIXME */
 /* CAN at LPD_MIO21-22 FIXME */
 
-
-&can0 { /* PMC_MIO16-17 */
-	status = "disabled";
-};
-
-&can1 { /* PMC_MIO18-19 */
-	status = "disabled";
-};
-
-&can2 { /* PMC_MIO20-21 */
-	status = "disabled";
-};
-
-&can3 { /* PMC_MIO22-23 */
-	status = "disabled";
-};
-
-&i3c0 {
-    status = "disabled";
-};
-
-&i3c1 {
-    status = "disabled";
-};
-
 &ospi { /* PMC_MIO0-10, MIO12 */
-	reset-names = "disabled";
+	reset-names = "qspi";
 	reset-gpios = <&gpio1 12 0>; /* FIXME reset via regs is possible too */
 	#address-cells = <1>;
 	#size-cells = <0>;
@@ -109,7 +76,6 @@
 		#address-cells = <1>;
 		reg = <0>;
 		no-wp;
-		broken-flash-reset;
 
 		partitions {
 			#size-cells = <1>;
@@ -129,12 +95,7 @@
 	};
 };
 
-&usb1 { /* PMC_MIO27-39 */
-	status = "okay";
-};
-
 &dwc3_1 {
-	status = "okay";
 	dr_mode = "host";
 	maximum-speed = "high-speed";
 	#address-cells = <1>;
@@ -153,12 +114,10 @@
 };
 
 &i2c0 { /* PMC_MIO42-43 */
-	status = "okay";
 	/* board_i2c0 - FMC */
 };
 
 &i2c1 { /* PMC_MIO44-45 */
-	status = "okay";
 	#address-cells = <1>;
 	#size-cells = <0>;
 
@@ -199,21 +158,11 @@
 	};
 };
 
-&serial0 { /* LPD_MIO16-17 */
-	status = "okay";
-};
-
-&serial1 { /* PMC_MIO46-47 */
-	status = "okay";
-};
-
 &ttc0 { /* PMC_MIO49 FAN_PWM */
-	status = "okay";
 	#pwm-cells = <3>;
 };
 
 &gem0 { /* MDIO PMC_MIO50/51, MIO0-11 */
-	status = "okay";
 	phy-handle = <&phy0>;
 	phy-mode = "rgmii-id";
 
@@ -233,13 +182,5 @@
 			reset-deassert-us = <280>;
 			reset-gpios = <&gpio0 25 GPIO_ACTIVE_LOW>;
 		};
-	};
-};
-
-&mmi_10gbe {
-	phy-mode = "10gbase-r";
-	fixed-link {
-		speed = <10000>;
-		full-duplex;
 	};
 };
