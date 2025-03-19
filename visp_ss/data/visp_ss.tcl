@@ -1012,7 +1012,7 @@ proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
 }
 
 proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
-    set ipi_node [create_node -n "&ipi_nobuf1" -p $bus_name -d $default_dts]
+    set ipi_node [create_node -n "ipi_nobuf1" -p $bus_name -d $default_dts]
 	add_prop "$ipi_node" "status" "okay" string $default_dts
 	set ipi_base_id 6
 	set rpu_base_addresses {
