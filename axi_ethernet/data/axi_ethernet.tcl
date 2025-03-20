@@ -289,10 +289,14 @@
         } elseif {$phytype == "1000basex"} {
             set phytype "1000base-x"
         }
+        # phytype should be 2500base-x if IP is configured for 2.5G
+        if {[hsi get_property CONFIG.speed_1_2p5 [hsi::get_cells -hier $drv_handle]] == "2p5G"} {
+            set phytype "2500base-x"
+        }
         if {![string match -nocase $phytype ""]} {
             add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
         }
-        if {$phytype == "sgmii" || $phytype == "1000base-x"} {
+        if {$phytype == "sgmii" || $phytype == "1000base-x" || $phytype == "2500base-x"} {
             add_prop $node phy-mode "$phytype" string "pl.dtsi" 1
             set phynode [axi_ethernet_pcspma_phy_node $eth_ip]
             set phya [lindex $phynode 0]
