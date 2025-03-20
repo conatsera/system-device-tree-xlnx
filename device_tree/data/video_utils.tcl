@@ -394,7 +394,7 @@ proc gen_broad_remoteendpoint_port7 {drv_handle value} {
             set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
             if {[llength $connectip]} {
                 if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_broadcaster"]} {
-                    gen_broadcaster $connectip
+                    gen_broadcaster $connectip $dts_file
                     break
                 }
                 if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_switch"]} {
