@@ -222,6 +222,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "usp_rf_data_converter" "rfdc"
 	dict set ::sdtgen::namespacelist "xdfe_cc_filter" "dfeccf"
 	dict set ::sdtgen::namespacelist "xdfe_cc_mixer" "dfemix"
+	dict set ::sdtgen::namespacelist "xdfe_ofdm" "dfeofdm"
 	dict set ::sdtgen::namespacelist "xdfe_nr_prach" "dfeprach"
 	dict set ::sdtgen::namespacelist "ps7_scugic" "scugic"
 	dict set ::sdtgen::namespacelist "psu_acpu_gic" "scugic"
