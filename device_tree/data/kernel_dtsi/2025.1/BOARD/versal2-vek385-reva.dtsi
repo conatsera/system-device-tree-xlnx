@@ -177,3 +177,11 @@
 		};
 	};
 };
+
+&mmi_10gbe {
+	phy-mode = "10gbase-r";
+	fixed-link {
+		speed = <10000>;
+		full-duplex;
+	};
+};
