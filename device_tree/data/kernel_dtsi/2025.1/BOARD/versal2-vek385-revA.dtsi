@@ -34,11 +34,6 @@
 	};
 
 	firmware {
-		optee: optee { /* Should be injected by firmware */
-			compatible = "linaro,optee-tz";
-			method = "smc";
-		};
-
 		psci: psci { /* Should be injected by firmware */
 			compatible = "arm,psci-1.0";
 			method = "smc";
@@ -72,8 +67,6 @@
 		cdns,tsd2d-ns = <0>;
 		cdns,tshsl-ns = <0>;
 		cdns,read-delay = <0>;
-		#size-cells = <1>;
-		#address-cells = <1>;
 		reg = <0>;
 		no-wp;
 
@@ -182,5 +175,13 @@
 			reset-deassert-us = <280>;
 			reset-gpios = <&gpio0 25 GPIO_ACTIVE_LOW>;
 		};
+	};
+};
+
+&mmi_10gbe {
+	phy-mode = "10gbase-r";
+	fixed-link {
+		speed = <10000>;
+		full-duplex;
 	};
 };

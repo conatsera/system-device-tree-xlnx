@@ -31,11 +31,6 @@
 	};
 
 	firmware {
-		optee: optee  {
-			compatible = "linaro,optee-tz";
-			method = "smc";
-		};
-
 		psci: psci { /* Should be injected by firmware */
 			compatible = "arm,psci-1.0";
 			method = "smc";
