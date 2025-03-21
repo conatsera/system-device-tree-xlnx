@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2020-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -24,7 +24,7 @@ proc dp_txss14_generate {drv_handle} {
 	set compatible [get_comp_str $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,v-dp-txss-3.1\""
 
-        set num_audio_channels [hsi get_property CONFIG.Number_of_Audio_Channels [hsi::get_cells -hier $drv_handle]]
+        set num_audio_channels [hsi get_property CONFIG.Number_of_Audio_gt_quad_gtwiz_versal_0rxphy_lane0Channels [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,num-audio-channels" $num_audio_channels int $dtsi_file
         set audio_enable [hsi get_property CONFIG.AUDIO_ENABLE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,audio-enable" $audio_enable int $dtsi_file
@@ -149,7 +149,7 @@ proc dp_txss14_generate {drv_handle} {
 		set gtpinname "GT_TX0"
 		set gtip [get_connected_stream_ip [hsi::get_cells -hier $channelip] $gtpinname]
 		if {[llength $gtip] && [llength [hsi::get_mem_ranges $gtip]]} {
-			set phy_s "${gtip}"
+			set phy_s "${gtip}txphy_lane0 0 1 1 1"
 			add_prop "$node" "phys" $phy_s reference $dtsi_file 1
 		}
 	}
