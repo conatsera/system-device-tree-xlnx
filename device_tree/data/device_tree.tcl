@@ -2231,7 +2231,8 @@ proc update_memory_node {} {
 			}
 			if {![catch {set memory_ip_name [systemdt get $node "xlnx,ip-name"]} msg]} {
 				if {[regexp -nocase "axi_noc" $memory_ip_name match]} {
-					dict set axi_noc_baseaddr_dict $mem_addr $node
+					regsub -all {^0x} $mem_addr {} mem_addr
+					dict set axi_noc_baseaddr_dict 0x$mem_addr $node
 				}
 			}
 		}
