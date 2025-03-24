@@ -81,9 +81,14 @@
 	};
 };
 
+&usb1 {
+	dma-coherent;
+};
+
 &dwc3_1 {
 	dr_mode = "host";
 	maximum-speed = "high-speed";
+	dma-coherent;
 	#address-cells = <1>;
 	#size-cells = <0>;
 
