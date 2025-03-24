@@ -298,6 +298,12 @@ proc gen_broad_remoteendpoint_port7 {drv_handle value} {
         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
         set broad 10
         foreach intf $master_intf {
+            set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] "M01_AXIS"]
+            if {[hsi get_property IP_NAME $connectip] in { "v_smpte_uhdsdi_tx_ss" }} {
+		    # UHD SDI TX SS after broadcaster is legal only in baremetal use case.
+		    # So break the loop here.
+		    break
+	    }
             set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
             if {[llength $connectip]} {
                 set ip_mem_handles [hsi::get_mem_ranges $connectip]
@@ -394,7 +400,7 @@ proc gen_broad_remoteendpoint_port7 {drv_handle value} {
             set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
             if {[llength $connectip]} {
                 if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_broadcaster"]} {
-                    gen_broadcaster $connectip
+                    gen_broadcaster $connectip $dts_file
                     break
                 }
                 if {[string match -nocase [hsi get_property IP_NAME [hsi::get_cells -hier $connectip]] "axis_switch"]} {

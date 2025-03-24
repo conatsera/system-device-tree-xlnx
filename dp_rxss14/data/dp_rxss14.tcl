@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2020-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -160,7 +160,7 @@ proc dp_rxss14_generate {drv_handle} {
 		set gtpinname "GT_RX0"
 		set gtip [get_connected_stream_ip [hsi::get_cells -hier $channelip] $gtpinname]
 		if {[llength $gtip] && [llength [hsi::get_mem_ranges $gtip]]} {
-			set phy_s "${gtip}"
+			set phy_s "${gtip}rxphy_lane0 0 1 1 0"
 			add_prop "$node" "phys" $phy_s reference $dts_file 1
 		}
 	}
