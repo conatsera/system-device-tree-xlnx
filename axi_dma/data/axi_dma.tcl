@@ -96,10 +96,7 @@
                 }
                 set ip_prop CONFIG.c_include_mm2s_dre
                 add_cross_property $drv_handle $ip_prop $drv_handle "xlnx,include-dre" $node boolean
-                set addr_width [hsi get_property CONFIG.c_addr_width $dma_ip]
-                set inhex [format %x $addr_width]
-                append addrwidth "/bits/ 8 <0x$inhex>"
-                add_prop $node "xlnx,addrwidth" $addrwidth noformating "pl.dtsi"
+                set_drv_conf_prop $drv_handle c_addr_width xlnx,addrwidth $node
                 set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $dma_ip]
                 set inhex [format %x $num_queues]
                 append numqueues "/bits/ 16 <0x$inhex>"
