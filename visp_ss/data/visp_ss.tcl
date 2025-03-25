@@ -291,7 +291,7 @@ proc visp_ss_generate {drv_handle} {
 }
 
 proc create_vcp_node {sub_node default_dts isp_id bus_name} {
-	set vcp_node [create_node -l visp_video_${isp_id} -n "visp_video.${isp_id}" -p $bus_name -d $default_dts]
+	set vcp_node [create_node -l visp_video_${isp_id} -n "visp_video_${isp_id}" -p $bus_name -d $default_dts]
 	add_prop "$vcp_node" "compatible" "xlnx,visp-video" string $default_dts
 	add_prop "$vcp_node" "status" "okay" string $default_dts
 	return $vcp_node
@@ -335,28 +335,28 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
 					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
 					incr vcap_reg_counter
-					set endpoint_node_mp [create_node -n "visp_isp${isp_id}_port${tile}${isp}${iba}_mp: endpoint" -p $port -d $default_dts]
+					set endpoint_node_mp [create_node -n "endpoint" -l "visp_isp${isp_id}_port${tile}${isp}${iba}_mp" -p $port -d $default_dts]
 					add_prop "$endpoint_node_mp" "remote-endpoint" visp_video_${isp_id}_${iba}_0 reference $default_dts
 					add_prop "$endpoint_node_mp" "type" "output" string $default_dts
 
 					set vcp_ports [create_node -n "v_port${tile}${isp}@${port_idx}" -p $vcap_ports_node -d $default_dts]
 					add_prop "$vcp_ports" "reg" $reg_counter int $default_dts
 					incr reg_counter
-					set vcp_endpoint_node_mp [create_node -n "visp_video_${isp_id}_${iba}_0: endpoint" -p $vcp_ports -d $default_dts]
+					set vcp_endpoint_node_mp [create_node -n "endpoint" -l "visp_video_${isp_id}_${iba}_0"  -p $vcp_ports -d $default_dts]
 					add_prop "$vcp_endpoint_node_mp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_mp reference $default_dts
 				}
 				if {$port_idx % 5 == 2} {
 					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
 					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
 					incr vcap_reg_counter
-					set endpoint_node_sp [create_node -n "visp_isp${isp_id}_port${tile}${isp}${iba}_sp: endpoint" -p $port -d $default_dts]
+					set endpoint_node_sp [create_node -n "endpoint" -l "visp_isp${isp_id}_port${tile}${isp}${iba}_sp"  -p $port -d $default_dts]
 					add_prop "$endpoint_node_sp" "remote-endpoint" visp_video_${isp_id}_${iba}_1 reference $default_dts
 					add_prop "$endpoint_node_sp" "type" "output" string $default_dts
 
 					set vcp_ports1 [create_node -n "v_port${tile}${isp}@${port_idx}" -p $vcap_ports_node -d $default_dts]
 					add_prop "$vcp_ports1" "reg" $reg_counter int $default_dts
 					incr reg_counter
-					set vcp_endpoint_node_sp [create_node -n "visp_video_${isp_id}_${iba}_1: endpoint" -p $vcp_ports1 -d $default_dts]
+					set vcp_endpoint_node_sp [create_node -n "endpoint" -l "visp_video_${isp_id}_${iba}_1"  -p $vcp_ports1 -d $default_dts]
 					add_prop "$vcp_endpoint_node_sp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_sp reference $default_dts
 				}
 			}
@@ -993,8 +993,8 @@ proc generate_tcm_nodes {rpu_ids default_dts bus_name} {
 
 proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
     foreach rpu_id $rpu_ids {
-        set mbox_label "visp_mbox_rpu${rpu_id}"
-        set mbox_name "visp_mbox_rpu.${rpu_id}"
+        set mbox_label "visp_mbox_rpu_${rpu_id}"
+        set mbox_name "visp_mbox_rpu_${rpu_id}"
         # Create the mailbox node under the bus
         set mbox_node [create_node -l $mbox_label -n $mbox_name -p $bus_name -d $default_dts]
         add_prop "$mbox_node" "compatible" "xlnx,mbox" string $default_dts
@@ -1012,7 +1012,7 @@ proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
 }
 
 proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
-    set ipi_node [create_node -n "&ipi_nobuf1" -p $bus_name -d $default_dts]
+    set ipi_node [create_node -n "ipi_nobuf1" -p $bus_name -d $default_dts]
 	add_prop "$ipi_node" "status" "okay" string $default_dts
 	set ipi_base_id 6
 	set rpu_base_addresses {
