@@ -36,6 +36,12 @@
         set connecttx_ip ""
         array set queue_channel_map {}
         set channel_type ""
+	set compatible [pldt get $node "compatible"]
+	if {$compatible eq "xlnx,tsn-endpoint-ethernet-mac-1.0"} {
+		pldt set $node compatible "\"xlnx,tsn-endpoint-ethernet-mac-1.0\""
+	} else {
+		pldt set $node compatible "\"xlnx,tsn-endpoint-ethernet-mac-2.0\""
+	}
         set num_priorites [hsi get_property CONFIG.NUM_PRIORITIES $eth_ip]
         if {$num_priorites > 3} {
             for {set i 0} {$i < $num_priorites} {incr i} {
