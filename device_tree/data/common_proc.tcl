@@ -2456,8 +2456,13 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 		foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm] {
 			if {![regexp "pspmc.*" "$drv" match]} {
 				set rev_num [get_ip_property $drv CONFIG.CPM_REVISION_NUMBER]
-				set port_type_0 [get_ip_property $drv CONFIG.C_CPM_PCIE0_PORT_TYPE]
-				set port_type_1 [get_ip_property $drv CONFIG.C_CPM_PCIE1_PORT_TYPE]
+				set avail_param [hsi list_property $drv]
+					if {[lsearch -nocase $avail_param "CONFIG.C_CPM_PCIE0_PORT_TYPE"] >= 0} {
+						set port_type_0 [hsi get_property CONFIG.C_CPM_PCIE0_PORT_TYPE $drv]
+					}
+					if {[lsearch -nocase $avail_param "CONFIG.C_CPM_PCIE1_PORT_TYPE"] >= 0} {
+						set port_type_1 [hsi get_property CONFIG.C_CPM_PCIE1_PORT_TYPE $drv]
+					}
 			}
 		}
 		if {($rev_num == 0) && ($port_type_0 || $port_type_1)} {
