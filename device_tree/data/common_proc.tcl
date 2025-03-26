@@ -5600,30 +5600,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 		}
 		if {![string_is_empty $base]} {
 			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8 || $is_64_bit_mb} {
-				# check if base address is 64bit and split it as MSB and LSB
-				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-					set temp $base
-					set temp [string trimleft [string trimleft $temp 0] x]
-					set len [string length $temp]
-					set rem [expr {${len} - 8}]
-					set high_base "0x[string range $temp $rem $len]"
-					set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-					set low_base [format 0x%08x $low_base]
-					if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
-						set temp $size
-						set temp [string trimleft [string trimleft $temp 0] x]
-						set len [string length $temp]
-						set rem [expr {${len} - 8}]
-						set high_size "0x[string range $temp $rem $len]"
-						set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
-						set low_size [format 0x%08x $low_size]
-						set reg "$low_base $high_base $low_size $high_size"
-					} else {
-						set reg "$low_base $high_base 0x0 $size"
-					}
-				} else {
-					set reg "0x0 $base 0x0 $size"
-				}
+				set reg [get_64_bit_reg $base $size]
 			} else {
                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                     dtg_warning "$drv_handle base value $base is greater than 32-bit, restricting it to 32-bit value 0xFFFFFFFF"
@@ -5686,30 +5663,7 @@ proc gen_reg_property {drv_handle {skip_ps_check ""} {set_node_prop 1}} {
 
 			set new_reg ""
 			if {[string match -nocase $proctype "versal"] || [is_zynqmp_platform $proctype] || [string length [string trimleft $base "0x"]] > 8 || $is_64_bit_mb} {
-				# check if base address is 64bit and split it as MSB and LSB
-				if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
-					set temp $base
-					set temp [string trimleft [string trimleft $temp 0] x]
-					set len [string length $temp]
-					set rem [expr {${len} - 8}]
-					set high_base "0x[string range $temp $rem $len]"
-					set low_base "0x[string range $temp 0 [expr {${rem} - 1}]]"
-					set low_base [format 0x%08x $low_base]
-					if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
-						set temp $size
-						set temp [string trimleft [string trimleft $temp 0] x]
-						set len [string length $temp]
-						set rem [expr {${len} - 8}]
-						set high_size "0x[string range $temp $rem $len]"
-						set low_size  "0x[string range $temp 0 [expr {${rem} - 1}]]"
-						set low_size [format 0x%08x $low_size]
-						set new_reg "$low_base $high_base $low_size $high_size"
-					} else {
-						set new_reg "$low_base $high_base 0x0 $size"
-					}
-				} else {
-					set new_reg "0x0 $base 0x0 $size"
-				}
+				set new_reg [get_64_bit_reg $base $size]
 			} else {
                 if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                     dtg_warning "$drv_handle base value $base is greater than 32-bit, restricting it to 32-bit value 0xFFFFFFFF"
@@ -7741,4 +7695,37 @@ proc gen_reg_property_format {base high {bit_format 64}} {
 		set reg "0x0 $base 0x0 $size"
 	}
 	return $reg
+}
+
+# Create a 64 bit reg value in the dt property format from the base address
+# and size address
+proc get_64_bit_reg {base size} {
+	set addr_cell_values ""
+	set size_cell_values ""
+	# check if base address is 64bit and split it as MSB and LSB
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
+		set addr_cell_values [split_string_to_32_bit_cell $base]
+	} else {
+		set addr_cell_values "0x0 $base"
+	}
+
+	# check if size is 64bit and split it as MSB and LSB
+	if {[regexp -nocase {0x([0-9a-f]{9})} "$size" match]} {
+		set size_cell_values [split_string_to_32_bit_cell $size]
+	} else {
+		set size_cell_values "0x0 $size"
+	}
+
+	return "$addr_cell_values $size_cell_values"
+}
+
+# Split more than 32 bit addresses into two cells of hex numbers
+proc split_string_to_32_bit_cell {addr} {
+	regsub -all {^0x} $addr {} addr
+	set len [string length $addr]
+	set rem [expr {${len} - 8}]
+	set lower_32bit_cell "0x[string range $addr $rem $len]"
+	set higher_32bit_cell "0x[string range $addr 0 [expr {${rem} - 1}]]"
+	set higher_32bit_cell [format 0x%08x $higher_32bit_cell]
+	return "$higher_32bit_cell $lower_32bit_cell"
 }
