@@ -732,13 +732,13 @@
                             append vid_formats " " "RG24"
                     }
                     "42" {
-                            append vid_formats " " "Y_U_V8"
+                            append vid_formats " " "YU24"
                     }
                     "43" {
-                            append vid_formats " " "Y_U_V10"
+                            append vid_formats " " "X403"
                     }
                     "44" {
-                            append vid_formats " " "Y_U_V12"
+                            append vid_formats " " "X423"
                     }
                     default {
                             dtg_warning "Not supported format:$num"
