@@ -23,6 +23,11 @@
         set_drv_conf_prop $drv_handle C_S_AXI_CTRL_ADDR_WIDTH xlnx,s-axi-ctrl-addr-width $node
         set_drv_conf_prop $drv_handle C_S_AXI_CTRL_DATA_WIDTH xlnx,s-axi-ctrl-data-width $node
 	set tile_mode [hsi get_property CONFIG.IS_TILE_FORMAT [hsi::get_cells -hier $drv_handle]]
+	if {[string match -nocase $tile_mode "1"]} {
+               add_prop "${node}" "xlnx,tile-formats" $tile_mode boolean $dts_file 1
+        } else {
+		pldt unset $node "xlnx,tile-formats"
+	}
         set vid_formats ""
         set has_bgr8 [hsi get_property CONFIG.HAS_BGR8 [hsi::get_cells -hier $drv_handle]]
         set has_rgb8 [hsi get_property CONFIG.HAS_RGB8 [hsi::get_cells -hier $drv_handle]]
@@ -142,6 +147,18 @@
 		}
 		if {$has_y_u_v10} {
 			append vid_formats " " "y_u_v10_32t y_u_v10_64t"
+		}
+		if {$has_y_uv10} {
+			append vid_formats " " "y_uv10_32t y_uv10_64t"
+		}
+		if {$has_y_uv10_420} {
+			append vid_formats " " "y_uv10_420_32t y_uv10_420_64t"
+		}
+		if {$has_y_uv12} {
+			append vid_formats " " "y_uv12_32t y_uv12_64t"
+		}
+		if {$has_y_uv12_420} {
+			append vid_formats " " "y_uv12_420_32t y_uv12_420_64t"
 		}
 		if {$has_y_u_v12} {
 			append vid_formats " " "y_u_v12_32t y_u_v12_64t"
