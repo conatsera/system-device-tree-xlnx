@@ -545,6 +545,16 @@
 			};
 		};
 
+		mmi_dcdma: dma-controller@edd10000 {
+			compatible = "amd,mmi-dcdma-1.0";
+			status = "disabled";
+			reg = <0 0xedd10000 0 0x1000>;
+			interrupts = <0 179 4>;
+			interrupt-parent = <&imux>;
+			clock-names = "axi_clk";
+			#dma-cells = <0x01>;
+		};
+
 		adma0: dma-controller@ebd00000 {
 			compatible = "amd,versal2-dma-1.0";
 			status = "disabled";
