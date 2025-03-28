@@ -3357,6 +3357,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping edec0000 label mmi_dwc3
 				dict set def_ps_mapping ed000000 label gpu
 				dict set def_ps_mapping edd00000 label mmi_dc
+				dict set def_ps_mapping ede00000 label mmi_dptx
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1

@@ -545,6 +545,35 @@
 			};
 		};
 
+		mmi_dptx: mmi_dptx@ede00000 {
+			compatible = "amd,mmi-dptx-1.0";
+			status = "disabled";
+			reg = <0x0 0xede00000 0x0 0x40000>,
+			      <0x0 0xedeb0000 0x0 0x100>;
+			reg-names = "dp", "hdcp";
+			interrupts = <0 178 4>, <0 167 4>;
+			interrupt-names = "dptx", "hdcp";
+			interrupt-parent = <&imux>;
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				port@0 {
+					reg = <0>;
+				};
+				port@1 {
+					reg = <1>;
+				};
+				port@2 {
+					reg = <2>;
+				};
+				port@3 {
+					reg = <3>;
+				};
+			};
+		};
+
 		mmi_dcdma: dma-controller@edd10000 {
 			compatible = "amd,mmi-dcdma-1.0";
 			status = "disabled";
