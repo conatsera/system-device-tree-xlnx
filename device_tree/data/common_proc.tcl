@@ -1711,7 +1711,7 @@ proc get_drivers args {
 	dict set driverlist can driver axi_can
 	dict set driverlist v_dp_txss1 driver dp_tx
 	dict set driverlist v_dp_rxss1 driver dp_rx
-	dict set driverlist canfd driver axi_can
+	dict set driverlist canfd driver canfd
 	dict set driverlist axi_cdma driver axi_cdma
 	dict set driverlist clk_wiz driver axi_clk_wiz
 	dict set driverlist clk_wizard driver axi_clk_wiz
@@ -1743,10 +1743,10 @@ proc get_drivers args {
 	dict set driverlist vcu driver axi_vcu
 	dict set driverlist axi_vdma driver axi_vdma
 	dict set driverlist xadc_wiz driver axi_xadc
-	dict set driverlist psu_canfd driver canfdps
-	dict set driverlist psv_canfd driver canfdps
-	dict set driverlist psx_canfd driver canfdps
-	dict set driverlist canfd driver canfdps
+	dict set driverlist psu_canfd driver canfd
+	dict set driverlist psv_canfd driver canfd
+	dict set driverlist psx_canfd driver canfd
+	dict set driverlist canfd driver canfd
 	dict set driverlist ps7_can driver canps
 	dict set driverlist psu_can driver canps
 	dict set driverlist psv_can driver canps
