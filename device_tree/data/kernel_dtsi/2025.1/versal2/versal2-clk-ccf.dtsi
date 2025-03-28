@@ -497,6 +497,10 @@
 	clocks = <&versal2_clk ADMA>;
 };
 
+&mmi_dcdma {
+	clocks = <&ref_clk>;
+};
+
 &adma0 {
 	clocks = <&versal2_clk ADMA>, <&versal2_clk LPD_LSBUS>;
 	power-domains = <&versal2_firmware PM_DEV_ADMA_0>;
