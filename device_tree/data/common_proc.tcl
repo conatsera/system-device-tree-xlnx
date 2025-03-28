@@ -3356,6 +3356,7 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f1c00000 label dwc3_1
 				dict set def_ps_mapping edec0000 label mmi_dwc3
 				dict set def_ps_mapping ed000000 label gpu
+				dict set def_ps_mapping edd00000 label mmi_dc
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1
@@ -5989,6 +5990,11 @@ proc ip2drv_prop {ip_name prop_name_list} {
 			add_prop $node $drv_prop_name hexint "pl.dtsi"
 			continue
 		}
+
+		if { $emac == "mmi_dc"} {
+			continue
+		}
+
 		set ignore_ip_props "CONFIG.C_AXIS_SIGNAL_SET CONFIG.C_USE_BRAM_BLOCK CONFIG.C_ALGORITHM \
 			CONFIG.C_AXI_TYPE CONFIG.C_INTERFACE_TYPE CONFIG.C_AXI_SLAVE_TYPE CONFIG.device_port_type \
 			CONFIG.C_AXI_WRITE_BASEADDR_SLV CONFIG.C_AXI_WRITE_HIGHADDR_SLV CONFIG.C_PVR_USER1 \
