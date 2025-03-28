@@ -204,12 +204,7 @@
 		method = "smc";
 	};
 
-	firmware {
-	    optee: optee  {
-	        compatible = "linaro,optee-tz";
-	        method = "smc";
-	    };
-
+	 firmware {
 		zynqmp_firmware: zynqmp-firmware {
 			compatible = "xlnx,zynqmp-firmware";
 			#power-domain-cells = <1>;
