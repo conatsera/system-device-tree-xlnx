@@ -75,6 +75,8 @@
                 append aiegen "/bits/ 8 <0x1>"
         } elseif {$hw_gen=="AIEML"} {
                 append aiegen "/bits/ 8 <0x2>"
+        } elseif {$hw_gen=="AIE2PS"} {
+	        append aiegen "/bits/ 8 <0x5>"
         }
 
         add_prop "${node}" "xlnx,aie-gen" $aiegen noformating "pl.dtsi"
