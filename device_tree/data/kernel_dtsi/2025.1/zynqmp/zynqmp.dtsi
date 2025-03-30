@@ -392,10 +392,10 @@
 				map {
 					trip = <&apu_passive>;
 					cooling-device =
-						<&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
-						<&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
-						<&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
-						<&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+						<&psu_cortexa53_0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+						<&psu_cortexa53_1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+						<&psu_cortexa53_2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+						<&psu_cortexa53_3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
 				};
 			};
 		};
@@ -684,28 +684,28 @@
                        compatible = "arm,coresight-cpu-debug", "arm,primecell";
                        reg = <0x0 0xfec10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
-                       cpu = <&cpu0>;
+                       cpu = <&psu_cortexa53_0>;
                };
 
                psu_cortexa53_1_debug: debug@fed10000 {
                        compatible = "arm,coresight-cpu-debug", "arm,primecell";
                        reg = <0x0 0xfed10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
-                       cpu = <&cpu1>;
+                       cpu = <&psu_cortexa53_1>;
                };
 
                psu_cortexa53_2_debug: debug@fee10000 {
                        compatible = "arm,coresight-cpu-debug", "arm,primecell";
                        reg = <0x0 0xfee10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
-                       cpu = <&cpu2>;
+                       cpu = <&psu_cortexa53_2>;
                };
 
                psu_cortexa53_3_debug: debug@fef10000 {
                        compatible = "arm,coresight-cpu-debug", "arm,primecell";
                        reg = <0x0 0xfef10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
-                       cpu = <&cpu3>;
+                       cpu = <&psu_cortexa53_3>;
                };
 
 		/* GDMA */

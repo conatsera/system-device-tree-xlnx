@@ -1,33 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
+ * This header provides constants for most thermal bindings.
  *
- * (C) Copyright 2014 Freescale Semiconductor, Inc
+ * Copyright (C) 2013 Texas Instruments
+ *	Eduardo Valentin <eduardo.valentin@ti.com>
  */
 
-#ifndef _THERMAL_H_
-#define _THERMAL_H_
+#ifndef _DT_BINDINGS_THERMAL_THERMAL_H
+#define _DT_BINDINGS_THERMAL_THERMAL_H
 
-struct udevice;
+/* On cooling devices upper and lower limits */
+#define THERMAL_NO_LIMIT		(~0)
 
-int thermal_get_temp(struct udevice *dev, int *temp);
+#endif
 
-/**
- * struct dm_thermal_ops - Driver model Thermal operations
- *
- * The uclass interface is implemented by all Thermal devices which use
- * driver model.
- */
-struct dm_thermal_ops {
-	/**
-	 * Get the current temperature
-	 *
-	 * This must be called before doing any transfers with a Thermal device.
-	 * It will enable and initialize any Thermal hardware as necessary.
-	 *
-	 * @dev:	The Thermal device
-	 * @temp:	pointer that returns the measured temperature
-	 */
-	int (*get_temp)(struct udevice *dev, int *temp);
-};
-
-#endif	/* _THERMAL_H_ */
