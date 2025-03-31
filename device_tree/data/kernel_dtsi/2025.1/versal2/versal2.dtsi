@@ -14,6 +14,13 @@
 	#size-cells = <2>;
 	interrupt-parent = <&imux>;
 
+	options {
+		u-boot {
+			compatible = "u-boot,config";
+			bootscr-address = /bits/ 64 <0x78000000>;
+		};
+	};
+
 	cpus_a78: cpus-a78@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
