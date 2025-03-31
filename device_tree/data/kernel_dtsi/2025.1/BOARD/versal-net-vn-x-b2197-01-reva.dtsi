@@ -67,7 +67,7 @@
 		};
 	};
 
-	zynqmp_ipi1_nobuf {
+	zynqmp_ipi1_nobuf@eb3b0000 {
 		compatible = "xlnx,versal-ipi-mailbox";
 		reg = <0x00 0xeb3b0000 0x00 0x1ff>;
 		reg-names = "ctrl";
@@ -77,6 +77,7 @@
 		#size-cells = <2>;
 		ranges;
 		ipi_mailbox_rpu0: mailbox@eb3b1000 {
+			compatible = "xlnx,versal-ipi-dest-mailbox";
 			#mbox-cells = <1>;
 			xlnx,ipi-id = <11>;
 			reg = <0 0xeb3b1000 0 0x1000>;
