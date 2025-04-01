@@ -979,6 +979,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf1948000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 21 4>;
 		};
 
@@ -988,6 +989,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf1958000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 22 4>;
 		};
 
@@ -997,6 +999,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf1968000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 11 4>;
 		};
 
@@ -1006,6 +1009,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf1978000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 12 4>;
 		};
 
@@ -1015,6 +1019,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf1988000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 13 4>;
 		};
 
@@ -1024,6 +1029,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf1998000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 100 4>;
 		};
 
@@ -1033,6 +1039,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf19a8000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 101 4>;
 		};
 
@@ -1042,6 +1049,7 @@
 			#address-cells = <3>;
 			#size-cells = <0>;
 			reg = <0 0xf19b8000 0 0x1000>;
+			interrupt-parent = <&imux>;
 			interrupts = <0 102 4>;
 		};
 
