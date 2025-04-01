@@ -32,5 +32,7 @@
         gen_pss_ref_clk_freq $drv_handle $cpu_node $ip_name
 
         set amba_node [create_node -n "&${bus_name}" -d "pcw.dtsi" -p root]
+        global 64_bit_processor_list
+        lappend 64_bit_processor_list $drv_handle
     }
 

@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -1525,6 +1525,7 @@ proc generate_sdt args {
 	global baseaddr_dict
 	global highaddr_dict
 	global processor_ip_list
+	global 64_bit_processor_list
 	global linear_spi_list
 	global cur_hw_iss_data
 	global non_val_list
@@ -1628,6 +1629,7 @@ Generates system device tree based on args given in:
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	set processor_ip_list [list]
+	set 64_bit_processor_list [list]
 	set is_64_bit_mb 0
 
 	# TODO: Consolidate this.
@@ -1943,6 +1945,7 @@ proc proc_mapping {} {
 	global is_versal_net_platform
 	global linear_spi_list
 	global monitor_ip_exclusion_list
+	global 64_bit_processor_list
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -2053,6 +2056,12 @@ proc proc_mapping {} {
 			set base [get_baseaddr $periph "" $val]
 			set high [get_highaddr $periph "" $val]
 			set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+			if {([regexp -nocase {0x([0-9a-f]{9})} "$base" match] || \
+				[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]) && \
+				!($val in $64_bit_processor_list)} {
+					continue
+			}
+
 			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                             set addr_64 "1"
                             set temp $base
