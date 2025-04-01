@@ -1799,6 +1799,12 @@
                                                     }
                                               }
 
+					      if {[llength $fiforx_per]} {
+                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "ethernet_offload"]} {
+                                                         set fiforx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $fiforx_per] "s2mm_axis"]
+                                                    }
+                                              }
+
                                               if {[llength $fiforx_connect_ip]} {
 
                                                      if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axi_mcdma"]} {
