@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -29,4 +29,7 @@
         gen_drv_prop_from_ip $drv_handle
         gen_pss_ref_clk_freq $drv_handle $cpu_node $ip_name
         set amba_node [create_node -n "&${bus_name}" -d "pcw.dtsi" -p root]
+
+        global 64_bit_processor_list
+        lappend 64_bit_processor_list $drv_handle
     }
