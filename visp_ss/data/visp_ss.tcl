@@ -262,7 +262,7 @@ proc visp_ss_generate {drv_handle} {
 	generate_remoteproc_node $rpu_ids $default_dts $bus_name
 	generate_tcm_nodes $rpu_ids $default_dts $bus_name
 	generate_mbox_nodes $rpu_ids $default_dts $bus_name
-	generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
+	#generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	foreach proc $proclist {
@@ -1002,8 +1002,8 @@ proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
         # Reference to the corresponding RPU node
         add_prop "$mbox_node" "isp,rproc" "<&r52f_${rpu_id}>" noformating $default_dts
         # Set mailbox properties dynamically
-        set mboxes "<&ipi_mailbox_rpu${rpu_id} 0>, <&ipi_mailbox_rpu${rpu_id} 1>"
-        add_prop "$mbox_node" "mboxes" $mboxes noformating $default_dts
+        #set mboxes "<&ipi_mailbox_rpu${rpu_id} 0>, <&ipi_mailbox_rpu${rpu_id} 1>"
+        #add_prop "$mbox_node" "mboxes" $mboxes noformating $default_dts
 		# Define mbox-names properly as a list
         set mbox_names [list "tx" "rx"]
         add_prop "$mbox_node" "mbox-names" $mbox_names stringlist $default_dts
