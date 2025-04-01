@@ -120,7 +120,9 @@
     
             if {[string_is_empty ${intf}] != 1} {
                 set tx_tsip [axi_ethernet_get_connectedip $intf]
-                set_drv_prop $drv_handle axififo-connected "$tx_tsip" $node reference
+                if {[llength $tx_tsip]} {
+                    set_drv_prop $drv_handle axififo-connected "$tx_tsip" $node reference
+                }
             }
         } else {
             foreach n "AXI_STR_RXD m_axis_rx" {
