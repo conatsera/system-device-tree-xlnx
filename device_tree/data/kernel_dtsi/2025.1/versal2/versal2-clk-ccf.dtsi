@@ -493,10 +493,6 @@
 	power-domains = <&versal2_firmware PM_DEV_I2C_7>;
 };
 
-&gpu {
-	clocks = <&versal2_clk ADMA>;
-};
-
 &mmi_dcdma {
 	clocks = <&ref_clk>;
 };

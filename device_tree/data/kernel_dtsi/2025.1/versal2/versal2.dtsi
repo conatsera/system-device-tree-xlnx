@@ -470,8 +470,6 @@
 			#interrupt-cells = <0x02>;
 			xlnx,gpu-slices = <2>;
 			xlnx,gpu-clk-freq-mhz = <900000000>;
-			clock-names = "int_clk";
-			reset-names = "gpu_rst";
 
 			gpu_interface@ed000000 {
 				compatible = "arm,mali-ptm-interface";
