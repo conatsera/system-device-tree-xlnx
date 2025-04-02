@@ -42,7 +42,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axi_bram_ctrl" "axi_bram"
 	dict set ::sdtgen::namespacelist "lmb_bram_if_cntlr" "axi_bram"
 	dict set ::sdtgen::namespacelist "can" "axi_can"
-	dict set ::sdtgen::namespacelist "canfd" "axi_can"
+	dict set ::sdtgen::namespacelist "canfd" "canfd"
 	dict set ::sdtgen::namespacelist "axi_cdma" "axi_cdma"
 	dict set ::sdtgen::namespacelist "clk_wiz" "axi_clk_wiz"
 	dict set ::sdtgen::namespacelist "clkx5_wiz" "axi_clk_wiz"
@@ -77,8 +77,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axi_vdma" "axi_vdma"
 	dict set ::sdtgen::namespacelist "xadc_wiz" "axi_xadc"
 	dict set ::sdtgen::namespacelist "system_management_wiz" "sysmon"
-	dict set ::sdtgen::namespacelist "psu_canfd" "canfdps"
-	dict set ::sdtgen::namespacelist "psv_canfd" "canfdps"
+	dict set ::sdtgen::namespacelist "psu_canfd" "canfd"
+	dict set ::sdtgen::namespacelist "psv_canfd" "canfd"
 	dict set ::sdtgen::namespacelist "ps7_can" "canps"
 	dict set ::sdtgen::namespacelist "psu_can" "canps"
 	dict set ::sdtgen::namespacelist "psv_can" "canps"
@@ -280,8 +280,8 @@ proc init_proclist {} {
 
 	dict set ::sdtgen::namespacelist "psx_apm" "apmps"
 	dict set ::sdtgen::namespacelist "apm" "apmps"
-	dict set ::sdtgen::namespacelist "psx_canfd" "canfdps"
-	dict set ::sdtgen::namespacelist "canfd" "canfdps"
+	dict set ::sdtgen::namespacelist "psx_canfd" "canfd"
+	dict set ::sdtgen::namespacelist "canfd" "canfd"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_adma" "dmaps"
 	dict set ::sdtgen::namespacelist "adma" "dmaps"
@@ -323,6 +323,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ISPPipeline_accel" "isppipeline"
 	dict set ::sdtgen::namespacelist "hdmi_acr_ctrl" "hdmi_ctrl"
 	dict set ::sdtgen::namespacelist "dfx_axi_shutdown_manager" "dfx_axi_shutdown_manager"
+	dict set ::sdtgen::namespacelist "mmi_dc" "axi_mmi_dc"
+	dict set ::sdtgen::namespacelist "mmi_udh_dp" "axi_mmi_dptx"
 }
 
 proc Pop {varname {nth 0}} {

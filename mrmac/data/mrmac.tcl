@@ -21,7 +21,10 @@
         }
         set dts_file [set_drv_def_dts $drv_handle]
         set compatible [get_comp_str $drv_handle]
-        pldt append $node compatible "\ \, \"xlnx,mrmac-ethernet-1.0\""
+        if {[string match -nocase [hsi get_property IP_NAME [hsi get_cells -hier $drv_handle]] "mrmac"]} {
+              set compatible [append compatible " " "xlnx,mrmac-ethernet-1.0"]
+        }
+        add_prop "$node" "compatible" "$compatible" stringlist $dts_file 1
         set mrmac_ip [hsi::get_cells -hier $drv_handle]
         mrmac_gen_mrmac_clk_property $drv_handle
         global env
@@ -58,11 +61,12 @@
                            add_prop "$ptp_3_node" "compatible" "$ptp_comp" stringlist $dts_file
                            mrmac_generate_reg_property $ptp_3_node $base_addr $high_addr
                    }
-               if {[string match -nocase $slave_intf "s_axi"]} {
+            }
+
+        if {[string match -nocase $slave_intf "s_axi"]} {
                         set mrmac0_highaddr_hex [format 0x%llx [expr $base_addr + 0xFFF]]
                         mrmac_generate_reg_property $node $base_addr $mrmac0_highaddr_hex
-                   }
-            }
+        }
             set connected_ip [get_connected_stream_ip $mrmac_ip "tx_axis_tdata0"]
         set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
         set gt_mode [split $gt_mode " "]
@@ -468,57 +472,9 @@
                 set mux_ip ""
                 set fifo_ip ""
                 if {[llength $sink_periph]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_data_fifo"]} {
-                                   set fifo_width_bytes [hsi get_property CONFIG.TDATA_NUM_BYTES $sink_periph]
-                                   if {[string_is_empty $fifo_width_bytes]} {
-                                           set fifo_width_bytes 1
-                                   }
-                                   set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $sink_periph]
-                                   # FIFO can be other than 8 bits, and we need the rxmem in bytes
-                                   set rxethmem [expr $rxethmem * $fifo_width_bytes]
-                                   add_prop "${node}" "xlnx,rxmem" $rxethmem int $dts_file
-                                   set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
-                                   set mux_per [hsi::get_cells -of_objects $fifo_pin]
-                                   if {[string match -nocase [hsi get_property IP_NAME $mux_per] "mrmac_10g_mux"]} {
-                                           set data_fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mux_per] "rx_m_axis_tdata"]]
-                                           set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
-                                           if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
-                                                   set fiforx_connect_ip [get_connected_stream_ip [hsi::get_cells -hier $data_fifo_per] "M_AXIS"]
-                                               dtg_verbose "fiforx_connect_ip:$fiforx_connect_ip"
-                                                   set fiforx_pin [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $data_fifo_per] "m_axis_tdata"]]
-                                                   if {[llength $fiforx_pin]} {
-                                                           set fiforx_per [::hsi::get_cells -of_objects $fiforx_pin]
-                                                   }
-                                                   if {[llength $fiforx_per]} {
-                                                           if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "RX_PTP_PKT_DETECT_TS_PREPEND"]} {
-                                                                   set fiforx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $fiforx_per] "M_AXIS"]
-                                                           }
-                                                   }
-                                                   if {[llength $fiforx_connect_ip]} {
-
-                                                   if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axi_mcdma"]} {
-                                                           add_prop "$node" "axistream-connected" "$fiforx_connect_ip" reference $dts_file "pl.dtsi"
-                                                           set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip]
-                                                           set inhex [format %x $num_queues]
-                                                           append numqueues "/bits/ 16 <0x$inhex>"
-                                                           add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
-                                                           set id 1
-                                                           for {set i 2} {$i <= $num_queues} {incr i} {
-                                                                   set i [format "%" $i]
-                                                                   append id "\""
-                                                                   append id ",\"" $i
-                                                                   set i [expr 0x$i]
-                                                           }
-                                                           add_prop $node "xlnx,num-queues" $numqueues stringlist $dts_file
-                                                           add_prop $node "xlnx,channel-ids" $id stringlist $dts_file
-                                                           mrmac_generate_intr_info  $drv_handle $node $fiforx_connect_ip
-                                                   }
-                                               }
-                                }
-                                }
-                        }
-                                  }
-           }
+				      mrmac_connect_axistream $drv_handle $node $sink_periph $dts_file
+                }
+        }
 
            set port0_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_0"]]
            dtg_verbose "port0_pins:$port0_pins"
@@ -681,7 +637,7 @@
         set port1 1
         append new_label $drv_handle "_" $port1
         set mrmac1_node [create_node -n "mrmac" -l "$new_label" -u $mrmac1_base_hex -d $dts_file -p $bus_node]
-        add_prop "$mrmac1_node" "compatible" "$compatible" stringlist $dts_file
+        add_prop "$mrmac1_node" "compatible" "$compatible" stringlist $dts_file 1
         mrmac_generate_reg_property $mrmac1_node $mrmac1_base $mrmac1_highaddr_hex
         lappend clknames1 "$s_axi_aclk" "$rx_axi_clk1" "$rx_flexif_clk1" "$rx_ts_clk1" "$tx_axi_clk1" "$tx_flexif_clk1" "$tx_ts_clk1"
         set index1 [lindex $clk_list $s_axi_aclk_index0]
@@ -697,56 +653,9 @@
                 set mux_ip ""
                 set fifo_ip ""
                 if {[llength $sink_periph]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_data_fifo"]} {
-                                   set fifo_width_bytes [hsi get_property CONFIG.TDATA_NUM_BYTES $sink_periph]
-                                   if {[string_is_empty $fifo_width_bytes]} {
-                                           set fifo_width_bytes 1
-                                   }
-                                   set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $sink_periph]
-                                   # FIFO can be other than 8 bits, and we need the rxmem in bytes
-                                   set rxethmem [expr $rxethmem * $fifo_width_bytes]
-                                   add_prop "${mrmac1_node}" "xlnx,rxmem" $rxethmem int $dts_file
-                                   set fifo1_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
-                                   set mux_per1 [hsi::get_cells -of_objects $fifo1_pin]
-                                   if {[string match -nocase [hsi get_property IP_NAME $mux_per1] "mrmac_10g_mux"]} {
-                                           set data_fifo_pin1 [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mux_per1] "rx_m_axis_tdata"]]
-                                           set data_fifo_per1 [hsi::get_cells -of_objects $data_fifo_pin1]
-                                           if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per1] "axis_data_fifo"]} {
-                                                   set fiforx_connect_ip1 [get_connected_stream_ip [hsi::get_cells -hier $data_fifo_per1] "M_AXIS"]
-                                                   set fiforx1_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $data_fifo_per1] "m_axis_tdata"]]
-                                                   if {[llength $fiforx1_pin]} {
-                                                           set fiforx1_per [::hsi::get_cells -of_objects $fiforx1_pin]
-                                                   }
-                                                   if {[llength $fiforx1_per]} {
-                                                           if {[string match -nocase [hsi get_property IP_NAME $fiforx1_per] "RX_PTP_PKT_DETECT_TS_PREPEND"]} {
-                                                                   set fiforx_connect_ip1 [get_connected_stream_ip [hsi::get_cells -hier $fiforx1_per] "M_AXIS"]
-                                                           }
-                                                   }
-                                                   if {[llength $fiforx_connect_ip1]} {
-
-                                                   if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip1] "axi_mcdma"]} {
-                                                           add_prop "$mrmac1_node" "axistream-connected" "$fiforx_connect_ip1" reference "pl.dtsi"
-                                                           set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip1]
-                                                           set inhex [format %x $num_queues]
-                                                           append numqueues1 "/bits/ 16 <0x$inhex>"
-                                                           add_prop $mrmac1_node "xlnx,num-queues" $numqueues1 stringlist $dts_file
-                                                           set id 1
-                                                           for {set i 2} {$i <= $num_queues} {incr i} {
-                                                                   set i [format "%" $i]
-                                                                   append id "\""
-                                                                   append id ",\"" $i
-                                                                   set i [expr 0x$i]
-                                                           }
-                                                           add_prop $mrmac1_node "xlnx,num-queues" $numqueues1 stringlist $dts_file
-                                                           add_prop $mrmac1_node "xlnx,channel-ids" $id stringlist $dts_file
-                                                           mrmac_generate_intr_info  $drv_handle $mrmac1_node $fiforx_connect_ip1
-                                                   }
-                                               }
-                                        }
-                                }
-                        }
-                   }
-           }
+			   mrmac_connect_axistream $drv_handle $mrmac1_node $sink_periph $dts_file
+                }
+        }
 
            set txtodport1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_1"]]
            dtg_verbose "txtodport1_pins:$txtodport1_pins"
@@ -1095,7 +1004,7 @@
         set port2 2
         append label2 $drv_handle "_" $port2
         set mrmac2_node [create_node -n "mrmac" -l "$label2" -u $mrmac2_base_hex -d $dts_file -p $bus_node]
-        add_prop "$mrmac2_node" "compatible" "$compatible" stringlist $dts_file
+        add_prop "$mrmac2_node" "compatible" "$compatible" stringlist $dts_file 1
         mrmac_generate_reg_property $mrmac2_node $mrmac2_base $mrmac2_highaddr_hex
 
         lappend clknames2 "$s_axi_aclk" "$rx_axi_clk2" "$rx_flexif_clk2" "$rx_ts_clk2" "$tx_axi_clk2" "$tx_flexif_clk2" "$tx_ts_clk2"
@@ -1111,51 +1020,9 @@
                 set mux_ip ""
                 set fifo_ip ""
                 if {[llength $sink_periph]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_data_fifo"]} {
-                                   set fifo_width_bytes [hsi get_property CONFIG.TDATA_NUM_BYTES $sink_periph]
-                                   if {[string_is_empty $fifo_width_bytes]} {
-                                           set fifo_width_bytes 1
-                                   }
-                                   set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $sink_periph]
-                                   # FIFO can be other than 8 bits, and we need the rxmem in bytes
-                                   set rxethmem [expr $rxethmem * $fifo_width_bytes]
-                                   add_prop "${mrmac2_node}" "xlnx,rxmem" $rxethmem int $dts_file
-                                   set fifo2_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
-                                   set mux_per2 [::hsi::get_cells -of_objects $fifo2_pin]
-                                   if {[string match -nocase [hsi get_property IP_NAME $mux_per2] "mrmac_10g_mux"]} {
-                                           set data_fifo_pin2 [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mux_per2] "rx_m_axis_tdata"]]
-                                           set data_fifo_per2 [hsi::get_cells -of_objects $data_fifo_pin2]
-                                           if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per2] "axis_data_fifo"]} {
-                                                   set fiforx_connect_ip2 [get_connected_stream_ip [hsi::get_cells -hier $data_fifo_per2] "M_AXIS"]
-                                                   set fiforx2_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $data_fifo_per2] "m_axis_tdata"]]
-                                                   set fiforx2_per [::hsi::get_cells -of_objects $fiforx2_pin]
-                                                   if {[string match -nocase [hsi get_property IP_NAME $fiforx2_per] "RX_PTP_PKT_DETECT_TS_PREPEND"]} {
-                                                           set fiforx_connect_ip2 [get_connected_stream_ip [hsi get_cells -hier $fiforx2_per] "M_AXIS"]
-                                                   }
-                                                   if {[llength $fiforx_connect_ip2]} {
-                                                   if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip2] "axi_mcdma"]} {
-                                                           add_prop "$mrmac2_node" "axistream-connected" "$fiforx_connect_ip2" reference "pl.dtsi"
-                                                           set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip2]
-                                                           set inhex [format %x $num_queues]
-                                                           append numqueues2 "/bits/ 16 <0x$inhex>"
-                                                           add_prop $mrmac2_node "xlnx,num-queues" $numqueues2 stringlist $dts_file
-                                                           set id 1
-                                                           for {set i 2} {$i <= $num_queues} {incr i} {
-                                                                   set i [format "%" $i]
-                                                                   append id "\""
-                                                                   append id ",\"" $i
-                                                                   set i [expr 0x$i]
-                                                           }
-                                                           add_prop $mrmac2_node "xlnx,num-queues" $numqueues2 stringlist $dts_file
-                                                           add_prop $mrmac2_node "xlnx,channel-ids" $id stringlist $dts_file
-                                                           mrmac_generate_intr_info  $drv_handle $mrmac2_node $fiforx_connect_ip2
-                                                   }
-                                               }
-                                        }
-                                }
-                        }
-    }
-           }
+			   mrmac_connect_axistream $drv_handle $mrmac2_node $sink_periph $dts_file
+                   }
+        }
 
            set txtodport2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_2"]]
         if {[llength $txtodport2_pins]} {
@@ -1482,7 +1349,7 @@
         set port3 3
         append label3 $drv_handle "_" $port3
         set mrmac3_node [create_node -n "mrmac" -l "$label3" -u $mrmac3_base_hex -d $dts_file -p $bus_node]
-        add_prop "$mrmac3_node" "compatible" "$compatible" stringlist $dts_file
+        add_prop "$mrmac3_node" "compatible" "$compatible" stringlist $dts_file 1
         mrmac_generate_reg_property $mrmac3_node $mrmac3_base $mrmac3_highaddr_hex
         set port3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata6"]]
         foreach pin $port3_pins {
@@ -1490,52 +1357,9 @@
                 set mux_ip ""
                 set fifo_ip ""
                 if {[llength $sink_periph]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_data_fifo"]} {
-                                   set fifo_width_bytes [hsi get_property CONFIG.TDATA_NUM_BYTES $sink_periph]
-                                   if {[string_is_empty $fifo_width_bytes]} {
-                                           set fifo_width_bytes 1
-                                   }
-                                   set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $sink_periph]
-                                   # FIFO can be other than 8 bits, and we need the rxmem in bytes
-                                   set rxethmem [expr $rxethmem * $fifo_width_bytes]
-                                   add_prop "${mrmac3_node}" "xlnx,rxmem" $rxethmem int $dts_file
-                                   set fifo3_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
-                                   set mux_per3 [hsi::get_cells -of_objects $fifo3_pin]
-                                   if {[string match -nocase [hsi get_property IP_NAME $mux_per3] "mrmac_10g_mux"]} {
-                                           set data_fifo_pin3 [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mux_per3] "rx_m_axis_tdata"]]
-                                           set data_fifo_per3 [hsi::get_cells -of_objects $data_fifo_pin3]
-                                           if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per3] "axis_data_fifo"]} {
-                                                   set fiforx_connect_ip3 [get_connected_stream_ip [hsi::get_cells -hier $data_fifo_per3] "M_AXIS"]
-                                                   set fiforx3_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $data_fifo_per3] "m_axis_tdata"]]
-                                                   set fiforx3_per [::hsi::get_cells -of_objects $fiforx3_pin]
-                                                   if {[string match -nocase [hsi::get_property IP_NAME $fiforx3_per] "RX_PTP_PKT_DETECT_TS_PREPEND"]} {
-                                                           set fiforx_connect_ip3 [get_connected_stream_ip [hsi::get_cells -hier $fiforx3_per] "M_AXIS"]
-                                                   }
-                                                   if {[llength $fiforx_connect_ip3]} {
-
-                                                   if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip3] "axi_mcdma"]} {
-                                                           add_prop "$mrmac3_node" "axistream-connected" "$fiforx_connect_ip3" reference "pl.dtsi"
-                                                           set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fiforx_connect_ip3]
-                                                           set inhex [format %x $num_queues]
-                                                           append numqueues3 "/bits/ 16 <0x$inhex>"
-                                                           add_prop $mrmac3_node "xlnx,num-queues" $numqueues3 stringlist $dts_file
-                                                           set id 1
-                                                           for {set i 2} {$i <= $num_queues} {incr i} {
-                                                                   set i [format "%" $i]
-                                                                   append id "\""
-                                                                   append id ",\"" $i
-                                                                   set i [expr 0x$i]
-                                                           }
-                                                           add_prop $mrmac3_node "xlnx,num-queues" $numqueues3 stringlist $dts_file
-                                                           add_prop $mrmac3_node "xlnx,channel-ids" $id stringlist $dts_file
-                                                           mrmac_generate_intr_info  $drv_handle $mrmac3_node $fiforx_connect_ip3
-                                                   }
-                                               }
-                                        }
-                                }
-                        }
-                   }
-           }
+                           mrmac_connect_axistream $drv_handle $mrmac3_node $sink_periph $dts_file
+                }
+        }
            set txtodport3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_3"]]
         if {[llength $txtodport3_pins]} {
                set tod3_sink_periph [::hsi::get_cells -of_objects $txtodport3_pins]
@@ -1898,6 +1722,100 @@
                 }
             }
         }
+    }
+
+    proc mrmac_get_axistream_info {drv_handle node fifo_ip dts_file} {
+
+         add_prop "$node" "axistream-connected" "$fifo_ip" reference $dts_file "pl.dtsi"
+         set num_queues [hsi get_property CONFIG.c_num_mm2s_channels $fifo_ip]
+         set inhex [format %x $num_queues]
+         append numqueues "/bits/ 16 <0x$inhex>"
+         add_prop $node "xlnx,num-queues" $numqueues noformating $dts_file
+         set id 1
+         for {set i 2} {$i <= $num_queues} {incr i} {
+              set i [format "%x" $i]
+              append id "\""
+              append id " ,\"" $i
+              set i [expr 0x$i]
+         }
+         if {$id == 1} {
+             add_prop $node "xlnx,channel-ids" $id stringlist $dts_file
+         } else {
+             add_prop $node "xlnx,channel-ids" $id intlist $dts_file
+         }
+         mrmac_generate_intr_info  $drv_handle $node $fifo_ip
+    }
+
+    proc mrmac_connect_axistream {drv_handle node sink_periph dts_file} {
+
+         if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"]} {
+                set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "dout"]]
+                set sink_periph [hsi::get_cells -of_objects $fifo_pin]
+         }
+
+         if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_register_slice"]} {
+                set sink_periph [get_connected_stream_ip [hsi::get_cells -hier $sink_periph] "M_AXIS"]
+         }
+
+         if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "axis_data_fifo"]} {
+                 set fifo_width_bytes [hsi get_property CONFIG.TDATA_NUM_BYTES $sink_periph]
+                 if {[string_is_empty $fifo_width_bytes]} {
+                        set fifo_width_bytes 1
+                 }
+
+                 set rxethmem [hsi get_property CONFIG.FIFO_DEPTH $sink_periph]
+                 # FIFO can be other than 8 bits, and we need the rxmem in bytes
+                 set rxethmem [expr $rxethmem * $fifo_width_bytes]
+                 add_prop "${node}" "xlnx,rxmem" $rxethmem int $dts_file
+                 set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "m_axis_tdata"]]
+                 set fiforx_connect_ip [hsi::get_cells -of_objects $fifo_pin]
+                 if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axis_dwidth_converter"]} {
+                       set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fiforx_connect_ip] "m_axis_tdata"]]
+                       set fiforx_connect_ip [hsi::get_cells -of_objects $fifo_pin]
+                       if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axis_data_fifo"]} {
+                              set fiforx_connect_ip [get_connected_stream_ip [hsi::get_cells -hier $fiforx_connect_ip] "M_AXIS"]
+                       }
+                 }
+
+                 if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axi_mcdma"]} {
+                        mrmac_get_axistream_info $drv_handle $node $fiforx_connect_ip $dts_file
+                 }
+
+                 if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "mrmac_10g_mux"]} {
+                        set data_fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fiforx_connect_ip] "rx_m_axis_tdata"]]
+                        set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
+                        foreach data_fifo $data_fifo_per {
+                              if {[string match -nocase [hsi get_property IP_NAME $data_fifo] "axis_data_fifo"]} {
+                                      set fiforx_pin [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $data_fifo] "m_axis_tdata"]]
+                                      if {[llength $fiforx_pin]} {
+                                              set fiforx_per [::hsi::get_cells -of_objects $fiforx_pin]
+                                      }
+				      if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "axi_mcdma"]} {
+					      mrmac_get_axistream_info $drv_handle $node $fiforx_per $dts_file
+                                      } else {
+                                              if {[llength $fiforx_per]} {
+                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "RX_PTP_TS_PREPEND"]} {
+                                                         set fiforx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $fiforx_per] "m_axis"]
+                                                    }
+                                              }
+
+					      if {[llength $fiforx_per]} {
+                                                    if {[string match -nocase [hsi get_property IP_NAME $fiforx_per] "ethernet_offload"]} {
+                                                         set fiforx_connect_ip [get_connected_stream_ip [hsi get_cells -hier $fiforx_per] "s2mm_axis"]
+                                                    }
+                                              }
+
+                                              if {[llength $fiforx_connect_ip]} {
+
+                                                     if {[string match -nocase [hsi get_property IP_NAME $fiforx_connect_ip] "axi_mcdma"]} {
+                                                                mrmac_get_axistream_info $drv_handle $node $fiforx_connect_ip $dts_file
+                                                     }
+                                              }
+                                      }
+                              }
+                        }
+                 }
+         }
     }
 
     proc mrmac_generate_reg_property {node base high} {

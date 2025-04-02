@@ -1711,7 +1711,7 @@ proc get_drivers args {
 	dict set driverlist can driver axi_can
 	dict set driverlist v_dp_txss1 driver dp_tx
 	dict set driverlist v_dp_rxss1 driver dp_rx
-	dict set driverlist canfd driver axi_can
+	dict set driverlist canfd driver canfd
 	dict set driverlist axi_cdma driver axi_cdma
 	dict set driverlist clk_wiz driver axi_clk_wiz
 	dict set driverlist clk_wizard driver axi_clk_wiz
@@ -1743,10 +1743,10 @@ proc get_drivers args {
 	dict set driverlist vcu driver axi_vcu
 	dict set driverlist axi_vdma driver axi_vdma
 	dict set driverlist xadc_wiz driver axi_xadc
-	dict set driverlist psu_canfd driver canfdps
-	dict set driverlist psv_canfd driver canfdps
-	dict set driverlist psx_canfd driver canfdps
-	dict set driverlist canfd driver canfdps
+	dict set driverlist psu_canfd driver canfd
+	dict set driverlist psv_canfd driver canfd
+	dict set driverlist psx_canfd driver canfd
+	dict set driverlist canfd driver canfd
 	dict set driverlist ps7_can driver canps
 	dict set driverlist psu_can driver canps
 	dict set driverlist psv_can driver canps
@@ -2456,8 +2456,13 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 		foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm] {
 			if {![regexp "pspmc.*" "$drv" match]} {
 				set rev_num [get_ip_property $drv CONFIG.CPM_REVISION_NUMBER]
-				set port_type_0 [get_ip_property $drv CONFIG.C_CPM_PCIE0_PORT_TYPE]
-				set port_type_1 [get_ip_property $drv CONFIG.C_CPM_PCIE1_PORT_TYPE]
+				set avail_param [hsi list_property $drv]
+					if {[lsearch -nocase $avail_param "CONFIG.C_CPM_PCIE0_PORT_TYPE"] >= 0} {
+						set port_type_0 [hsi get_property CONFIG.C_CPM_PCIE0_PORT_TYPE $drv]
+					}
+					if {[lsearch -nocase $avail_param "CONFIG.C_CPM_PCIE1_PORT_TYPE"] >= 0} {
+						set port_type_1 [hsi get_property CONFIG.C_CPM_PCIE1_PORT_TYPE $drv]
+					}
 			}
 		}
 		if {($rev_num == 0) && ($port_type_0 || $port_type_1)} {
@@ -3356,6 +3361,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f1c00000 label dwc3_1
 				dict set def_ps_mapping edec0000 label mmi_dwc3
 				dict set def_ps_mapping ed000000 label gpu
+				dict set def_ps_mapping edd00000 label mmi_dc
+				dict set def_ps_mapping ede00000 label mmi_dptx
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1
@@ -5989,6 +5996,11 @@ proc ip2drv_prop {ip_name prop_name_list} {
 			add_prop $node $drv_prop_name hexint "pl.dtsi"
 			continue
 		}
+
+		if { $emac == "mmi_dc"} {
+			continue
+		}
+
 		set ignore_ip_props "CONFIG.C_AXIS_SIGNAL_SET CONFIG.C_USE_BRAM_BLOCK CONFIG.C_ALGORITHM \
 			CONFIG.C_AXI_TYPE CONFIG.C_INTERFACE_TYPE CONFIG.C_AXI_SLAVE_TYPE CONFIG.device_port_type \
 			CONFIG.C_AXI_WRITE_BASEADDR_SLV CONFIG.C_AXI_WRITE_HIGHADDR_SLV CONFIG.C_PVR_USER1 \
