@@ -76,6 +76,7 @@
 			partition@0 {
 				label = "spi0-flash0";
 				reg = <0 0x10000000>;
+			};
 		};
 	};
 };
