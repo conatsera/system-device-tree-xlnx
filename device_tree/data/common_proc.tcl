@@ -6480,12 +6480,14 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 					"mdm" - "axi_uartlite" - "axi_uart16550" { set dev_type "serial" }
 					"axi_timer" { set dev_type "timer" }
 
-					# Below BRAM controller entry is a workaround. Encountered a design in Vivado
-					# test suite where there were 2 bram controllers, both starting at same
-					# address 0. None of them were mapped to any processor, their MASTER INTERFACEs
-					# were PCI interfaces. This was leading to duplicate node names (axi_bram_ctrl@0)
-					# with different labels in SDT.
-					"axi_bram_ctrl" { set dev_type $ip }
+					"axi_bram_ctrl" {
+                        # Below BRAM controller entry is a workaround. Encountered a design in Vivado
+                        # test suite where there were 2 bram controllers, both starting at same
+                        # address 0. None of them were mapped to any processor, their MASTER INTERFACEs
+                        # were PCI interfaces. This was leading to duplicate node names (axi_bram_ctrl@0)
+                        # with different labels in SDT.
+                        set dev_type $ip
+                    }
 				}
 				set t [get_ip_property $drv_handle IP_NAME]
 				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
