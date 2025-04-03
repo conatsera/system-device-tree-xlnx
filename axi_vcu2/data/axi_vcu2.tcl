@@ -18,6 +18,7 @@
         if {$node == 0} {
            return
         }
+        set parent [get_node amba_pl]
         set dts_file [set_drv_def_dts $drv_handle]
         add_prop $node "#address-cells" 2 int $dts_file
         add_prop $node "#size-cells" 2 int $dts_file
@@ -47,7 +48,7 @@
             set encoder_mcu_clk [hsi get_property CONFIG.C0_ENC_MCU_AND_CORE_CLK [hsi::get_cells -hier $drv_handle]]
             set encoder_offset 0x40000
             set encoder_baseaddr [format %08x [expr $baseaddr + $encoder_offset]]
-            set encoder_node [create_node -l "encoder" -n "ale2xx" -u $encoder_baseaddr -p $node -d $dts_file]
+            set encoder_node [create_node -l "encoder" -n "ale2xx" -u $encoder_baseaddr -p $parent -d $dts_file]
             set encoder_comp "al,ale2xx"
             add_prop "${encoder_node}" compatible $encoder_comp string $dts_file
             add_prop "${encoder_node}" xlnx,mcu-clk $encoder_mcu_clk int $dts_file
@@ -70,7 +71,7 @@
             set decoder_mcu_clk [hsi get_property CONFIG.C0_DEC_MCU_AND_CORE_CLK [hsi::get_cells -hier $drv_handle]]
             set decoder_offset 0x80000
             set decoder_baseaddr [format %08x [expr $baseaddr + $decoder_offset]]
-            set decoder_node [create_node -l "decoder" -n "al5d" -u $decoder_baseaddr -p $node -d $dts_file]
+            set decoder_node [create_node -l "decoder" -n "ald3xx" -u $decoder_baseaddr -p $parent -d $dts_file]
             set decoder_comp "al,ald3xx"
             add_prop "${decoder_node}" xlnx,mcu-clk $decoder_mcu_clk int $dts_file
             add_prop "${decoder_node}" compatible $decoder_comp string $dts_file
