@@ -9,8 +9,6 @@
 
 #include "include/dt-bindings/net/ti-dp83867.h"
 #include "include/dt-bindings/gpio/gpio.h"
-#include "versal.dtsi"
-#include "versal-clk.dtsi"
 
 / {
 	compatible = "xlnx,versal-vrk160-revA", "xlnx,versal-vrk160",
