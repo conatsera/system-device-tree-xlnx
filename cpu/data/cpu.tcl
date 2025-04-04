@@ -21,6 +21,7 @@
     proc cpu_generate {drv_handle} {
         global mb_dict_64_bit
         global is_64_bit_mb
+        global 64_bit_processor_list
         set proctype [get_hw_family]
         set addr_size [get_ip_property $drv_handle CONFIG.C_ADDR_SIZE]
         if {![string_is_empty $addr_size]} {
@@ -28,6 +29,7 @@
                 if {[expr $addr_size] > 32} {
                         set is_64_bit_mb 1
                         set cell_size 2
+                        lappend 64_bit_processor_list $drv_handle
                 }
                 dict set mb_dict_64_bit $drv_handle $cell_size
         }
