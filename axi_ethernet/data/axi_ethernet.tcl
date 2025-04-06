@@ -22,7 +22,7 @@
     proc axi_ethernet_generate {drv_handle} {
         global env
         global dtsi_fname
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
         set bus_node [detect_bus_name $drv_handle]
 
