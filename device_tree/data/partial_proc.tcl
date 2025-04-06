@@ -23,7 +23,7 @@ proc write_rm_dt args {
 	}
 
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	# Windows treats an empty env variable as not defined
 	if {[catch {set user_dts $env(user_dts)} msg]} {
 		set user_dts ""
@@ -312,10 +312,10 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	set pl_ps_irq1 0
 	set pl_ps_irq0 0
 	set is_rm_design 1
-	set path $env(REPO)
-	if {[catch {set path $env(REPO)} msg]} {
+	set path $env(CUSTOM_SDT_REPO)
+	if {[catch {set path $env(CUSTOM_SDT_REPO)} msg]} {
 		set path "."
-		set env(REPO) $path
+		set env(CUSTOM_SDT_REPO) $path
 	}
 
 	if { $::sdtgen::namespacelist == "" } {

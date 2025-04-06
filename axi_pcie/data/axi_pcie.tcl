@@ -16,7 +16,7 @@
     proc axi_pcie_set_pcie_ranges {drv_handle proctype} {
         global env
         global dtsi_fname
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
 
         set node [get_node $drv_handle]
         if {$node == 0} {
@@ -147,7 +147,7 @@
     proc axi_pcie_generate {drv_handle} {
         global env
         global dtsi_fname
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
 
         set node [get_node $drv_handle]
         if {$node == 0} {

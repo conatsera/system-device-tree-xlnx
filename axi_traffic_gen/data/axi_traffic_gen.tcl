@@ -1,4 +1,4 @@
-#
+
 # (C) Copyright 2014-2022 Xilinx, Inc.
 # (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
 #
@@ -16,7 +16,7 @@
     proc axi_traffic_gen_generate {drv_handle} {
         global env
         global dtsi_fname
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
 
         set node [get_node $drv_handle]
         if {$node == 0} {

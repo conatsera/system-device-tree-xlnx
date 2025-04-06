@@ -592,7 +592,7 @@ proc get_prop args {
 
 proc get_driver_config args {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set drv_handle [lindex $args 0]
 	set type [lindex $args 1]
 	set param [get_driver_param $drv_handle $type]
@@ -1360,10 +1360,10 @@ proc write_dt args {
 #		error "file creation error"
 	}
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	# Windows treats an empty env variable as not defined
-	if {[catch {set board_dtsi_file $env(board)} msg]} {
+	if {[catch {set board_dtsi_file $env(sdt_board_dts)} msg]} {
 		set board_dtsi_file ""
 	}
 	set fd [open $file w]
@@ -1685,11 +1685,11 @@ proc write_dt args {
 }
 
 proc get_repo_path args {
-	if { [info exists ::env(REPO) ] } {
+	if { [info exists ::env(CUSTOM_SDT_REPO) ] } {
 		set path $env(repo_path)
 		return $path
 	} else {
-		error "No repo found, please set it using ser env(REPO) PATH"
+		error "No repo found, please set it using ser env(CUSTOM_SDT_REPO) PATH"
 		return ""
 	}
 }
@@ -2761,7 +2761,7 @@ proc update_system_dts_include {include_file} {
 	set proctype [get_hw_family]
 	if {[regexp "microblaze" $proctype match]} {
 		global env
-		set path $env(REPO)
+		set path $env(CUSTOM_SDT_REPO)
 		#set drvname [get_drivers $drv_handle]
 		#set common_file "$path/device_tree/data/config.yaml"
 		set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
@@ -2800,7 +2800,7 @@ proc update_system_dts_include {include_file} {
 
 proc get_dts_include {} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set family [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml" 
         set dir [get_user_config $common_file -output_dir]
@@ -2814,7 +2814,7 @@ proc get_dts_include {} {
 proc set_drv_def_dts {drv_handle} {
 	proc_called_by
 	global env
-	#set path $env(REPO)
+	#set path $env(CUSTOM_SDT_REPO)
 
 	#set drvname [get_drivers $drv_handle]
 	#set common_file "$path/device_tree/data/config.yaml"
@@ -3901,7 +3901,7 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	set plattype [get_hw_family]
 	# Assuming these device supports the clocks
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 
 	#set drvname [get_drivers $drv_handle]
 	#
@@ -4308,7 +4308,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
 
 proc gen_axis_switch_clk_property {drv_handle dts_file node} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	#set drvname [get_drivers $drv_handle]
 	#set common_file "$path/device_tree/data/config.yaml"
 	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
@@ -4581,7 +4581,7 @@ proc gen_clk_property {drv_handle} {
 	}
 
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	#set drvname [get_drivers $drv_handle]
 	#set common_file "$path/device_tree/data/config.yaml"
 	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
@@ -6203,7 +6203,7 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 		if {[regexp "^MIO" $value matched]} {
 			# switch with kernel version
 			global env
-			set path $env(REPO)
+			set path $env(CUSTOM_SDT_REPO)
 
 			#set drvname [get_drivers $drv_handle]
 			#
@@ -6287,7 +6287,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	set ip_type [hsi get_property IP_NAME $ip]
 	set node [get_node $drv_handle]
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set ignore_list "PERIPHERAL axi_noc mig_7series"
 	if {[string match -nocase $ip_type "psu_pcie"]} {
@@ -6519,7 +6519,7 @@ proc detect_bus_name {ip_drv} {
 
 	set valid_proc_list "ps7_cortexa9 psu_cortexa53 psv_cortexa72 psv_cortexr5 psv_pmc psu_pmu psu_cortexr5 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm cortexa78 cortexr52 pmc psm"
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 		if {[is_pl_ip $ip_drv]}  {
 			# create the parent_node for pl.dtsi
@@ -6620,7 +6620,7 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 	dtg_debug "bus_name: $bus_name"
 	dtg_debug "bus_label: $bus_name"
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set proctype [get_hw_family]
 	set bus_node $bus_name
