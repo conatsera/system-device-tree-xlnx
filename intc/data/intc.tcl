@@ -22,7 +22,7 @@
         set node [get_node $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
         global env
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
         pldt append $node compatible "\ \, \"xlnx,xps-intc-1.00.a\""
         add_prop $node "#interrupt-cells" 2 int "pl.dtsi"

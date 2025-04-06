@@ -667,7 +667,7 @@ proc vproc_ss_gen_gpio_reset {drv_handle node topology dts_file} {
 
 proc vpss_gen_sca_frm_buf_node {outip drv_handle dts_file} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
 	set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
@@ -688,7 +688,7 @@ proc vpss_gen_sca_frm_buf_node {outip drv_handle dts_file} {
 
 proc vpss_gen_csc_frm_buf_node {outip drv_handle dts_file} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
 	set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]

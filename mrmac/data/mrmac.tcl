@@ -28,7 +28,7 @@
         set mrmac_ip [hsi::get_cells -hier $drv_handle]
         mrmac_gen_mrmac_clk_property $drv_handle
         global env
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
         set bus_node "amba_pl"
         set dts_file [set_drv_def_dts $drv_handle]
@@ -627,7 +627,7 @@
         }
 
         global env
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
         set bus_node "amba_pl: amba_pl"
         set dts_file [set_drv_def_dts $drv_handle]

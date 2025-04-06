@@ -126,7 +126,7 @@
     proc ai_engine_generate {drv_handle} {
         global env
         global dtsi_fname
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
 	global is_versal_gen2_platform
 
         set node [get_node $drv_handle]

@@ -265,7 +265,7 @@ proc dp_rx_add_hier_instances {drv_handle} {
 #generate fmc card node as this is required when display port exits
 proc gen_xfmc_node {drv_handle dts_file} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
         set pl_disp [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]
