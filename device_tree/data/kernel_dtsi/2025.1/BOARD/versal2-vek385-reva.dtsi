@@ -255,6 +255,10 @@
 	};
 };
 
+&mdb_pcie0 {
+	reset-gpios = <&tca6416_u37 7 GPIO_ACTIVE_LOW>;
+};
+
 &mmi_10gbe {
 	phy-mode = "10gbase-r";
 	fixed-link {

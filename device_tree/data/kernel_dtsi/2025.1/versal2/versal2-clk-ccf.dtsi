@@ -13,7 +13,7 @@
 #include "include/dt-bindings/reset/xlnx-versal2-resets.h"
 
 / {
-	ref_clk: ref_clk {
+	ref_clk: ref-clk {
 		bootph-all;
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -82,7 +82,7 @@
 				compatible = "xlnx,versal2-clk";
 				bootph-all;
 				clocks = <&ref_clk>, <&ref_clk>;
-				clock-names = "ref_clk", "pl_alt_ref_clk";
+				clock-names = "ref", "pl_alt_ref";
 			};
 
 			versal_net_power: zynqmp-power { // NT Pending
@@ -585,42 +585,42 @@
 };
 
 &ttc0 {
-	clocks = <&versal2_clk TTC0>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC0>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_0>;
 };
 
 &ttc1 {
-	clocks = <&versal2_clk TTC1>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC1>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_1>;
 };
 
 &ttc2 {
-	clocks = <&versal2_clk TTC2>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC2>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_2>;
 };
 
 &ttc3 {
-	clocks = <&versal2_clk TTC3>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC3>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_3>;
 };
 
 &ttc4 {
-	clocks = <&versal2_clk TTC4>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC4>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_4>;
 };
 
 &ttc5 {
-	clocks = <&versal2_clk TTC5>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC5>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_5>;
 };
 
 &ttc6 {
-	clocks = <&versal2_clk TTC6>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC6>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_6>;
 };
 
 &ttc7 {
-	clocks = <&versal2_clk TTC7>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC7>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_7>;
 };
 
