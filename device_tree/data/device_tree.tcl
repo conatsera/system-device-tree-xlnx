@@ -1696,7 +1696,7 @@ Generates system device tree based on args given in:
 			set skip1 1
 		}
 		if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
-		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
+		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1 && ![string match -nocase $ip_name "tmr_inject"]} {
 			set skip1 1
 		}
 		if {[string match -nocase $ip_name "gmii_to_rgmii"]} {

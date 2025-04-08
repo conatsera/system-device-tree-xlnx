@@ -494,7 +494,7 @@ proc get_node args {
 		return ""
 	}
 	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
-	    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
+	    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1 && ![string match -nocase $ip_name "tmr_inject"]} {
 		dict set node_dict $cur_hw_design $handle {}
 		return ""
 	}
@@ -5947,7 +5947,7 @@ proc gen_compatible_property {drv_handle} {
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set proctype [hsi get_property IP_TYPE $slave]
 	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "microblaze"] &&
-		![string match -nocase $ip_name "microblaze_riscv"]} {
+		![string match -nocase $ip_name "microblaze_riscv"] && ![string match -nocase $ip_name "tmr_inject"]} {
 		return 0
 	}
 	set comp_prop [gen_compatible_string $slave]
@@ -5956,7 +5956,7 @@ proc gen_compatible_property {drv_handle} {
 		set comp_prop "${comp_prop}${index}"
 	}
 	regsub -all {_} $comp_prop {-} comp_prop
-	if {[string match -nocase $proctype "processor"]} {
+	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "tmr_inject"]} {
 		set proctype [get_hw_family]
 		set bus_name [detect_bus_name $drv_handle]
 		set count [get_microblaze_nr $drv_handle]
