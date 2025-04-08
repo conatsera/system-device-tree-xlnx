@@ -325,6 +325,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "dfx_axi_shutdown_manager" "dfx_axi_shutdown_manager"
 	dict set ::sdtgen::namespacelist "mmi_dc" "axi_mmi_dc"
 	dict set ::sdtgen::namespacelist "mmi_udh_dp" "axi_mmi_dptx"
+	dict set ::sdtgen::namespacelist "mmi_usb_cfg" "mmi_usb"
 }
 
 proc Pop {varname {nth 0}} {
