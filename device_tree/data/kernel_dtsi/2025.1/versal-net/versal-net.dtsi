@@ -1055,6 +1055,7 @@
 		};
 
 		cpm5nc: pcie@e4a10000 {
+			device_type = "pci";
 			status = "disabled";
 			compatible = "xlnx,versal-cpm5nc-host";
 			#address-cells = <0x03>;
