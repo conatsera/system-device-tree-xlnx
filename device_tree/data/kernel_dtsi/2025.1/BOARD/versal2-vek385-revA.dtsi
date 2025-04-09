@@ -105,12 +105,10 @@
 };
 
 &i2c0 { /* PMC_MIO42-43 */
-	status = "okay";
 	/* board_i2c0 - FMC */
 };
 
 &i2c1 { /* PMC_MIO44-45 */
-	status = "okay";
 	#address-cells = <1>;
 	#size-cells = <0>;
 	bootph-all;
