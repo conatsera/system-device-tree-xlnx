@@ -1727,6 +1727,7 @@ proc get_drivers args {
 	dict set driverlist usxgmii driver axi_ethernet
 	dict set driverlist axi_gpio driver axi_gpio
 	dict set driverlist axi_iic driver axi_iic
+	dict set driverlist axi_i3c driver axi_i3c
 	dict set driverlist axi_mcdma driver axi_mcdma
 	dict set driverlist axi_pcie driver axi_pcie
 	dict set driverlist axi_pcie3 driver axi_pcie
