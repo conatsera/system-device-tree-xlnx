@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -261,6 +261,13 @@
                 }
             }
         }
+
+	if {$ip_name == "xxv_ethernet"} {
+	    set auto_neg [hsi get_property CONFIG.C_INCLUDE_AUTO_NEG_LT_LOGIC $eth_ip]
+	    if {$auto_neg eq "Include AN/LT Logic"} {
+		    add_prop $node "xlnx,has-auto-neg" boolean "pl.dtsi"
+	    }
+	}
 
         if { $hasbuf == "false" && $is_nobuf == 0} {
             set ip_prop CONFIG.processor_mode
