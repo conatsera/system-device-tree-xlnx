@@ -23,6 +23,7 @@ proc dp_txss14_generate {drv_handle} {
         set dtsi_file [set_drv_def_dts $drv_handle]
 	set compatible [get_comp_str $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,v-dp-txss-3.1\""
+	pldt append $node compatible "\ \, \"xlnx,v-dp-txss-3.0\""
 
         set num_audio_channels [hsi get_property CONFIG.Number_of_Audio_gt_quad_gtwiz_versal_0rxphy_lane0Channels [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,num-audio-channels" $num_audio_channels int $dtsi_file
