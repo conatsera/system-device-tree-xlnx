@@ -551,7 +551,6 @@ proc vproc_ss_update_endpoints {drv_handle} {
 			}
 		}
 	}  else {
-		puts "$drv_handle unsupported topology for linux driver"
 		dtg_warning "$drv_handle unsupportedd topology for linux driver"
 	}
 }
