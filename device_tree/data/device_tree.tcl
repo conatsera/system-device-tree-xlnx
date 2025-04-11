@@ -60,6 +60,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "usxgmii" "axi_ethernet"
 	dict set ::sdtgen::namespacelist "axi_gpio" "axi_gpio"
 	dict set ::sdtgen::namespacelist "axi_iic" "axi_iic"
+	dict set ::sdtgen::namespacelist "axi_i3c" "axi_i3c"
 	dict set ::sdtgen::namespacelist "axi_mcdma" "axi_mcdma"
 	dict set ::sdtgen::namespacelist "axi_pcie" "axi_pcie"
 	dict set ::sdtgen::namespacelist "axi_pcie3" "axi_pcie"
