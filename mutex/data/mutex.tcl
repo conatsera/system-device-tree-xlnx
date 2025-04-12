@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2024 - 2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -12,11 +12,97 @@
 # GNU General Public License for more details.
 #
 
-    proc mutex_generate {drv_handle} {
-        set node [get_node $drv_handle]
-        if {$node == 0} {
-                return
-        }
-        set compatible [get_comp_str $drv_handle]
-        set keyval [pldt append $node compatible "\ \, \"xlnx,mutex\""]
-    }
+proc mutex_generate {drv_handle} {
+	set node [get_node $drv_handle]
+	if {$node == 0} {
+		return
+	}
+	set compatible [get_comp_str $drv_handle]
+	set family [get_hw_family]
+	if {$family in {"microblaze" "Zynq"}} {
+		set bit_format 32
+	} else {
+		set bit_format 64
+	}
+
+	#Delete the Mutex Core node
+	pldt delete $node
+
+	set proclist [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR]
+
+	set enable_hw_prot [hsi::get_property CONFIG.C_ENABLE_HW_PROT $drv_handle]
+	set enable_user [hsi::get_property CONFIG.C_ENABLE_USER $drv_handle]
+	set num_mutex [hsi::get_property CONFIG.C_NUM_MUTEX $drv_handle]
+	set num_axi [hsi::get_property CONFIG.C_NUM_AXI $drv_handle]
+	set ip_name [hsi::get_property IP_NAME $drv_handle]
+	set name [hsi::get_property NAME $drv_handle]
+	set bus_name [detect_bus_name $drv_handle]
+	set dts_file pl.dtsi
+	set size 0x10000
+
+	#Create mutex nodes based on number of Axi Interfaces connected to the Mutex Core
+	for {set i 0} {$i < $num_axi} {incr i} {
+		set baseaddr [hsi::get_property CONFIG.C_S${i}_AXI_BASEADDR $drv_handle]
+		set highaddr [hsi::get_property CONFIG.C_S${i}_AXI_HIGHADDR $drv_handle]
+		set reg [gen_reg_property_format $baseaddr $highaddr $bit_format]
+		set nodename_baseaddr [format %08x $baseaddr]
+		set label_name ${drv_handle}_S${i}
+
+		set node [create_node -n $label_name -l $label_name -u $nodename_baseaddr -p $bus_name -d $dts_file]
+
+		add_prop "${node}" "xlnx,enable-hw-prot" $enable_hw_prot int $dts_file
+		add_prop "${node}" "xlnx,enable-user" $enable_user int $dts_file
+		add_prop "${node}" "xlnx,num-mutex" $num_mutex int $dts_file
+		add_prop "${node}" "compatible" $compatible string $dts_file
+		add_prop "${node}" "xlnx,ip-name" $ip_name string $dts_file
+		add_prop "${node}" "xlnx,num-axi" $num_axi int $dts_file
+		add_prop "${node}" "xlnx,name" $name string $dts_file
+		add_prop "${node}" "status" "okay" string $dts_file
+		add_prop "${node}" "reg" $reg hexlist $dts_file
+
+		#Append generic compatible string
+		pldt append $node compatible "\ \, \"xlnx,mutex\""
+
+		#Processor mapping
+		foreach proc $proclist {
+			set intf [hsi get_property BASE_NAME [hsi::get_mem_ranges -of [hsi::get_cells -hier $proc] -filter INSTANCE==$drv_handle]]
+
+			if {[string match "*S${i}*" $intf] && [string match "*S${i}*" $label_name]} {
+				configure_memmap "${label_name}" $proc $reg $bit_format $baseaddr $size
+			}
+		}
+	}
+}
+
+proc configure_memmap {node_label proc reg bit_format baseaddr size} {
+	set proc_ip_name [get_ip_property $proc IP_NAME]
+	set memmap_key ""
+	switch $proc_ip_name {
+		"microblaze" - "microblaze_riscv" - "psu_cortexr5" - "psv_cortexr5" - "psx_cortexr52" - "cortexr52" {
+			set memmap_key $proc
+		}
+		"psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
+			set memmap_key "a53"
+		}
+		"psv_psm" - "psx_psm" - "psm" {
+			set memmap_key "psm"
+		}
+		"psv_pmc" - "psx_pmc" - "pmc" {
+			set memmap_key "pmc"
+		}
+		"psu_pmu" {
+			set memmap_key "pmu"
+		}
+		"asu" {
+			set memmap_key "asu"
+		}
+	}
+	if {![string_is_empty $memmap_key]} {
+		if {$proc_ip_name in {"microblaze" "microblaze_riscv"}} {
+			if {$bit_format == 32} {
+				set reg "0x0 $baseaddr 0x0 $size"
+			}
+		}
+		set_memmap "${node_label}" $memmap_key $reg
+	}
+}
