@@ -24,7 +24,7 @@
         set_drv_prop $drv_handle phy_type ulpi $node string
         } else {
         global env
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
 
         set drvname [get_drivers $drv_handle]
 

@@ -33,6 +33,7 @@
                  gen_dev_ccf_binding $drv_handle "s_axi_aclk"
         }
         pldt unset $node "clock-frequency"
+        set keyval [pldt append $node compatible "\ \, \"xlnx,axi-uart16550\""]
     }
 
 

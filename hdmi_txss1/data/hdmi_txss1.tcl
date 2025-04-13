@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -184,7 +184,7 @@ proc hdmi_txss1_update_endpoints {drv_handle} {
 	set axis_sw_nm ""
 	foreach inip $hdmitx_in_ip {
 		if {[llength $inip]} {
-			set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $hdmitx_in_ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+			set master_intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $inip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
 			set ip_mem_handles [hsi::get_mem_ranges $inip]
 			if {[llength $ip_mem_handles]} {
 				set base [string tolower [hsi::get_property BASE_VALUE $ip_mem_handles]]
@@ -210,7 +210,7 @@ proc hdmi_txss1_update_endpoints {drv_handle} {
 				if {![llength $axis_sw_nm]} {
 					set inip [get_in_connect_ip $inip $master_intf]
 				}
-				if {[string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+				if {[llength $inip] && [string match -nocase [hsi::get_property IP_NAME $inip] "v_frmbuf_rd"]} {
 					gen_frmbuf_rd_node $inip $drv_handle $hdmi_port_node $dts_file
 				}
 			}
@@ -248,7 +248,7 @@ proc gen_frmbuf_rd_node {ip drv_handle hdmi_port_node dts_file} {
 	set frmbuf_rd_node [create_node -n "endpoint" -l encoder$drv_handle -p $hdmi_port_node -d $dts_file]
 	add_prop "$frmbuf_rd_node" "remote-endpoint" $ip$drv_handle reference $dts_file 1
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
 	set pl_display [create_node -n "drm-pl-disp-drv$drv_handle" -l "v_pl_disp$drv_handle" -p $bus_node -d $dts_file]

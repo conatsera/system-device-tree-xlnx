@@ -1,4 +1,4 @@
-#
+
 # (C) Copyright 2020-2022 Xilinx, Inc.
 # (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
@@ -23,6 +23,7 @@ proc dp_txss14_generate {drv_handle} {
         set dtsi_file [set_drv_def_dts $drv_handle]
 	set compatible [get_comp_str $drv_handle]
 	pldt append $node compatible "\ \, \"xlnx,v-dp-txss-3.1\""
+	pldt append $node compatible "\ \, \"xlnx,v-dp-txss-3.0\""
 
         set num_audio_channels [hsi get_property CONFIG.Number_of_Audio_gt_quad_gtwiz_versal_0rxphy_lane0Channels [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,num-audio-channels" $num_audio_channels int $dtsi_file
@@ -217,7 +218,7 @@ proc gen_frmbuf_rd_node {ip drv_handle port0_node dtsi_file} {
 	set frmbuf_rd_node [create_node -n "endpoint" -l dptx_out$drv_handle -p $port0_node -d $dtsi_file]
 	add_prop "$frmbuf_rd_node" "remote-endpoint" $ip$drv_handle reference $dtsi_file 1
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
         set pl_disp [create_node -n "drm-pl-disp-drv" -l "v_pl_disp$drv_handle" -p $bus_node -d $dtsi_file]
@@ -310,7 +311,7 @@ proc dp_tx_add_hier_instances {drv_handle} {
 #generate fmc card node as this is required when display port exits
 proc gen_xfmc_node {drv_handle dts_file} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
         set pl_disp [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]

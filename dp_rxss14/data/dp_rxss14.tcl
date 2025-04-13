@@ -17,6 +17,12 @@ proc dp_rxss14_generate {drv_handle} {
 	if {$node == 0} {
 		return
 	}
+	set family [get_hw_family]
+	if {$family in {"microblaze" "Zynq"}} {
+		set bit_format 32
+	} else {
+		set bit_format 64
+	}
 	dp_rx_add_hier_instances $drv_handle
 
 	set compatible [get_comp_str $drv_handle]
@@ -89,9 +95,9 @@ proc dp_rxss14_generate {drv_handle} {
 		set highaddr_dp_rx [hsi get_property CONFIG.C_HIGHADDR [hsi get_cells -hier $drv_handle]]
 		set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $edid_ip]]
 		set highaddr [hsi get_property CONFIG.C_HIGHADDR [hsi get_cells -hier $edid_ip]]
-		set reg_val_0 [gen_reg_property_format $baseaddr_dp_rx $highaddr_dp_rx]
+		set reg_val_0 [gen_reg_property_format $baseaddr_dp_rx $highaddr_dp_rx $bit_format]
 		set updat [lappend updat $reg_val_0]
-		set reg_val_1 [gen_reg_property_format $baseaddr $highaddr]
+		set reg_val_1 [gen_reg_property_format $baseaddr $highaddr $bit_format]
 		set updat [lappend updat $reg_val_1]
 		set reg_val [lindex $updat 0]
 		append reg_val ">, <[lindex $updat 1]"
@@ -265,7 +271,7 @@ proc dp_rx_add_hier_instances {drv_handle} {
 #generate fmc card node as this is required when display port exits
 proc gen_xfmc_node {drv_handle dts_file} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set bus_node "amba_pl: amba_pl"
         set pl_disp [create_node -n "xv_fmc$drv_handle" -l "xfmc$drv_handle" -p $bus_node -d $dts_file]

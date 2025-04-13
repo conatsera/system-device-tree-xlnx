@@ -60,6 +60,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "usxgmii" "axi_ethernet"
 	dict set ::sdtgen::namespacelist "axi_gpio" "axi_gpio"
 	dict set ::sdtgen::namespacelist "axi_iic" "axi_iic"
+	dict set ::sdtgen::namespacelist "axi_i3c" "axi_i3c"
 	dict set ::sdtgen::namespacelist "axi_mcdma" "axi_mcdma"
 	dict set ::sdtgen::namespacelist "axi_pcie" "axi_pcie"
 	dict set ::sdtgen::namespacelist "axi_pcie3" "axi_pcie"
@@ -360,10 +361,10 @@ proc print_usage args {
 proc set_sdt_default_repo {} {
 	global env
 	variable ::sdtgen::loader_path
-	if { ![info exists ::env(REPO)] } {
-		set env(REPO) [file dirname [file dirname [file dirname $::sdtgen::loader_path]]]
+	if { ![info exists ::env(CUSTOM_SDT_REPO)] } {
+		set env(CUSTOM_SDT_REPO) [file dirname [file dirname [file dirname $::sdtgen::loader_path]]]
 	}
-	return $env(REPO)
+	return $env(CUSTOM_SDT_REPO)
 }
 
 proc set_dt_param args {
@@ -400,12 +401,12 @@ proc set_dt_param args {
 					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
 						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
 					}
-					set env(board) $board_dts_file
+					set env(sdt_board_dts) $board_dts_file
 				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
                                 -dir {set env(dir) [Pop args 1]}
-                                -repo {set env(REPO) [Pop args 1]}
+                                -repo {set env(CUSTOM_SDT_REPO) [Pop args 1]}
                                 -zocl {set env(zocl) [Pop args 1]}
                                 -user_dts {set env(user_dts) [Pop args 1]}
                                 -include_dts {set env(user_dts) [Pop args 1]}
@@ -434,12 +435,12 @@ proc get_dt_param args {
                } -rm_xsa {
                      if {[catch {set val $env(rm_xsa)} msg ]} {}
                } -repo {
-                        if {[catch {set val $env(REPO)} msg ]} {
+                        if {[catch {set val $env(CUSTOM_SDT_REPO)} msg ]} {
                                 set val [set_sdt_default_repo]
                        }
                } -board -
                  -board_dts {
-                       if {[catch {set val $env(board)} msg ]} {}
+                       if {[catch {set val $env(sdt_board_dts)} msg ]} {}
                } -mainline_kernel {
                        if {[catch {set val $env(kernel)} msg ]} {}
                } -kernel_ver {
@@ -695,9 +696,9 @@ proc gen_sata_laneinfo {} {
 
 proc gen_include_headers {} {
 	global env
-	set common_file "$env(REPO)/device_tree/data/config.yaml"
+	set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
-	set includes_dir [file normalize "$env(REPO)/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
+	set includes_dir [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
 	set dir_path [get_user_config $common_file -dir]
 	# Copy full include directory to dt WS
 	if {[file exists $includes_dir]} {
@@ -708,7 +709,7 @@ proc gen_include_headers {} {
 
 proc include_custom_dts {} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	# Windows treats an empty env variable as not defined
 	if {[catch {set user_dts $env(user_dts)} msg]} {
 		set user_dts ""
@@ -971,7 +972,7 @@ proc gen_board_info {} {
 	global env
 	global is_versal_net_platform
 	global is_versal_gen2_platform
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
@@ -1547,9 +1548,9 @@ Generates system device tree based on args given in:
 
 	global env
 	set path [set_sdt_default_repo]
-	if {[catch {set path $env(REPO)} msg]} {
+	if {[catch {set path $env(CUSTOM_SDT_REPO)} msg]} {
 		set path "."
-		set env(REPO) $path
+		set env(CUSTOM_SDT_REPO) $path
 	}
 	if {[catch {set debug $env(debug)} msg]} {
 		set env(debug) "disable"
@@ -1696,7 +1697,7 @@ Generates system device tree based on args given in:
 			set skip1 1
 		}
 		if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
-		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
+		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1 && ![string match -nocase $ip_name "tmr_inject"]} {
 			set skip1 1
 		}
 		if {[string match -nocase $ip_name "gmii_to_rgmii"]} {
@@ -2184,7 +2185,7 @@ proc proc_mapping {} {
 
 proc add_skeleton {} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 
 	set common_file "$path/device_tree/data/config.yaml"
 
@@ -2612,7 +2613,7 @@ proc update_alias {} {
 	global is_versal_net_platform
 	global dup_periph_handle
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
@@ -2753,7 +2754,7 @@ proc update_alias {} {
 
 proc gen_xppu {drv_handle} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	set node [get_node $drv_handle]
@@ -4178,7 +4179,7 @@ proc gen_power_domains {drv_handle} {
         global is_versal_net_platform
         global is_versal_gen2_platform
 
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
         set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
         set node [get_node $drv_handle]

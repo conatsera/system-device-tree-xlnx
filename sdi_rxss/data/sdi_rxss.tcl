@@ -110,7 +110,7 @@ proc sdi_rxss_generate {drv_handle} {
 
 proc gen_frmbuf_node {ip drv_handle dts_file} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
         set bus_node "amba_pl: amba_pl"
         set vcap [create_node -n "vcap_$drv_handle" -p $bus_node -d $dts_file]
