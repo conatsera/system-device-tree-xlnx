@@ -19,10 +19,10 @@
                 return
         }
         set compatible [get_comp_str $drv_handle]
-        if {[string equal $compatible "xlnx,clk-wizard-1.0"] || [string equal $compatible "xlnx,clkx5-wiz-1.0"]} {
-               set keyval [pldt append $node compatible "\ \, \"xlnx,versal-clk-wizard\""]
-        } else {
+        if {[string match  "xlnx,clocking-wizard-*" $compatible] } {
                set keyval [pldt append $node compatible "\ \, \"xlnx,clocking-wizard\""]
+        } else {
+               set keyval [pldt append $node compatible "\ \, \"xlnx,versal-clk-wizard\""]
         }
         set ip [hsi::get_cells -hier $drv_handle]
         axi_clk_wiz_gen_speedgrade $drv_handle
