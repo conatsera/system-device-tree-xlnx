@@ -19,7 +19,8 @@ proc mutex_generate {drv_handle} {
 	}
 	set compatible [get_comp_str $drv_handle]
 	set family [get_hw_family]
-	if {$family in {"microblaze" "Zynq"}} {
+	global is_64_bit_mb
+	if {$family in {"microblaze" "Zynq"} && !$is_64_bit_mb} {
 		set bit_format 32
 	} else {
 		set bit_format 64
