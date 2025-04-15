@@ -1013,6 +1013,11 @@ proc gen_board_info {} {
 		if {$slrcount != -1} {
 			add_prop "root" "slrcount" $slrcount int $default_dts
 		}
+		set speed_grade [common::get_property SPEEDGRADE [hsi current_hw_design]]
+		regsub -all {^-} $speed_grade {} speed_grade
+		if {$speed_grade != ""} {
+			add_prop "root" "speed_grade" "${speed_grade}" string $default_dts
+		}
 	}
 	set sem_mem_scan [get_sem_property CONFIG.SEM_MEM_SCAN]
 	set sem_npi_scan [get_sem_property CONFIG.SEM_NPI_SCAN]
