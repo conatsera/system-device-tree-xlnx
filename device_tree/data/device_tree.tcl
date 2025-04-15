@@ -702,7 +702,7 @@ proc gen_include_headers {} {
 	set dir_path [get_user_config $common_file -dir]
 	# Copy full include directory to dt WS
 	if {[file exists $includes_dir]} {
-		file delete -force -- $dir_path/include
+		file delete -force $dir_path/include
 		file copy -force $includes_dir $dir_path
 	}
 }
@@ -1047,89 +1047,29 @@ proc gen_board_info {} {
 	}
 	set dts_name $dtsi_file
 
-	set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
-	set include_list "include*"
-	set gpio_list "gpio.h"
-	set intr_list "irq.h"
-	set phy_list  "phy.h"
-	set input_list "input.h"
-	set pinctrl_list "pinctrl-zynqmp.h"
-    set tidp_list "ti-dp83867.h"
-	set gpiodir "$dir_path/include/dt-bindings/gpio"
-	set phydir "$dir_path/include/dt-bindings/phy"
-	set intrdir "$dir_path/include/dt-bindings/interrupt-controller"
-	set inputdir "$dir_path/include/dt-bindings/input"
-	set pinctrldir "$dir_path/include/dt-bindings/pinctrl"
-    set tidpdir "$dir_path/include/dt-bindings/net"
-	file mkdir $phydir
-	file mkdir $gpiodir
-	file mkdir $intrdir
-	file mkdir $inputdir
-	file mkdir $pinctrldir
-    file mkdir $tidpdir
-	if {[file exists $include_dtsi]} {
-		foreach file [glob [file normalize [file dirname ${include_dtsi}]/*/*/*/*]] {
-			if {[string first $gpio_list $file] != -1} {
-				file copy -force $file $gpiodir
-			} elseif {[string first $phy_list $file] != -1} {
-				file copy -force $file $phydir
-			} elseif {[string first $intr_list $file] != -1} {
-				file copy -force $file $intrdir
-			} elseif {[string first $input_list $file] != -1} {
-				file copy -force $file $inputdir
-			} elseif {[string first $pinctrl_list $file] != -1} {
-				file copy -force $file $pinctrldir
-            } elseif {[string first $tidp_list $file] != -1} {
-                    file copy -force $file $tidpdir
-			}
-		}
-	}
-	if {[string match -nocase $dts_name "template"]} {
-		return
-	}
 	if {[llength $dts_name] == 0} {
 		return
 	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
-	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
-	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
-		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${mainline_ker}/board"]
-		if {[file exists $mainline_dtsi]} {
-			set mainline_board_file 0
-			foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/board/*]] {
-				set dtsi_name "$dts_name.dtsi"
-				# NOTE: ./ works only if we did not change our directory
-				if {[regexp $dtsi_name $file match]} {
-					file copy -force $file $dir_path
-					update_system_dts_include [file tail $file]
-					set mainline_board_file 1
-				}
+
+	set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
+	if {[file exists $kernel_dtsi]} {
+		set valid_board_file 0
+		foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
+			set dtsi_name "$dts_name.dtsi"
+			# NOTE: ./ works only if we did not change our directory
+			if {[regexp $dtsi_name $file match]} {
+				file copy -force $file $dir_path
+				update_system_dts_include [file tail $file]
+				set valid_board_file 1
+				gen_include_dtfile "${file}" "${dir_path}"
+				break
 			}
-			if {$mainline_board_file == 0} {
-				error "Error:$dtsi_name board file is not present in DTG. Please add a vaild board."
-			}
+		}
+		if {$valid_board_file == 0} {
+			error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
 		}
 	} else {
-		set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
-		if {[file exists $kernel_dtsi]} {
-			set valid_board_file 0
-			foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
-				set dtsi_name "$dts_name.dtsi"
-				# NOTE: ./ works only if we did not change our directory
-				if {[regexp $dtsi_name $file match]} {
-					file copy -force $file $dir_path
-					update_system_dts_include [file tail $file]
-					set valid_board_file 1
-					gen_include_dtfile "${file}" "${dir_path}"
-					break
-				}
-			}
-			if {$valid_board_file == 0} {
-				error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
-			}
-		} else {
-			puts "File not found\n\r"
-		}
+		puts "$kernel_dtsi folder is not found"
 	}
 }
 
