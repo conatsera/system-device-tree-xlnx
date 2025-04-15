@@ -2049,6 +2049,9 @@ proc proc_mapping {} {
 			if {$ipname == "visp_ss"} {
 				continue
 			}
+			if {$ipname == "mutex"} {
+				continue
+			}
 			if {$ipname in {"tsn_endpoint_ethernet_mac_block"}} {
 				continue
 			}
