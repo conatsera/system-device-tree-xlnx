@@ -22,5 +22,6 @@
 #define TTC6		0xCE
 #define TTC7		0xCF
 #define UFS_REF		0xC8
+#define MMI_AUX0_REF	0xDC
 
 #endif
