@@ -11,5 +11,6 @@
 
 #define VERSAL_RST_UFS			(0xC104103U)
 #define VERSAL_RST_UFS_PHY		(0xC10407CU)
+#define VERSAL_RST_DC			(0xC104119U)
 
 #endif
