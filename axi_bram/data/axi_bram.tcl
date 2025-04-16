@@ -25,6 +25,7 @@
         global is_64_bit_mb
         set mapped 0
 
+        pldt append $node compatible "\ \, \"xlnx,axi-bram-ctrl\""
         # HSI reports ilmb_ram and dlmb_ram as two different IPs even though it points to the same BRAM_CNTRL. The
         # linker needs just one entry among these two and other is just a redundant data for us.
         # e.g.: microblaze_0_local_memory_dlmb_bram_if_cntlr_0 and microblaze_0_local_memory_ilmb_bram_if_cntlr
