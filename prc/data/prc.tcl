@@ -29,7 +29,7 @@
             #        source $api_file 
             #}
             source [file join $path "api.tcl"]
-
+	pldt append $node compatible "\ \, \"xlnx,dfx-controller\""
 
         set ip [hsi::get_cells -hier $drv_handle]
         set configuration [hsi get_property CONFIG.ALL_PARAMS $ip]
