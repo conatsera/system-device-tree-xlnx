@@ -2838,6 +2838,16 @@ proc set_drv_def_dts {drv_handle} {
 	return $default_dts
 }
 
+proc return_tree_obj {drv_handle} {
+	set dts_file [set_drv_def_dts $drv_handle]
+	if {[string match -nocase $dts_file "pcw.dtsi"]} {
+		set treeobj "pcwdt"
+	} elseif {[string match -nocase $dts_file "pl.dtsi"]} {
+		set treeobj "pldt"
+	}
+	return $treeobj
+}
+
 proc dt_node_def_checking {node_label node_name node_ua node_obj} {
 	# check if the node_object has matching label, name and unit_address properties
 	global def_string
