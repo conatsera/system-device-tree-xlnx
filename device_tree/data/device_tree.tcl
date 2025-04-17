@@ -59,6 +59,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ethernet_1_10_25g" "axi_ethernet"
 	dict set ::sdtgen::namespacelist "usxgmii" "axi_ethernet"
 	dict set ::sdtgen::namespacelist "axi_gpio" "axi_gpio"
+	dict set ::sdtgen::namespacelist "axi_hwicap" "axi_hwicap"
 	dict set ::sdtgen::namespacelist "axi_iic" "axi_iic"
 	dict set ::sdtgen::namespacelist "axi_i3c" "axi_i3c"
 	dict set ::sdtgen::namespacelist "axi_mcdma" "axi_mcdma"
@@ -247,6 +248,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "slv2_psv_pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "slv3_psv_pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "axi_timer" "tmrctr"
+	dict set ::sdtgen::namespacelist "tmr_manager" "tmr_manager"
+	dict set ::sdtgen::namespacelist "tmr_inject" "tmr_inject"
 	dict set ::sdtgen::namespacelist "tsn_endpoint_ethernet_mac" "tsn"
 	dict set ::sdtgen::namespacelist "ps7_ttc" "ttcps"
 	dict set ::sdtgen::namespacelist "psu_ttc" "ttcps"
@@ -1574,7 +1577,7 @@ Generates system device tree based on args given in:
 	set peri_list [move_match_elements_to_top $peri_list "clk_wizard"]
 	set peri_list [move_match_elements_to_top $peri_list "clkx5_wiz"]
 
-	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR && IP_NAME != "tmr_inject"}]
 	set processor_ip_list [list]
 	set 64_bit_processor_list [list]
 	set is_64_bit_mb 0
