@@ -425,4 +425,8 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	delete_tree pldt root
 	move_match_node_to_top pldt root "misc_clk_*"
 	write_rm_dt pldt root "$dir/$rm_ws/$partial_file"
+	set filepath "$dir/$firmware_name"
+	if {[file exists $filepath]} {
+		file delete -force $filepath
+	}
 }
