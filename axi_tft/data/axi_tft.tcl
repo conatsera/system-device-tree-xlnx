@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -14,6 +14,11 @@
 #
 
     proc axi_tft_generate {drv_handle} {
+        set node [get_node $drv_handle]
+        if {$node == 0} {
+                return
+        }
+        pldt append $node compatible "\ \, \"xlnx,axi-tft\""
     }
 
 
