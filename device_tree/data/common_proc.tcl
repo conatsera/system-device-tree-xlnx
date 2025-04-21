@@ -322,6 +322,9 @@ proc remove_duplicate_addr args {
 		if {[string match -nocase $ip_name "lmb_bram_if_cntlr"]} {
 			continue
 		}
+		if {[string match -nocase $ip_name "mailbox"]} {
+			continue
+		}
 		if { $periph_addr ne "" && [is_ps_ip $drv_handle] != 1 && [lsearch $non_val_list $ip_name] < 0 } {
 			if { [dict exists $addr_dict $periph_addr $ip_name] } {
 				dict set dup_periph_handle $drv_handle [dict get $addr_dict $periph_addr $ip_name]
@@ -823,7 +826,7 @@ proc create_node args {
 		v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic \
 		gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr \
 		perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr \
-		axi_noc mailbox dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
+		axi_noc dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
 		xpm_cdc_gen bufgmux axi_apb_bridge gig_ethernet_pcs_pma \
 		dfe_rfsoc_adc_quadndual_io dfe_vec_fifo"
 	set temp [lsearch $ignore_list $node_name]

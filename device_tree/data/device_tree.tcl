@@ -1606,7 +1606,7 @@ Generates system device tree based on args given in:
 	get_pl_ip_list
 
 	# Generate properties only once if different instances of the same IP is 
-	# having a common base address. (e.g. mailbox connected to muliple 
+	# having a common base address. (e.g. tmr_inject connected to muliple
 	# microblazes). This is to avoid the duplicate node name dtc compilation 
 	# error.
 
@@ -1651,7 +1651,7 @@ Generates system device tree based on args given in:
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip1 1
 		}
-		if { [string_is_empty [get_baseaddr ${drv_handle}]] } {
+		if { [string_is_empty [get_baseaddr ${drv_handle}]] && ![string match -nocase $ip_name "mailbox"] } {
 			set skip1 1
 			lappend no_reg_drv_handle ${drv_handle}
 		}
@@ -1995,6 +1995,9 @@ proc proc_mapping {} {
 				continue
 			}
 			if {$ipname == "mutex"} {
+				continue
+			}
+			if {$ipname == "mailbox"} {
 				continue
 			}
 			if {$ipname in {"tsn_endpoint_ethernet_mac_block"}} {
