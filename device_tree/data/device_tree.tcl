@@ -1606,7 +1606,7 @@ Generates system device tree based on args given in:
 	get_pl_ip_list
 
 	# Generate properties only once if different instances of the same IP is 
-	# having a common base address. (e.g. mailbox connected to muliple 
+	# having a common base address. (e.g. tmr_inject connected to muliple
 	# microblazes). This is to avoid the duplicate node name dtc compilation 
 	# error.
 
@@ -1651,7 +1651,7 @@ Generates system device tree based on args given in:
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip1 1
 		}
-		if { [string_is_empty [get_baseaddr ${drv_handle}]] } {
+		if { [string_is_empty [get_baseaddr ${drv_handle}]] && ![string match -nocase $ip_name "mailbox"] } {
 			set skip1 1
 			lappend no_reg_drv_handle ${drv_handle}
 		}
@@ -1829,7 +1829,7 @@ proc delete_tree {dttree head} {
 		} else {
 			foreach amba_cchild $amba_childs {
 				set val [$dttree getall $amba_cchild]
-				if {[string match -nocase $val ""]} {
+				if {[string match -nocase $val ""] && [string_is_empty [$dttree children $amba_cchild]]} {
 					$dttree delete $amba_cchild
 				}
 			}
@@ -1995,6 +1995,9 @@ proc proc_mapping {} {
 				continue
 			}
 			if {$ipname == "mutex"} {
+				continue
+			}
+			if {$ipname == "mailbox"} {
 				continue
 			}
 			if {$ipname in {"tsn_endpoint_ethernet_mac_block"}} {
@@ -2545,15 +2548,26 @@ proc update_cpu_node {} {
 		set cpu_node [create_node -n $delete_node_label -d "system-top.dts" -p root]
 		for {set i $len_apu_cores_in_design} {$i < 4} {incr i} {
 			add_prop $delete_node_label "/delete-node/ cpu@$i" boolean "system-top.dts"
+			add_prop root "/delete-node/ &psu_cortexa53_${i}_debug;" boolean "pcw.dtsi"
     		}
 		# Update the existing interrupt-affinity property of pmu node that contains apu references.
 		set intr_affinity ""
+		set cpu_cooling_maps ""
 		set pmu_node [create_node -n pmu -d "system-top.dts" -p root]
 		for {set i 0} {$i < $len_apu_cores_in_design} {incr i} {
 			append intr_affinity "<&psu_cortexa53_$i>, "
+			append cpu_cooling_maps "<&psu_cortexa53_$i THERMAL_NO_LIMIT THERMAL_NO_LIMIT>, "
 		}
 		set intr_affinity [string trimright $intr_affinity ", "]
 		add_prop $pmu_node "interrupt-affinity" $intr_affinity noformating "system-top.dts"
+
+		# Update the existing cooling-device property of thermal-zones that contains apu references.
+		set cpu_cooling_maps [string trimright $cpu_cooling_maps ", "]
+		set thermal_zone_node [create_node -n thermal-zones -d $default_dts -p root]
+		set apu_thermal_node [create_node -n apu-thermal -d $default_dts -p $thermal_zone_node]
+		set cooling_maps_node [create_node -n cooling-maps -d $default_dts -p $apu_thermal_node]
+		set maps_node [create_node -n map -d $default_dts -p $cooling_maps_node]
+		add_prop $maps_node "cooling-device" $cpu_cooling_maps noformating $default_dts
 	}
 }
 

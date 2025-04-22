@@ -322,6 +322,9 @@ proc remove_duplicate_addr args {
 		if {[string match -nocase $ip_name "lmb_bram_if_cntlr"]} {
 			continue
 		}
+		if {[string match -nocase $ip_name "mailbox"]} {
+			continue
+		}
 		if { $periph_addr ne "" && [is_ps_ip $drv_handle] != 1 && [lsearch $non_val_list $ip_name] < 0 } {
 			if { [dict exists $addr_dict $periph_addr $ip_name] } {
 				dict set dup_periph_handle $drv_handle [dict get $addr_dict $periph_addr $ip_name]
@@ -823,7 +826,7 @@ proc create_node args {
 		v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic \
 		gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr \
 		perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr \
-		axi_noc mailbox dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
+		axi_noc dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
 		xpm_cdc_gen bufgmux axi_apb_bridge gig_ethernet_pcs_pma \
 		dfe_rfsoc_adc_quadndual_io dfe_vec_fifo"
 	set temp [lsearch $ignore_list $node_name]
@@ -7743,4 +7746,37 @@ proc split_string_to_32_bit_cell {addr} {
 	set higher_32bit_cell "0x[string range $addr 0 [expr {${rem} - 1}]]"
 	set higher_32bit_cell [format 0x%08x $higher_32bit_cell]
 	return "$higher_32bit_cell $lower_32bit_cell"
+}
+
+proc map_node_to_processor {node_label processor reg bit_format baseaddr size} {
+	set proc_ip_name [get_ip_property $processor IP_NAME]
+	set memmap_key ""
+	switch $proc_ip_name {
+		"microblaze" - "microblaze_riscv" - "psu_cortexr5" - "psv_cortexr5" - "psx_cortexr52" - "cortexr52" {
+			set memmap_key $processor
+		}
+		"psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
+			set memmap_key "a53"
+		}
+		"psv_psm" - "psx_psm" - "psm" {
+			set memmap_key "psm"
+		}
+		"psv_pmc" - "psx_pmc" - "pmc" {
+			set memmap_key "pmc"
+		}
+		"psu_pmu" {
+			set memmap_key "pmu"
+		}
+		"asu" {
+			set memmap_key "asu"
+		}
+	}
+	if {![string_is_empty $memmap_key]} {
+		if {$proc_ip_name in {"microblaze" "microblaze_riscv"}} {
+			if {$bit_format == 32} {
+				set reg "0x0 $baseaddr 0x0 $size"
+			}
+		}
+		set_memmap "${node_label}" $memmap_key $reg
+	}
 }
