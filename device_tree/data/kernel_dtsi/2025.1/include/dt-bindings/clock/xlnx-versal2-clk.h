@@ -22,6 +22,12 @@
 #define TTC6		0xCE
 #define TTC7		0xCF
 #define UFS_REF		0xC8
+#define MMI_DRD_REF_CLK	0xD0
+#define GPU_PLL		0xD9
+#define DC_PIXEL	0xDA
+#define GPU_REF		0xDB
 #define MMI_AUX0_REF	0xDC
+#define PS_AXI_DMA	0xDD
+#define AUX1_REF	0xDF
 
 #endif

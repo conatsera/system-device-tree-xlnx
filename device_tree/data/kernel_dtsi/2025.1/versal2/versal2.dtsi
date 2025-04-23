@@ -64,48 +64,68 @@
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
 		};
 		cortexa78_1: cpu@100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x100>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
 		};
 		cortexa78_2: cpu@10000 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x10000>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
 		};
 		cortexa78_3: cpu@10100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x10100>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
 		};
 		cortexa78_4: cpu@20000 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x20000>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
 		};
 		cortexa78_5: cpu@20100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x20100>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
 		};
 		cortexa78_6: cpu@30000 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x30000>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
 		};
 		cortexa78_7: cpu@30100 {
 			compatible = "arm,cortex-a78";
 			device_type = "cpu";
 			enable-method = "psci";
 			reg = <0x30100>;
+			cpu-idle-states = <&CPU_RETENTION_0>;
+		};
+		idle-states {
+			entry-method = "psci";
+
+			CPU_RETENTION_0: cpu-retention-0 {
+				compatible = "arm,idle-state";
+				arm,psci-suspend-param = <0>;
+				local-timer-stop;
+				entry-latency-us = <300>;
+				exit-latency-us = <600>;
+				min-residency-us = <10000>;
+			};
 		};
 	};
 
