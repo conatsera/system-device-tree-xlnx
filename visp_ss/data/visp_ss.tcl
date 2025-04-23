@@ -315,10 +315,16 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 				set iba_values {}
 				if {$live_stream == 1} {
 					lappend iba_values 4
-					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
+					#add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
+					foreach iba_val $iba_values {
+						add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_val $tile
+					}
 				} elseif {$live_stream == 2} {
 					lappend iba_values 4 3
-					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
+					#add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
+					foreach iba_val $iba_values {
+						add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_val $tile
+					}
 				}
 				foreach iba $iba_values {
 					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
