@@ -967,6 +967,9 @@ proc gen_pss_ref_clk_freq {drv_handle node ip_name} {
 		}
 	}
 	if {![string_is_empty $pss_ref_clk_mhz]} {
+		if {[llength [split $pss_ref_clk_mhz "."]] > 1} {
+			set pss_ref_clk_mhz [scan [expr $pss_ref_clk_mhz * 1000000] %d]
+		}
 	        add_prop $node "xlnx,pss-ref-clk-freq" $pss_ref_clk_mhz int "pcw.dtsi"
 	}
 }
