@@ -26,7 +26,10 @@ proc axis_switch_update_endpoints {drv_handle} {
         set ip $drv_handle
         set bus_node [detect_bus_name $ip]
         set dts [set_drv_def_dts $ip]
-        set switch_node [create_node -n "axis_switch_$ip" -l $ip -u 0 -p $bus_node -d $dts]
+        set switch_node [get_node $drv_handle]
+        if {[string_is_empty $switch_node]} {
+                set switch_node [create_node -n "axis_switch_$ip" -l $ip -u 0 -p $bus_node -d $dts]
+        }
         set ips [hsi get_cells -hier -filter {IP_NAME == "axis_switch"}]
         foreach ip $ips {
                 if {[llength $ip]} {
