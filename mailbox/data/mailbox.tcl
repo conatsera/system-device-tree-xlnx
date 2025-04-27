@@ -19,10 +19,18 @@ proc mailbox_generate {drv_handle} {
 	}
 
 	#Obtain interrupt values
-	set intr_val [pldt get $node interrupts]
+	set intr_val ""
+	set intr_parent ""
+	if {[catch {
+		set intr_val [pldt get $node interrupts]
+		set intr_parent [pldt get $node interrupt-parent]
+	}]} {
+		set intr_val ""
+		set intr_parent ""
+	}
+
 	set intr_val [string trimright $intr_val ">"]
 	set intr_val [string trimleft $intr_val "<"]
-	set intr_parent [pldt get $node interrupt-parent]
 	set intr_parent [string trimright $intr_parent ">"]
 	set intr_parent [string trimleft $intr_parent "<"]
 	set intr_parent [string trimleft $intr_parent "&"]
@@ -119,8 +127,12 @@ proc create_mbox_nodes {drv_handle port_interface port_id processor intr_val int
 		pldt append $node compatible "\ \, \"xlnx,mailbox\""
 
 		#Add interrupt properties
-		add_prop "${node}" "interrupts" $intr_val intlist $dts_file
-		add_prop "${node}" "interrupt-parent" $intr_parent reference  $dts_file
+		if {![string_is_empty $intr_val]} {
+			add_prop "${node}" "interrupts" $intr_val intlist $dts_file
+		}
+		if {![string_is_empty $intr_parent]} {
+			add_prop "${node}" "interrupt-parent" $intr_parent reference  $dts_file
+		}
 
 		#Processor mapping
 		map_node_to_processor "${label_name}" $processor $reg $bit_format $mbox_baseaddr $size
@@ -140,12 +152,10 @@ proc check_if_connected {periph port_id port_interface processor} {
 		#Check if AXI4LITE interface is connected.
 		set baseaddr [common::get_property CONFIG.[format "C_S%d_AXI_BASEADDR" $port_id] $periph]
 		set mem [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $processor] -filter INSTANCE==$periph]
-		if {[llength $mem] != 0} {
+		if {[llength [lindex $mem 0]] != 0} {
 			set addrs [common::get_property BASE_VALUE $mem]
-			foreach addr $addrs {
-				if {$addr == $baseaddr} {
-					set is_axi4lite_connected 1
-				}
+			if {$addrs == $baseaddr} {
+				set is_axi4lite_connected 1
 			}
 		}
 	} else {
