@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2024-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -17,9 +17,9 @@ proc cpu_cortexr52_generate {drv_handle} {
 	set fields [split [get_ip_property $drv_handle NAME] "_"]
 	set cpu_nr [lindex $fields end]
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	if { $is_versal_net_platform } {
-		if {$is_versal_gen2_platform} {
+		if {$is_versal_2ve_2vm_platform} {
 			set node [create_node -n "&cortexr52_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
 		} else {
 			set node [create_node -n "&psx_cortexr52_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
