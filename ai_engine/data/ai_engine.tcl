@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2018-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,8 +21,8 @@
         set compatible [get_comp_str $drv_handle]
         pldt append $node compatible "\ \, \"xlnx,ai-engine-v2.0\""
 
-	global is_versal_gen2_platform
-	if {$is_versal_gen2_platform} {
+	global is_versal_2ve_2vm_platform
+	if {$is_versal_2ve_2vm_platform} {
 		set power_domain_family "versal2_firmware"
 	} else {
 		set power_domain_family "versal_firmware"
@@ -127,14 +127,14 @@
         global env
         global dtsi_fname
         set path $env(CUSTOM_SDT_REPO)
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 
         set node [get_node $drv_handle]
         if {$node == 0} {
                 return
         }
 
-        if {$is_versal_gen2_platform} {
+        if {$is_versal_2ve_2vm_platform} {
                 set power_domain_family "versal2_firmware"
         } else {
                 set power_domain_family "versal_firmware"

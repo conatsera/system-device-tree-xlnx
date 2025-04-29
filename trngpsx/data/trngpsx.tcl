@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2024-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -13,13 +13,13 @@
 #
 
 proc trngpsx_generate {drv_handle} {
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	set node [get_node $drv_handle]
 	set pki_trng_baseaddress "0x20400051000"
 	set pki_trng_offset "0x200"
 	set pki_num_insts 8
 
-	if {$node == 0 || $is_versal_gen2_platform} {
+	if {$node == 0 || $is_versal_2ve_2vm_platform} {
 		return
 	}
 	for {set instance 0} {$instance < $pki_num_insts} {incr instance} {
