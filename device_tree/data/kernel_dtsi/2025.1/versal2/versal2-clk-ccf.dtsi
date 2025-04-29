@@ -53,10 +53,10 @@
 		clock-mult = <1>;
 	};
 
-	clk24: clk24 {
+	clk50: clk50 {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
-		clock-frequency = <24000000>;
+		clock-frequency = <50000000>;
 	};
 
 	clk150: clk150 {
@@ -657,11 +657,17 @@
 };
 
 &usb_mmi {
-	clocks = <&clk256>, <&clk24>;
+	clocks = <&clk256>, <&versal2_clk MMI_DRD_REF_CLK>;
+	resets = <&versal2_reset VERSAL_RST_UDH_DRD>;
+	power-domains = <&versal2_firmware PM_DEV_MMI_USB_DRD>;
 };
 
 &mmi_dwc3 {
-	clocks = <&clk24>;
+	clocks = <&versal2_clk MMI_DRD_REF_CLK>;
+};
+
+&mmi_dcdma {
+	clocks = <&clk50>;
 };
 
 &wwdt0 {
