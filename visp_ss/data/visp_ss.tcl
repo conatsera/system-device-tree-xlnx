@@ -255,8 +255,12 @@ proc visp_ss_generate {drv_handle} {
 			} else {
 				set compatible_name "xlnx,Unknown"
 			}
+			if {$compatible_name ne "xlnx,Unknown"} {
+				add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
+			} else {
+				puts "Warning: Compatible name is Unknown for node '$sub_node'. Skipping adding compatible property."
+			}
 
-			add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
@@ -1004,25 +1008,46 @@ proc generate_tcm_nodes {rpu_ids default_dts bus_name} {
 }
 
 proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
-	foreach rpu_info $rpu_info_list {
-		lassign $rpu_info rpu_id io_type
+    # Map to collect compatible strings per rpu_id
+    array set compat_map {}
 
-		if {$io_type == 3} {
-			set compatible_str "xlnx,mimo-mbox"
-		} else {
-			set compatible_str "xlnx,mbox"
-		}
+    foreach rpu_info $rpu_info_list {
+        lassign $rpu_info rpu_id io_type
 
-		set mbox_label "visp_mbox_rpu_${rpu_id}"
-		set mbox_name "visp_mbox_rpu_${rpu_id}"
+        # Determine compatible string based on io_type
+        if {$io_type == 3} {
+            set compat_str "xlnx,mimo-mbox"
+        } elseif {$io_type == 1 || $io_type == 2} {
+            set compat_str "xlnx,mbox"
+        } else {
+            puts "Warning: Invalid io_type '$io_type' for RPU $rpu_id. Skipping mbox node creation."
+            continue
+        }
 
-		set mbox_node [create_node -l $mbox_label -n $mbox_name -p $bus_name -d $default_dts]
-		add_prop "$mbox_node" "compatible" $compatible_str string $default_dts
-		add_prop "$mbox_node" "rpu_id" $rpu_id int $default_dts
-		add_prop "$mbox_node" "isp,rproc" "<&r52f_${rpu_id}>" noformating $default_dts
-		add_prop "$mbox_node" "mbox-names" [list "tx" "rx"] stringlist $default_dts
-		add_prop "$mbox_node" "status" "okay" string $default_dts
-	}
+        # Collect unique compatible strings per rpu_id
+        if {[info exists compat_map($rpu_id)]} {
+            if {[lsearch -exact $compat_map($rpu_id) $compat_str] == -1} {
+                lappend compat_map($rpu_id) $compat_str
+            }
+        } else {
+            set compat_map($rpu_id) [list $compat_str]
+        }
+    }
+
+    # Create one mbox node per rpu_id
+    foreach rpu_id [array names compat_map] {
+        set mbox_label "visp_mbox_rpu_${rpu_id}"
+        set mbox_name "visp_mbox_rpu_${rpu_id}"
+        set compat_list $compat_map($rpu_id)
+
+        puts "Creating mbox node for RPU $rpu_id with compatible: $compat_list"
+
+        set mbox_node [create_node -l $mbox_label -n $mbox_name -p $bus_name -d $default_dts]
+        add_prop "$mbox_node" "compatible" $compat_list stringlist $default_dts
+        add_prop "$mbox_node" "rpu_id" $rpu_id int $default_dts
+        add_prop "$mbox_node" "mbox-names" [list "tx" "rx"] stringlist $default_dts
+        add_prop "$mbox_node" "status" "okay" string $default_dts
+    }
 }
 
 proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
