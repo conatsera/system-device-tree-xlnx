@@ -977,7 +977,7 @@ proc gen_pss_ref_clk_freq {drv_handle node ip_name} {
 proc gen_board_info {} {
 	global env
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	set path $env(CUSTOM_SDT_REPO)
 	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
@@ -990,8 +990,8 @@ proc gen_board_info {} {
 	set family [get_hw_family]
 	switch $family {
 		"versal" {
-			if {$is_versal_gen2_platform} {
-				set family "VersalGen2"
+			if {$is_versal_2ve_2vm_platform} {
+				set family "Versal_2VE_2VM"
 			} elseif {$is_versal_net_platform} {
 				set family "VersalNet"
 			} else {
@@ -2227,7 +2227,7 @@ proc update_memory_node {} {
 
 proc gen_cpu_cluster {} {
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	global mb_dict_64_bit
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
@@ -2317,7 +2317,7 @@ proc gen_cpu_cluster {} {
     		set r5_cores 2
     		if { $is_versal_net_platform } {
     			set r5_cores 4
-			if { $is_versal_gen2_platform } {
+			if { $is_versal_2ve_2vm_platform } {
 				set r5_cores 10
 			}
     		}
@@ -2528,7 +2528,7 @@ proc update_cpu_node {} {
 	# proper cpu listing for linux, the extra cpu nodes from static files have to be
 	# deleted. In order to remove these nodes, all the references corresponding to
 	# these nodes also have to be removed. Removing all the existing references is a
-	# challenge and error prone. Platforms like Versal Net and Versal Gen2 with A78
+	# challenge and error prone. Platforms like Versal Net and Versal_2VE_2VM with A78
 	# processors have clusters and the node name is not easy to decode. It would
 	# involve complicated logic to remove cpu nodes along with all its references.
 	# Popular known use case is only for ZYNQMP CG devices and DTG contains
@@ -4139,7 +4139,7 @@ proc gen_xppu {drv_handle} {
 proc gen_power_domains {drv_handle} {
         global env
         global is_versal_net_platform
-        global is_versal_gen2_platform
+        global is_versal_2ve_2vm_platform
 
         set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
@@ -4151,7 +4151,7 @@ proc gen_power_domains {drv_handle} {
 
         if {[string match -nocase $family "versal"] && [is_ps_ip $drv_handle]} {
 		if { $is_versal_net_platform } {
-			if { $is_versal_gen2_platform } {
+			if { $is_versal_2ve_2vm_platform } {
 				return
 			}
 			set firmware_name "versal_net_firmware"

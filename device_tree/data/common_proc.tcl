@@ -384,14 +384,14 @@ proc set_hw_family {proclist} {
 	global pl_design
 	global design_family
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	global apu_proc_ip
 	set apu_proc_ip ""
 	set design_family ""
 	set pl_design 0
 	set ps_design 0
 	set is_versal_net_platform 0
-	set is_versal_gen2_platform 0
+	set is_versal_2ve_2vm_platform 0
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
@@ -402,7 +402,7 @@ proc set_hw_family {proclist} {
 				set is_versal_net_platform 1
 				set apu_proc_ip $ip_name
 				if {[llength [hsi::get_cells -hier -filter "IP_NAME==ps11"]]} {
-					set is_versal_gen2_platform 1
+					set is_versal_2ve_2vm_platform 1
 				}
 			} "psv_cortexa72" {
 				set design_family "versal"
@@ -3239,12 +3239,12 @@ proc add_driver_prop {drv_handle dt_node prop} {
 
 proc gen_ps_mapping {} {
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	set family [get_hw_family]
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
 		if { $is_versal_net_platform } {
-			if { $is_versal_gen2_platform } {
+			if { $is_versal_2ve_2vm_platform } {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1
 				dict set def_ps_mapping eb350000 label ipi2
@@ -7127,8 +7127,8 @@ proc is_orgate { intc_src_port ip_name} {
 #TODO: cache the data
 proc get_psu_interrupt_id { ip_name port_name } {
 	proc_called_by
-	global is_versal_gen2_platform
-	set versal_gen2_irq_dict {
+	global is_versal_2ve_2vm_platform
+	set versal_2ve_2vm_irq_dict {
 		"pl_lpd_irq0" 104 "pl_lpd_irq1" 105 "pl_lpd_irq2" 106 "pl_lpd_irq3" 107 "pl_lpd_irq4" 108 "pl_lpd_irq5" 109 "pl_lpd_irq6" 110 "pl_lpd_irq7" 111
 		"pl_fpd_irq0" 143 "pl_fpd_irq1" 144 "pl_fpd_irq2" 145 "pl_fpd_irq3" 146 "pl_fpd_irq4" 147 "pl_fpd_irq5" 148 "pl_fpd_irq6" 149 "pl_fpd_irq7" 150
 		"pl_lpd_irq8" 51 "pl_lpd_irq9" 52 "pl_lpd_irq10" 53 "pl_lpd_irq11" 54
@@ -7136,7 +7136,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		"pl_lpd_irq18" 88 "pl_lpd_irq19" 89 "pl_lpd_irq20" 90 "pl_lpd_irq21" 91 "pl_lpd_irq22" 92 "pl_lpd_irq23" 93
 		"pl_mmi_irq0" 163 "pl_mmi_irq1" 163
 	}
-	set versal_gen2_irq_names_list [dict keys $versal_gen2_irq_dict]
+	set versal_2ve_2vm_irq_names_list [dict keys $versal_2ve_2vm_irq_dict]
 	global or_id
 	global or_cnt
 
@@ -7292,8 +7292,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 				}
 				if {$en_cascade_mode == 1} {
 					set number [regexp -all -inline -- {[0-9]+} $sink_pn]
-					if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
-						set number [lsearch $versal_gen2_irq_names_list $sink_pin]
+					if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
+						set number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
 					}
 					return $number
 				}
@@ -7329,8 +7329,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		# check for direct connection or concat block connected
 		if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
 			set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin]
-			if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
-				set pin_number [lsearch $versal_gen2_irq_names_list $sink_pin]
+			if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
+				set pin_number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
 			}
 			set number 0
 			global intrpin_width
@@ -7399,8 +7399,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 					set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
 					if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
 						set number [regexp -all -inline -- {[0-9]+} $sink_pin]
-						if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
-							set number [lsearch $versal_gen2_irq_names_list $sink_pin]
+						if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
+							set number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
 						}
 						set dout "dout"
 						set concat_block 1
@@ -7450,11 +7450,11 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set ret [expr 84 + $number]
 		}
 	} elseif {[regexp "^pl_lpd_irq.*|^pl_fpd_irq.*|^pl_mmi_irq.*" "$sink_pin" match]} {
-		if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
+		if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
 			if {$concat_block == "0"} {
-				set ret [dict get $versal_gen2_irq_dict $sink_pin]
-			} elseif {$number < [llength $versal_gen2_irq_names_list]} {
-				set ret [dict get $versal_gen2_irq_dict [lindex $versal_gen2_irq_names_list $number]]
+				set ret [dict get $versal_2ve_2vm_irq_dict $sink_pin]
+			} elseif {$number < [llength $versal_2ve_2vm_irq_names_list]} {
+				set ret [dict get $versal_2ve_2vm_irq_dict [lindex $versal_2ve_2vm_irq_names_list $number]]
 			}
 		}
 	} elseif {[regexp "^pl_psx_irq.*" "$sink_pin" match] && \

@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -72,7 +72,7 @@
 
     proc emacps_generate {drv_handle} {
         global env
-        global is_versal_gen2_platform
+        global is_versal_2ve_2vm_platform
         set node [get_node $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
@@ -82,7 +82,7 @@
         add_prop $node "phy-mode" "gmii" string $dts_file
         } elseif { $phymode == 2 } {
         add_prop $node "phy-mode" "sgmii" string $dts_file
-        } elseif { !($is_versal_gen2_platform && [string match -nocase $ip_name "mmi_10gbe"]) } {
+        } elseif { !($is_versal_2ve_2vm_platform && [string match -nocase $ip_name "mmi_10gbe"]) } {
         add_prop $node "phy-mode" "rgmii-id" string $dts_file
         }
 
