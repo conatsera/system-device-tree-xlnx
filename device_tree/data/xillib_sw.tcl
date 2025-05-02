@@ -211,6 +211,7 @@ proc get_drivers_sw args {
 	dict set driverlist psv_wdt driver wdtps
 	dict set driverlist ps7_xadc driver xadcps
 	dict set driverlist psv_pmc_sysmon driver sysmonpsv
+	dict set driverlist pmc_sysmon driver sysmonpsv
 	set val [lindex $args 0]
 	if {[string match -nocase $val "1"]} {
 		set drivers ""
