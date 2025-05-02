@@ -247,6 +247,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "slv1_psv_pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "slv2_psv_pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "slv3_psv_pmc_sysmon" "sysmonpsv"
+	dict set ::sdtgen::namespacelist "pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "axi_timer" "tmrctr"
 	dict set ::sdtgen::namespacelist "tmr_manager" "tmr_manager"
 	dict set ::sdtgen::namespacelist "tmr_inject" "tmr_inject"
