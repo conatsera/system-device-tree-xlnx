@@ -220,7 +220,7 @@ proc visp_ss_generate {drv_handle} {
 					set rprocn "E_1_$rpu"
 				}
 			}
-			add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
+			#add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
 			if {[dict size $intr_mapping] > 0} {
 				set tile_intrnames ""
 				dict for {key value} $intr_mapping {
@@ -1059,12 +1059,12 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         # Add mboxes property referencing the correct child node
         if {[info exists rpu_to_child($rpu_id)]} {
             set child_label $rpu_to_child($rpu_id)
-            add_prop "$mbox_node" "mboxes" "<&${child_label} 0>, <&${child_label} 1>" noformating $default_dts
+            #add_prop "$mbox_node" "mboxes" "<&${child_label} 0>, <&${child_label} 1>" noformating $default_dts
         } else {
             puts "Warning: No child label mapping found for rpu_id=$rpu_id. Skipping mboxes property."
         }
 
-        add_prop "$mbox_node" "memory-region" "<&isp_mbox_buffer>" noformating $default_dts
+        #add_prop "$mbox_node" "memory-region" "<&isp_mbox_buffer>" noformating $default_dts
     }
 }
 
