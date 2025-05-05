@@ -253,13 +253,10 @@ proc visp_ss_generate {drv_handle} {
 			} elseif {$io_type == 3} {
 				set compatible_name "xlnx,visp-ss-mimo-1.0"
 			} else {
-				set compatible_name "xlnx,Unknown"
+				set compatible_name "xlnx,visp-disabled"
+				add_prop "$sub_node" "status" "disabled" string $default_dts
 			}
-			if {$compatible_name ne "xlnx,Unknown"} {
-				add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
-			} else {
-				puts "Warning: Compatible name is Unknown for node '$sub_node'. Skipping adding compatible property."
-			}
+			add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
 
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
@@ -755,7 +752,7 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 
 proc find_valid_visp_inip {drv_handle visp_ip_name} {
     set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
-    set valid_patterns "^(axis_broadcaster|axis_switch|mipi_.*)\$"
+    set valid_patterns "^(axis_broadcaster|axis_switch|.*mipi_.*)\$"
 
     # Check if any IP matches the valid patterns
     set visp_list [split $visp_inip " "]
