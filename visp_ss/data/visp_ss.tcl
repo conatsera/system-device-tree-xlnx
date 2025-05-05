@@ -220,7 +220,7 @@ proc visp_ss_generate {drv_handle} {
 					set rprocn "E_1_$rpu"
 				}
 			}
-			add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
+			#add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
 			if {[dict size $intr_mapping] > 0} {
 				set tile_intrnames ""
 				dict for {key value} $intr_mapping {
@@ -264,9 +264,9 @@ proc visp_ss_generate {drv_handle} {
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
-	generate_reserved_memory $rpu_ids $default_dts $bus_name
-	generate_remoteproc_node $rpu_ids $default_dts $bus_name
-	generate_tcm_nodes $rpu_ids $default_dts $bus_name
+	#generate_reserved_memory $rpu_ids $default_dts $bus_name
+	#generate_remoteproc_node $rpu_ids $default_dts $bus_name
+	#generate_tcm_nodes $rpu_ids $default_dts $bus_name
 	generate_mbox_nodes $rpu_info_list $default_dts $bus_name
 	#generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
 
@@ -737,7 +737,7 @@ proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip
 
 proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 	set bus_node [detect_bus_name $drv_handle]
-	set vcap [create_node -n "vcap_$sub_node_label" -p $bus_node -d $dts_file]
+	set vcap [create_node -n "vcap_$sub_node_label" -l vcap_$sub_node_label -p $bus_node -d $dts_file]
 	add_prop $vcap "compatible" "xlnx,video" string $dts_file
 	add_prop $vcap "dmas" "$outip 0" reference $dts_file
 	add_prop $vcap "dma-names" "port0" string $dts_file
@@ -1011,6 +1011,14 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
     # Map to collect compatible strings per rpu_id
     array set compat_map {}
 
+    # Map rpu_id to child label (child0..child3)
+    array set rpu_to_child {
+        6 child0
+        7 child1
+        8 child2
+        9 child3
+    }
+
     foreach rpu_info $rpu_info_list {
         lassign $rpu_info rpu_id io_type
 
@@ -1047,8 +1055,19 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         add_prop "$mbox_node" "rpu_id" $rpu_id int $default_dts
         add_prop "$mbox_node" "mbox-names" [list "tx" "rx"] stringlist $default_dts
         add_prop "$mbox_node" "status" "okay" string $default_dts
+
+        # Add mboxes property referencing the correct child node
+        if {[info exists rpu_to_child($rpu_id)]} {
+            set child_label $rpu_to_child($rpu_id)
+            #add_prop "$mbox_node" "mboxes" "<&${child_label} 0>, <&${child_label} 1>" noformating $default_dts
+        } else {
+            puts "Warning: No child label mapping found for rpu_id=$rpu_id. Skipping mboxes property."
+        }
+
+        #add_prop "$mbox_node" "memory-region" "<&isp_mbox_buffer>" noformating $default_dts
     }
 }
+
 
 proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
     set ipi_node [create_node -n "ipi_nobuf1" -p $bus_name -d $default_dts]
