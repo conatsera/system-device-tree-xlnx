@@ -66,7 +66,18 @@ proc mutex_generate {drv_handle} {
 
 		#Processor mapping
 		foreach proc $proclist {
-			set intf [hsi get_property BASE_NAME [hsi::get_mem_ranges -of [hsi::get_cells -hier $proc] -filter INSTANCE==$drv_handle]]
+			if {[catch {
+				set interface_inst [hsi::get_mem_ranges -of [hsi::get_cells -hier $proc] -filter INSTANCE==$drv_handle]
+			}]} {
+				set interface_inst ""
+			}
+
+			set mutex_inst [lindex $interface_inst 0]
+			if {[llength $mutex_inst] != 0} {
+				set intf [hsi get_property BASE_NAME $mutex_inst]
+			} else {
+				continue
+			}
 
 			if {[string match "*S${i}*" $intf] && [string match "*S${i}*" $label_name]} {
 				configure_memmap "${label_name}" $proc $reg $bit_format $baseaddr $size
