@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -17,8 +17,18 @@ proc xdmapcie_generate {drv_handle} {
         if {$node == 0} {
             return
         }
+	set ip_type [hsi get_property IP_NAME $drv_handle]
+	set default_dts [set_drv_def_dts $drv_handle]
+	set val -1
 
 	if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "qdma"]} {
+		if {[string match *qdma* $ip_type]} {
+			set val [hsi get_property CONFIG.device_port_type $drv_handle]
+		}
+		if {[string match -nocase $val "PCI_Express_Endpoint_device"]} {
+			add_prop $node "status" "disabled" string $default_dts 1
+		}
+
 		set axibar_num [get_ip_property $drv_handle "CONFIG.axibar_num"]
 		set range_type 0x02000000
 		# 64-bit high address.
@@ -105,8 +115,10 @@ proc xdmapcie_generate {drv_handle} {
 		add_prop "${node}" "reg-names" ${reg_name} stringlist "pl.dtsi"
 		set_drv_prop $drv_handle interrupt-map-mask "0 0 0 7" $node intlist
 		# Add Interrupt controller child node
-		set pcie_child_intc_node [create_node -l "pcie_intc_1" -n interrupt-controller -p $node -d "pl.dtsi"]
-		set int_map "0 0 0 1 &pcie_intc_1 0>, <0 0 0 2 &pcie_intc_1 1>, <0 0 0 3 &pcie_intc_1 2>, <0 0 0 4 &pcie_intc_1 3"
+		set intc_cnt [get_count "${ip_type}_intc_cnt"]
+		set intc_label "${ip_type}_intc_${intc_cnt}"
+		set pcie_child_intc_node [create_node -l $intc_label -n interrupt-controller -p $node -d "pl.dtsi"]
+		set int_map "0 0 0 1 &${intc_label} 0>, <0 0 0 2 &${intc_label} 1>, <0 0 0 3 &${intc_label} 2>, <0 0 0 4 &${intc_label} 3"
 		set_drv_prop $drv_handle interrupt-map $int_map $node hexlist
 		add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
 		add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
