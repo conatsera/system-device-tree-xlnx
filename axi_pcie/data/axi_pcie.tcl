@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -154,45 +154,61 @@
                 return
         }
         set family [get_hw_family]
-        if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "axi_pcie"]} {
-                pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
-                add_prop $node "xlnx,port-type" 1 hexint "pl.dtsi" 1
+        set ip [hsi::get_cells -hier $drv_handle]
+        set ip_type [hsi get_property IP_NAME $ip]
+        set default_dts [set_drv_def_dts $drv_handle]
+        set val -1
+
+        if {$ip_type in {"xdma" "axi_pcie"}} {
+               set target_ips {"xdma" "axi_pcie"}
+               foreach ip $target_ips {
+                       set cells [hsi::get_cells -hier -filter "IP_NAME == $ip"]
+                       foreach cell $cells {
+                               set cell_type [hsi::get_property IP_NAME $cell]
+                               if {[string match *xdma* $cell_type]} {
+                                      set val [hsi get_property CONFIG.device_port_type $cell]
+                                      pldt append $node compatible "\ \, \"xlnx,xdma-host-3.00\""
+                               } else {
+                                      set val [hsi get_property CONFIG.INCLUDE_RC $cell]
+                                      pldt append $node compatible "\ \, \"xlnx,axi-pcie-host-1.00.a\""
+                               }
+                               if {[string match -nocase $val "PCI_Express_Endpoint_device"]} {
+                                     add_prop $node "status" "disabled" string $default_dts 1
+                               }
+                       }
+               }
         }
-        if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"]} {
-                pldt append $node compatible "\ \, \"xlnx,xdma-host-3.00\""
-                set msi_rx_pin_en [hsi get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
-                if {[string match -nocase $msi_rx_pin_en "true"]} {
-                        set intr_names "misc msi0 msi1"
-                        add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi" 1
+
+        if {[string match -nocase $val "Root_Port_of_PCI_Express_Root_Complex"]} {
+                add_prop $node "xlnx,port-type" 1 hexint "pl.dtsi"
+                if {[string match -nocase [get_ip_property $drv_handle IP_NAME] "xdma"]} {
+                        set msi_rx_pin_en [hsi get_property CONFIG.msi_rx_pin_en [hsi::get_cells -hier $drv_handle]]
+                        if {[string match -nocase $msi_rx_pin_en "true"]} {
+                                set intr_names "misc msi0 msi1"
+                                add_prop $node "interrupt-names" $intr_names stringlist "pl.dtsi" 1
+                        }
+                        add_prop $node "xlnx,num-of-bars" 0x2 hexint "pl.dtsi" 1
+                        add_prop $node "xlnx,csr-slcr" 0xa0000000 hexint "pl.dtsi" 1
                 }
-                add_prop $node "xlnx,num-of-bars" 0x2 hexint "pl.dtsi" 1
-                add_prop $node "xlnx,port-type" 1 hexint "pl.dtsi" 1
-		add_prop $node "xlnx,csr-slcr" 0xa0000000 hexint "pl.dtsi" 1
-        }
-        add_prop $node device_type "pci" string "pl.dtsi"
-        set proctype [get_hw_family]
-        axi_pcie_set_pcie_reg $drv_handle $proctype
-        axi_pcie_set_pcie_ranges $drv_handle $proctype
-        set_drv_prop $drv_handle interrupt-map-mask "0 0 0 7" $node intlist
-        if {[regexp "microblaze" $proctype match]} {
-                set_drv_prop $drv_handle bus-range "0x0 0xff" $node hexint
-        }
-        # Add Interrupt controller child node
-	set pcieintc_cnt [get_count "pci_intc_cnt"]
-	set pcie_child_intc_node [create_node -l "pcie_intc_${pcieintc_cnt}" -n interrupt-controller -p $node -d "pl.dtsi"]
-	set int_map "0 0 0 1 &pcie_intc_${pcieintc_cnt} 1>, <0 0 0 2 &pcie_intc_${pcieintc_cnt} 2>, <0 0 0 3 &pcie_intc_${pcieintc_cnt} 3>,\
-               <0 0 0 4 &pcie_intc_${pcieintc_cnt} 4"
-	incr pcieintc_cnt
-	set_drv_prop $drv_handle interrupt-map $int_map $node hexlist
-	incr pcieintc_cnt
+                add_prop $node device_type "pci" string "pl.dtsi"
+                set proctype [get_hw_family]
+                axi_pcie_set_pcie_reg $drv_handle $proctype
+                axi_pcie_set_pcie_ranges $drv_handle $proctype
+                set_drv_prop $drv_handle interrupt-map-mask "0 0 0 7" $node intlist
+                if {[regexp "microblaze" $proctype match]} {
+                    set_drv_prop $drv_handle bus-range "0x0 0xff" $node hexint
+                }
+                # Add Interrupt controller child node
+                set intc_cnt [get_count "${ip_type}_intc_cnt"]
+                set intc_label "${ip_type}_intc_${intc_cnt}"
+                set pcie_child_intc_node [create_node -l $intc_label -n interrupt-controller -p $node -d "pl.dtsi"]
+                set int_map "0 0 0 1 &${intc_label} 1>, <0 0 0 2 &${intc_label} 2>, <0 0 0 3 &${intc_label} 3>,\
+                      <0 0 0 4 &${intc_label} 4"
+                incr intc_cnt
+                set_drv_prop $drv_handle interrupt-map $int_map $node hexlist
 
-        add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
-        add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
-        add_prop "${pcie_child_intc_node}" "#interrupt-cells" 1 int "pl.dtsi"
-        set prop [hsi get_property CONFIG.device_port_type [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $prop "Root_Port_of_PCI_Express_Root_Complex"]} {
-                add_prop $node "xlnx,device-port-type" 1 hexint "pl.dtsi"
-        }
-    }
-
-
+                add_prop "${pcie_child_intc_node}" "interrupt-controller" boolean "pl.dtsi"
+                add_prop "${pcie_child_intc_node}" "#address-cells" 0 int "pl.dtsi"
+                add_prop "${pcie_child_intc_node}" "#interrupt-cells" 1 int "pl.dtsi"
+       }
+}
