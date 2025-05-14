@@ -986,6 +986,7 @@ proc gen_board_info {} {
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
 	set device [hsi get_property DEVICE [hsi::current_hw_design]]
+	set ddr5_handle [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr5}]
 	add_prop "root" "device_id" "${device}" string $default_dts
 
 	set family [get_hw_family]
@@ -1014,6 +1015,16 @@ proc gen_board_info {} {
 		}
 	}
 	add_prop "root" "family" "${family}" string $default_dts
+
+	if {[llength $ddr5_handle] > 0} {
+	   foreach ddr5_cell $ddr5_handle {
+		   set ddr_type [hsi::get_property CONFIG.DDRMC5_DEVICE_TYPE $ddr5_cell]
+		   if {$ddr_type eq "RDIMMs" || $ddr_type eq "UDIMMs"} {
+			   add_prop "root" "xlnx,ddrmc5-device-type" $ddr_type string $default_dts
+			   break
+                   }
+	   }
+	}
 
 	if {[hsi get_current_part] != ""} {
 		set slrcount [common::get_property NUM_OF_SLRS [hsi get_current_part]]
