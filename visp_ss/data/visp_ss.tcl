@@ -301,86 +301,91 @@ proc create_vcp_node {sub_node default_dts isp_id bus_name} {
 	return $vcp_node
 }
 
-#IO_MODE==2 (LIMO)
 proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
 	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
+
 	set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
 	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp}" -n "ports" -p $vcp_node -d $default_dts]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
+
 	set reg_counter 0
 	set vcap_reg_counter 1
 	set port_addr_counter 0
+	set skip_default_port_creation 0  ;# Added flag
+
 	for {set iba 0} {$iba < $live_stream} {incr iba} {
+		set iba_mod [expr $iba % 4]
+
 		for {set j 0} {$j < 5} {incr j} {
 			set port_idx [expr $iba * 5 + $j]
-			if {$isp == 1 && $io_mode == 2 && $live_stream <= 2 && $port_idx % 5 == 0} {
+			set port_num $port_idx
+
+			# Special-case: ISP1 live_stream 1 or 2
+			if {$isp == 1 && $io_mode == 2 && $live_stream <= 2 && $port_idx % 5 == 0 && $iba == 0 && !$skip_default_port_creation} {
 				set iba_values {}
 				if {$live_stream == 1} {
 					lappend iba_values 4
-					#add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
-					foreach iba_val $iba_values {
-						add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_val $tile
-					}
 				} elseif {$live_stream == 2} {
 					lappend iba_values 4 3
-					#add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
-					foreach iba_val $iba_values {
-						add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_val $tile
-					}
 				}
-				foreach iba $iba_values {
-					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
+				foreach iba_val $iba_values {
+					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_val $tile
+					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba_val}"
 					set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
 					visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_addr_counter}" $port_addr_counter $visp_inip
 					incr port_addr_counter 5
 				}
-			} elseif {$port_idx % 5 == 0} {
-				add_iba_properties $drv_handle $sub_node $default_dts $isp $iba $tile
-				set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
+				set skip_default_port_creation 1
+				continue
+			}
+
+			# Skip generic fallback IBA block if already handled special case
+			if {$skip_default_port_creation && $port_idx % 5 == 0} {
+				continue
+			}
+
+			# Fallback: IBA input port creation
+			if {$port_idx % 5 == 0} {
+				add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_mod $tile
+				set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba_mod}"
 				set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
 				visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_addr_counter}" $port_addr_counter $visp_inip
 				incr port_addr_counter 5
-			} else {
-				if {$port_idx % 5 == 1} {
-					set port [create_node -l "port${tile}${isp}${port_idx}" -n "port@${vcap_reg_counter}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
-					incr vcap_reg_counter
-					set endpoint_node_mp [create_node -n "endpoint" -l "visp_isp${isp_id}_port${tile}${isp}${iba}_mp" -p $port -d $default_dts]
-					add_prop "$endpoint_node_mp" "remote-endpoint" visp_video_${isp_id}_${iba}_0 reference $default_dts
-					add_prop "$endpoint_node_mp" "type" "output" string $default_dts
-					set vcp_ports [create_node -l "vport${tile}${isp}${port_idx}" -n "port@${reg_counter}" -p $vcap_ports_node -d $default_dts]
-					add_prop "$vcp_ports" "reg" $reg_counter int $default_dts
-					incr reg_counter
-					set vcp_endpoint_node_mp [create_node -n "endpoint" -l "visp_video_${isp_id}_${iba}_0"  -p $vcp_ports -d $default_dts]
-					add_prop "$vcp_endpoint_node_mp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_mp reference $default_dts
-				}
-				if {$port_idx % 5 == 2} {
-					set port [create_node -l "port${tile}${isp}${port_idx}" -n "port@${vcap_reg_counter}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
-					incr vcap_reg_counter
-					set endpoint_node_sp [create_node -n "endpoint" -l "visp_isp${isp_id}_port${tile}${isp}${iba}_sp"  -p $port -d $default_dts]
-					add_prop "$endpoint_node_sp" "remote-endpoint" visp_video_${isp_id}_${iba}_1 reference $default_dts
-					add_prop "$endpoint_node_sp" "type" "output" string $default_dts
-					set vcp_ports1 [create_node -l "vport${tile}${isp}${port_idx}" -n port@${reg_counter}  -p $vcap_ports_node -d $default_dts]
-					add_prop "$vcp_ports1" "reg" $reg_counter int $default_dts
-					incr reg_counter
-					set vcp_endpoint_node_sp [create_node -n "endpoint" -l "visp_video_${isp_id}_${iba}_1"  -p $vcp_ports1 -d $default_dts]
-					add_prop "$vcp_endpoint_node_sp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_sp reference $default_dts
-				}
+
+			} elseif {$port_idx % 5 == 1 || $port_idx % 5 == 2} {
+				# MP or SP output port creation
+				set type [expr {$port_idx % 5 == 1 ? "mp" : "sp"}]
+				set visp_label "visp_isp${isp_id}_port${tile}${isp}${iba_mod}_${type}"
+				set video_label "visp_video_${isp_id}_${iba_mod}_[expr {$type eq "mp" ? 0 : 1}]"
+				set vport_label "vport${tile}${isp}${port_idx}"
+
+				# VISP side
+				set port [create_node -l "port${tile}${isp}${port_idx}" -n "port@${port_num}" -p $ports_node -d $default_dts]
+				add_prop "$port" "reg" $port_num int $default_dts
+				set endpoint_node [create_node -n "endpoint" -l $visp_label -p $port -d $default_dts]
+				add_prop "$endpoint_node" "remote-endpoint" $video_label reference $default_dts
+				add_prop "$endpoint_node" "type" "output" string $default_dts
+
+				# Video side
+				set vcp_ports [create_node -l $vport_label -n "port@${reg_counter}" -p $vcap_ports_node -d $default_dts]
+				add_prop "$vcp_ports" "reg" $reg_counter int $default_dts
+				incr reg_counter
+
+				set vcp_endpoint [create_node -n "endpoint" -l $video_label -p $vcp_ports -d $default_dts]
+				add_prop "$vcp_endpoint" "remote-endpoint" $visp_label reference $default_dts
 			}
 		}
 	}
 }
-
 # IO_MODE==1 (LILO)
 proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
 	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
-	set port0 [create_node -n "port${tile}${isp}" -p $ports_node -d $default_dts]
+	set port0 [create_node -l "port${tile}${isp}" -n "port${tile}${isp}" -p $ports_node -d $default_dts]
 	add_prop "$port0" "reg" 1 int $default_dts
 	set port_addr_counter 0
 	set pin_name ""
@@ -434,7 +439,8 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 	global broad_port2_remo_mappings
 
 	set port_node [create_node -n "port@$port_addr_counter" -l visp_ss_ports$sub$drv_handle -p $node -d $default_dts]
-	add_prop "$port_node" "reg" 0 int $default_dts 1
+	#add_prop "$port_node" "reg" 0 int $default_dts 1
+	add_prop "$port_node" "reg" $port_addr_counter int $default_dts 1
 	set len [llength $visp_inip]
 
 	if {$len > 1} {
