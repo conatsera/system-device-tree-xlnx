@@ -18,6 +18,7 @@
         if {$node == 0} {
            return
         }
+        set parent [get_node amba_pl]
         set dts_file [set_drv_def_dts $drv_handle]
         add_prop $node "#address-cells" 2 int $dts_file
         add_prop $node "#size-cells" 2 int $dts_file
@@ -47,11 +48,17 @@
             set encoder_mcu_clk [hsi get_property CONFIG.C0_ENC_MCU_AND_CORE_CLK [hsi::get_cells -hier $drv_handle]]
             set encoder_offset 0x40000
             set encoder_baseaddr [format %08x [expr $baseaddr + $encoder_offset]]
-            set encoder_node [create_node -l "encoder" -n "ale2xx" -u $encoder_baseaddr -p $node -d $dts_file]
+            set encoder_node [create_node -l "encoder" -n "ale2xx" -u $encoder_baseaddr -p $parent -d $dts_file]
             set encoder_comp "al,ale2xx"
             add_prop "${encoder_node}" compatible $encoder_comp string $dts_file
             add_prop "${encoder_node}" xlnx,mcu-clk $encoder_mcu_clk int $dts_file
-            set encoder_reg "0x00 0x$encoder_baseaddr 0x00 0x80000 0x00 0x8000000 0x00 0x8000000"
+            if {"0x$encoder_baseaddr" > 0xFFFFFFFF} {
+                set high_addr [format %08x [expr (("0x$encoder_baseaddr") >> 32) & 0xFFFFFFFF]]
+                set low_addr [format %08x [expr ("0x$encoder_baseaddr") & 0xFFFFFFFF]]
+                set encoder_reg "0x$high_addr 0x$low_addr 0x0 0x80000 0x0 0x8000000 0x0 0x8000000"
+            } else {
+                set encoder_reg "0x0 0x$encoder_baseaddr 0x0 0x80000 0x0 0x8000000 0x0 0x8000000"
+            }
             add_prop "${encoder_node}" "reg" $encoder_reg hexlist $dts_file
             dict for {key value} $intr_mapping {
                if {[string match "*enc*" $key]} {
@@ -70,11 +77,17 @@
             set decoder_mcu_clk [hsi get_property CONFIG.C0_DEC_MCU_AND_CORE_CLK [hsi::get_cells -hier $drv_handle]]
             set decoder_offset 0x80000
             set decoder_baseaddr [format %08x [expr $baseaddr + $decoder_offset]]
-            set decoder_node [create_node -l "decoder" -n "al5d" -u $decoder_baseaddr -p $node -d $dts_file]
+            set decoder_node [create_node -l "decoder" -n "ald3xx" -u $decoder_baseaddr -p $parent -d $dts_file]
             set decoder_comp "al,ald3xx"
             add_prop "${decoder_node}" xlnx,mcu-clk $decoder_mcu_clk int $dts_file
             add_prop "${decoder_node}" compatible $decoder_comp string $dts_file
-            set decoder_reg "0x0 0x$decoder_baseaddr 0x0 0x80000 0x0 0x00000000 0x0 0x08000000"
+            if {"0x$decoder_baseaddr" > 0xFFFFFFFF} {
+                set high_addr [format %08x [expr (("0x$decoder_baseaddr") >> 32) & 0xFFFFFFFF]]
+                set low_addr [format %08x [expr ("0x$decoder_baseaddr") & 0xFFFFFFFF]]
+                set decoder_reg "0x$high_addr 0x$low_addr 0x0 0x80000 0x0 0x00000000 0x0 0x8000000"
+            } else {
+                set decoder_reg "0x0 0x$decoder_baseaddr 0x0 0x80000 0x0 0x00000000 0x0 0x08000000"
+            }
             add_prop "${decoder_node}" "reg" $decoder_reg hexlist $dts_file
             set decoder_intr "0x00 0x63 0x04"
             dict for {key value} $intr_mapping {

@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -22,7 +22,7 @@
     proc axi_ethernet_generate {drv_handle} {
         global env
         global dtsi_fname
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
         set bus_node [detect_bus_name $drv_handle]
 
@@ -120,7 +120,9 @@
     
             if {[string_is_empty ${intf}] != 1} {
                 set tx_tsip [axi_ethernet_get_connectedip $intf]
-                set_drv_prop $drv_handle axififo-connected "$tx_tsip" $node reference
+                if {[llength $tx_tsip]} {
+                    set_drv_prop $drv_handle axififo-connected "$tx_tsip" $node reference
+                }
             }
         } else {
             foreach n "AXI_STR_RXD m_axis_rx" {
@@ -259,6 +261,13 @@
                 }
             }
         }
+
+	if {$ip_name == "xxv_ethernet"} {
+	    set auto_neg [hsi get_property CONFIG.C_INCLUDE_AUTO_NEG_LT_LOGIC $eth_ip]
+	    if {$auto_neg eq "Include AN/LT Logic"} {
+		    add_prop $node "xlnx,has-auto-neg" boolean "pl.dtsi"
+	    }
+	}
 
         if { $hasbuf == "false" && $is_nobuf == 0} {
             set ip_prop CONFIG.processor_mode

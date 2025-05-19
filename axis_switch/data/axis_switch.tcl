@@ -26,17 +26,16 @@ proc axis_switch_update_endpoints {drv_handle} {
         set ip $drv_handle
         set bus_node [detect_bus_name $ip]
         set dts [set_drv_def_dts $ip]
-        set switch_node [create_node -n "axis_switch_$ip" -l $ip -u 0 -p $bus_node -d $dts]
-        set ips [hsi get_cells -hier -filter {IP_NAME == "axis_switch"}]
-        foreach ip $ips {
+        set switch_node [get_node $drv_handle]
+        if {[string_is_empty $switch_node]} {
+                set switch_node [create_node -n "axis_switch_$ip" -l $ip -u 0 -p $bus_node -d $dts]
+        }
                 if {[llength $ip]} {
                         set ip_mem_handles [hsi get_mem_ranges $ip]
                         if {![llength $ip_mem_handles]} {
                                 set axis_ip [hsi get_property IP_NAME $ip]
                                 set unit_addr [get_baseaddr ${ip} no_prefix]
-                                if { ![string equal $unit_addr ""] } {
-                                        break
-                                }
+                                if { [string equal $unit_addr ""] } {
                                 if {[llength $axis_ip]} {
                                         set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
                                         set inip [get_in_connect_ip $ip $intf]
@@ -71,9 +70,9 @@ proc axis_switch_update_endpoints {drv_handle} {
                                                 }
                                         }
                                 }
+                                }
                         }
                 }
-        }
 
         set ip [hsi get_cells -hier $drv_handle]
         if {[string match -nocase [hsi get_property IP_NAME $ip] "axis_switch"]} {

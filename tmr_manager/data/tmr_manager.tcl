@@ -1,6 +1,5 @@
 #
-# (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -13,7 +12,14 @@
 # GNU General Public License for more details.
 #
 
-    proc canfdps_generate {drv_handle} {
-    }
-
-
+proc tmr_manager_generate {drv_handle} {
+	set node [get_node $drv_handle]
+	set tree_obj [return_tree_obj $drv_handle]
+	if {$node == 0} {
+		return
+	}
+	set version [string tolower [hsi get_property VLNV $drv_handle]]
+	if {![string compare -nocase "xilinx.com:ip:tmr_manager:1.0" $version] == 0} {
+		$tree_obj append $node compatible "\ \, \"xlnx,tmr-manager-1.0\""
+	}
+}

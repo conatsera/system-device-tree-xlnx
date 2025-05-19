@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -65,14 +65,14 @@
         set rgmii_node [create_node -l $phy_name -n $phy_name -u $phya -p $mdio_node -d $dts_file]
         add_prop "${rgmii_node}" "reg" $phya int $dts_file
         add_prop "${rgmii_node}" "compatible" "xlnx,gmii-to-rgmii-1.0" string $dts_file
-        if {![catch {[string_is_empty $env(board)]} msg]} {
+        if {![catch {[string_is_empty $env(sdt_board_dts)]} msg]} {
             add_prop "${rgmii_node}" "phy-handle" phy1 reference $dts_file
         }
     }
 
     proc emacps_generate {drv_handle} {
         global env
-        global is_versal_gen2_platform
+        global is_versal_2ve_2vm_platform
         set node [get_node $drv_handle]
         set slave [hsi::get_cells -hier $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
@@ -82,7 +82,7 @@
         add_prop $node "phy-mode" "gmii" string $dts_file
         } elseif { $phymode == 2 } {
         add_prop $node "phy-mode" "sgmii" string $dts_file
-        } elseif { !($is_versal_gen2_platform && [string match -nocase $ip_name "mmi_10gbe"]) } {
+        } elseif { !($is_versal_2ve_2vm_platform && [string match -nocase $ip_name "mmi_10gbe"]) } {
         add_prop $node "phy-mode" "rgmii-id" string $dts_file
         }
 
@@ -157,7 +157,7 @@
         set phya [lindex $conv_data 0]
         if { $phya != "-1" } {
             set phy_name "[lindex $conv_data 1]"
-            if {![catch {[string_is_empty $env(board)]} msg]} {
+            if {![catch {[string_is_empty $env(sdt_board_dts)]} msg]} {
                 set_drv_prop $drv_handle phy-handle "phy1" $node reference
             }
             set mdio_node [emacps_gen_mdio1_node $drv_handle $node]

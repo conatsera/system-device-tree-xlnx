@@ -13,7 +13,7 @@
 #include "include/dt-bindings/reset/xlnx-versal2-resets.h"
 
 / {
-	ref_clk: ref_clk {
+	ref_clk: ref-clk {
 		bootph-all;
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -53,6 +53,12 @@
 		clock-mult = <1>;
 	};
 
+	clk50: clk50 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <50000000>;
+	};
+
 	clk150: clk150 {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
@@ -63,6 +69,12 @@
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <250000000>;
+	};
+
+	clk256: clk256 {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <256000000>;
 	};
 
 	firmware {
@@ -82,7 +94,7 @@
 				compatible = "xlnx,versal2-clk";
 				bootph-all;
 				clocks = <&ref_clk>, <&ref_clk>;
-				clock-names = "ref_clk", "pl_alt_ref_clk";
+				clock-names = "ref", "pl_alt_ref";
 			};
 
 			versal_net_power: zynqmp-power { // NT Pending
@@ -493,10 +505,6 @@
 	power-domains = <&versal2_firmware PM_DEV_I2C_7>;
 };
 
-&gpu {
-	clocks = <&versal2_clk ADMA>;
-};
-
 &mmi_dcdma {
 	clocks = <&ref_clk>;
 };
@@ -589,42 +597,42 @@
 };
 
 &ttc0 {
-	clocks = <&versal2_clk TTC0>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC0>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_0>;
 };
 
 &ttc1 {
-	clocks = <&versal2_clk TTC1>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC1>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_1>;
 };
 
 &ttc2 {
-	clocks = <&versal2_clk TTC2>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC2>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_2>;
 };
 
 &ttc3 {
-	clocks = <&versal2_clk TTC3>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC3>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_3>;
 };
 
 &ttc4 {
-	clocks = <&versal2_clk TTC4>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC4>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_4>;
 };
 
 &ttc5 {
-	clocks = <&versal2_clk TTC5>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC5>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_5>;
 };
 
 &ttc6 {
-	clocks = <&versal2_clk TTC6>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC6>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_6>;
 };
 
 &ttc7 {
-	clocks = <&versal2_clk TTC7>, <&versal2_clk LPD_LSBUS>;
+	clocks = <&versal2_clk TTC7>;
 	power-domains = <&versal2_firmware PM_DEV_TTC_7>;
 };
 
@@ -646,6 +654,20 @@
 
 &dwc3_1 {
 	clocks = <&versal2_clk USB1_BUS_REF>;
+};
+
+&usb_mmi {
+	clocks = <&clk256>, <&versal2_clk MMI_DRD_REF_CLK>;
+	resets = <&versal2_reset VERSAL_RST_UDH_DRD>;
+	power-domains = <&versal2_firmware PM_DEV_MMI_USB_DRD>;
+};
+
+&mmi_dwc3 {
+	clocks = <&versal2_clk MMI_DRD_REF_CLK>;
+};
+
+&mmi_dcdma {
+	clocks = <&clk50>;
 };
 
 &wwdt0 {
@@ -672,4 +694,9 @@
 	clocks = <&versal2_clk UFS_REF>;
 	power-domains = <&versal2_firmware PM_DEV_UFS>;
 	resets = <&versal2_reset VERSAL_RST_UFS>, <&versal2_reset VERSAL_RST_UFS_PHY>;
+};
+
+&mmi_dc {
+	clocks = <&versal2_clk MMI_AUX0_REF>;
+	resets = <&versal2_reset VERSAL_RST_DC>;
 };

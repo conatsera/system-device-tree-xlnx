@@ -15,8 +15,8 @@
 	model = "AMD Versal VEK385 revA";
 
 	chosen {
-		bootargs = "earlycon=pl011,mmio32,0xf1930000 console=ttyAMA1,115200";
-		stdout-path = "serial1:115200n8";
+		bootargs = "earlycon=pl011,mmio32,0xf1920000 console=ttyAMA0,115200";
+		stdout-path = "serial0:115200n8";
 	};
 
 	reserved-memory {
@@ -253,6 +253,10 @@
 			reset-gpios = <&gpio0 25 GPIO_ACTIVE_LOW>;
 		};
 	};
+};
+
+&mdb_pcie0 {
+	reset-gpios = <&tca6416_u37 7 GPIO_ACTIVE_LOW>;
 };
 
 &mmi_10gbe {

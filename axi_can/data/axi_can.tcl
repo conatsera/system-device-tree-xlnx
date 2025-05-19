@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -16,7 +16,7 @@
 	proc axi_can_generate {drv_handle} {
 		global env
 		global dtsi_fname
-		set path $env(REPO)
+		set path $env(CUSTOM_SDT_REPO)
 
 		set node [get_node $drv_handle]
 		if {$node == 0} {
@@ -25,29 +25,15 @@
 
 		set dts_file [set_drv_def_dts $drv_handle]
 
-		set ip_name [get_ip_property $drv_handle IP_NAME]
-		if {[string equal -nocase $ip_name "can"]} {
-			set keyval [pldt append $node compatible "\ \, \"xlnx,axi-can-1.00.a\""]
-		}
-		set version [string tolower [hsi get_property VLNV $drv_handle]]
-		if {[string match -nocase $ip_name "canfd"]} {
-			if {[string compare -nocase "xilinx.com:ip:canfd:1.0" $version] == 0} {
-				set keyval [pldt append $node compatible "\ \, \"xlnx,canfd-1.0\""]
-			} else {
-				set keyval [pldt append $node compatible " \, \"xlnx,canfd-2.0\""]
-			}
-			set_drv_conf_prop $drv_handle NUM_OF_TX_BUF tx-mailbox-count $node hexint
-			set_drv_conf_prop $drv_handle NUM_OF_TX_BUF rx-fifo-depth $node hexint
-		} else {
-			set_drv_conf_prop $drv_handle c_can_num_acf can-num-acf $node hexint
-			set_drv_conf_prop $drv_handle c_can_tx_dpth tx-fifo-depth $node hexint
-			set_drv_conf_prop $drv_handle c_can_rx_dpth rx-fifo-depth $node hexint
+		set keyval [pldt append $node compatible "\ \, \"xlnx,axi-can-1.00.a\""]
 
-			set ecc [hsi get_property CONFIG.ENABLE_ECC [hsi::get_cells -hier $drv_handle]]
-			if { $ecc == 1} {
-				add_prop $node "xlnx,has-ecc" "" boolean $dts_file
-			}
+		set_drv_conf_prop $drv_handle c_can_num_acf can-num-acf $node hexint
+		set_drv_conf_prop $drv_handle c_can_tx_dpth tx-fifo-depth $node hexint
+		set_drv_conf_prop $drv_handle c_can_rx_dpth rx-fifo-depth $node hexint
 
+		set ecc [hsi get_property CONFIG.ENABLE_ECC [hsi::get_cells -hier $drv_handle]]
+		if { $ecc == 1} {
+			add_prop $node "xlnx,has-ecc" "" boolean $dts_file
 		}
 
 		set proc_type [get_hw_family]

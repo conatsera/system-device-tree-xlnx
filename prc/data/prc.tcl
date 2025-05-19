@@ -19,7 +19,7 @@
 
     proc prc_generate_params {drv_handle} {
         global env 
-            set path $env(REPO) 
+            set path $env(CUSTOM_SDT_REPO)
         set node [get_node $drv_handle] 
         set dts_file [set_drv_def_dts $drv_handle]
             #set drvname [get_drivers $drv_handle] 
@@ -29,7 +29,7 @@
             #        source $api_file 
             #}
             source [file join $path "api.tcl"]
-
+	pldt append $node compatible "\ \, \"xlnx,dfx-controller\""
 
         set ip [hsi::get_cells -hier $drv_handle]
         set configuration [hsi get_property CONFIG.ALL_PARAMS $ip]

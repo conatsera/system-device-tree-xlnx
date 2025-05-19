@@ -20,7 +20,6 @@
         }
         set dts_file [set_drv_def_dts $drv_handle]
 
-
         set operating_mode [hsi get_property CONFIG.C_DPDC_OPERATING_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop $node "xlnx,dc-operating-mode" $operating_mode string $dts_file
         set pres_mode [hsi get_property CONFIG.C_DPDC_PRESENTATION_MODE [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
@@ -80,4 +79,41 @@
         set stream3_sdp_en [hsi get_property CONFIG.C_DPDC_STREAM3_SDP_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         add_prop $node "xlnx,dc-stream3-sdp-en" $stream3_sdp_en int $dts_file
 
+        # Set the status okay for mmi_dcdma using the mmi_dc drv_handle
+        set dcdma_node [create_node -n "&mmi_dcdma" -d "pcw.dtsi" -p root]
+        add_prop $dcdma_node "status" "okay" string $dts_file
+
+        # Map mmi_dcdma to the processor address map
+        set proclist [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR]
+        set a78 0
+        set reg_val "0x0 0xedd10000 0x0 0x1000"
+        foreach procc $proclist {
+                set proc_name [get_ip_property $procc IP_NAME]
+                # If the mappings have already been found for a78_0, then ignore the process for a78_1
+                if {$a78 == 1 && ($proc_name in {"cortexa78"} )} {
+                        continue
+                }
+                if {$proc_name in {"cortexa78"}} {
+                        set a78 1
+                }
+                set mmi_dc_instances [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $procc] -filter INSTANCE==$drv_handle]
+                if {![string_is_empty $mmi_dc_instances]} {
+                        switch $proc_name {
+                                "cortexr52" - "microblaze" - "microblaze_riscv" {
+                                        set_memmap "mmi_dcdma" $procc $reg_val
+                                }
+                                "cortexa78" {
+                                        set_memmap "mmi_dcdma" a53 $reg_val
+                                }
+                                "pmc" {
+                                        set_memmap "mmi_dcdma" pmc $reg_val
+                                }
+                                "asu" {
+                                        set_memmap "mmi_dcdma" asu $reg_val
+                                }
+                                default {
+                                }
+                        }
+                }
+        }
     }

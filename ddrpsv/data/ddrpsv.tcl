@@ -181,9 +181,9 @@ proc ddrpsv_generate_reg_format {base high} {
 # Vivado is allowing the DDR addresses accessible from RPU to start from 0.
 # This leads to the DDR region's overlapping with the TCM region and results into linking error.
 proc ddrpsv_check_r5_tcm_overlapping {r5_ddr_base_addr} {
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	set tcm_ip [hsi::get_cells -hier -filter {NAME=~"*tcm_ram_global" || NAME=~"*tcm_alias"}]
-	# For Versal Gen2, there are two TCM aliases coming, one generic and another mmi.
+	# For Versal_2VE_2VM, there are two TCM aliases coming, one generic and another mmi.
 	# To avoid confusion, maintain a separate condition.
 	if {[llength $tcm_ip] == 1} {
 		set tcm_high_addr [get_highaddr $tcm_ip]
@@ -192,7 +192,7 @@ proc ddrpsv_check_r5_tcm_overlapping {r5_ddr_base_addr} {
 		if {[scan $tcm_size %lx] > [scan $r5_ddr_base_addr %lx]} {
 			set r5_ddr_base_addr $tcm_size
 		}
-	} elseif {$is_versal_gen2_platform && [expr {$r5_ddr_base_addr < "0x100000"}]} {
+	} elseif {$is_versal_2ve_2vm_platform && [expr {$r5_ddr_base_addr < "0x100000"}]} {
 		set r5_ddr_base_addr "0x100000"
 	}
 	return $r5_ddr_base_addr

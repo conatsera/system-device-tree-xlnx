@@ -322,6 +322,9 @@ proc remove_duplicate_addr args {
 		if {[string match -nocase $ip_name "lmb_bram_if_cntlr"]} {
 			continue
 		}
+		if {[string match -nocase $ip_name "mailbox"]} {
+			continue
+		}
 		if { $periph_addr ne "" && [is_ps_ip $drv_handle] != 1 && [lsearch $non_val_list $ip_name] < 0 } {
 			if { [dict exists $addr_dict $periph_addr $ip_name] } {
 				dict set dup_periph_handle $drv_handle [dict get $addr_dict $periph_addr $ip_name]
@@ -381,14 +384,14 @@ proc set_hw_family {proclist} {
 	global pl_design
 	global design_family
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	global apu_proc_ip
 	set apu_proc_ip ""
 	set design_family ""
 	set pl_design 0
 	set ps_design 0
 	set is_versal_net_platform 0
-	set is_versal_gen2_platform 0
+	set is_versal_2ve_2vm_platform 0
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
@@ -399,7 +402,7 @@ proc set_hw_family {proclist} {
 				set is_versal_net_platform 1
 				set apu_proc_ip $ip_name
 				if {[llength [hsi::get_cells -hier -filter "IP_NAME==ps11"]]} {
-					set is_versal_gen2_platform 1
+					set is_versal_2ve_2vm_platform 1
 				}
 			} "psv_cortexa72" {
 				set design_family "versal"
@@ -494,7 +497,7 @@ proc get_node args {
 		return ""
 	}
 	if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
-	    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
+	    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1 && ![string match -nocase $ip_name "tmr_inject"]} {
 		dict set node_dict $cur_hw_design $handle {}
 		return ""
 	}
@@ -592,7 +595,7 @@ proc get_prop args {
 
 proc get_driver_config args {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set drv_handle [lindex $args 0]
 	set type [lindex $args 1]
 	set param [get_driver_param $drv_handle $type]
@@ -823,7 +826,7 @@ proc create_node args {
 		v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic \
 		gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr \
 		perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr \
-		axi_noc mailbox dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
+		axi_noc dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
 		xpm_cdc_gen bufgmux axi_apb_bridge gig_ethernet_pcs_pma \
 		dfe_rfsoc_adc_quadndual_io dfe_vec_fifo"
 	set temp [lsearch $ignore_list $node_name]
@@ -1360,10 +1363,10 @@ proc write_dt args {
 #		error "file creation error"
 	}
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	# Windows treats an empty env variable as not defined
-	if {[catch {set board_dtsi_file $env(board)} msg]} {
+	if {[catch {set board_dtsi_file $env(sdt_board_dts)} msg]} {
 		set board_dtsi_file ""
 	}
 	set fd [open $file w]
@@ -1685,11 +1688,11 @@ proc write_dt args {
 }
 
 proc get_repo_path args {
-	if { [info exists ::env(REPO) ] } {
+	if { [info exists ::env(CUSTOM_SDT_REPO) ] } {
 		set path $env(repo_path)
 		return $path
 	} else {
-		error "No repo found, please set it using ser env(REPO) PATH"
+		error "No repo found, please set it using ser env(CUSTOM_SDT_REPO) PATH"
 		return ""
 	}
 }
@@ -1711,7 +1714,7 @@ proc get_drivers args {
 	dict set driverlist can driver axi_can
 	dict set driverlist v_dp_txss1 driver dp_tx
 	dict set driverlist v_dp_rxss1 driver dp_rx
-	dict set driverlist canfd driver axi_can
+	dict set driverlist canfd driver canfd
 	dict set driverlist axi_cdma driver axi_cdma
 	dict set driverlist clk_wiz driver axi_clk_wiz
 	dict set driverlist clk_wizard driver axi_clk_wiz
@@ -1727,6 +1730,7 @@ proc get_drivers args {
 	dict set driverlist usxgmii driver axi_ethernet
 	dict set driverlist axi_gpio driver axi_gpio
 	dict set driverlist axi_iic driver axi_iic
+	dict set driverlist axi_i3c driver axi_i3c
 	dict set driverlist axi_mcdma driver axi_mcdma
 	dict set driverlist axi_pcie driver axi_pcie
 	dict set driverlist axi_pcie3 driver axi_pcie
@@ -1743,10 +1747,10 @@ proc get_drivers args {
 	dict set driverlist vcu driver axi_vcu
 	dict set driverlist axi_vdma driver axi_vdma
 	dict set driverlist xadc_wiz driver axi_xadc
-	dict set driverlist psu_canfd driver canfdps
-	dict set driverlist psv_canfd driver canfdps
-	dict set driverlist psx_canfd driver canfdps
-	dict set driverlist canfd driver canfdps
+	dict set driverlist psu_canfd driver canfd
+	dict set driverlist psv_canfd driver canfd
+	dict set driverlist psx_canfd driver canfd
+	dict set driverlist canfd driver canfd
 	dict set driverlist ps7_can driver canps
 	dict set driverlist psu_can driver canps
 	dict set driverlist psv_can driver canps
@@ -1910,6 +1914,7 @@ proc get_drivers args {
 	dict set driverlist psv_wdt driver wdtps
 	dict set driverlist ps7_xadc driver xadcps
 	dict set driverlist psv_pmc_sysmon driver sysmonpsv
+	dict set driverlist pmc_sysmon driver sysmonpsv
 	dict set driverlist mrmac driver mrmac
 	set val [lindex $args 0]
 	if {[string match -nocase $val "1"]} {
@@ -2456,8 +2461,13 @@ proc get_baseaddr {slave_ip {no_prefix ""} {proc_handle ""}} {
 		foreach drv [hsi::get_cells -hier -filter IP_NAME==psv_cpm] {
 			if {![regexp "pspmc.*" "$drv" match]} {
 				set rev_num [get_ip_property $drv CONFIG.CPM_REVISION_NUMBER]
-				set port_type_0 [get_ip_property $drv CONFIG.C_CPM_PCIE0_PORT_TYPE]
-				set port_type_1 [get_ip_property $drv CONFIG.C_CPM_PCIE1_PORT_TYPE]
+				set avail_param [hsi list_property $drv]
+					if {[lsearch -nocase $avail_param "CONFIG.C_CPM_PCIE0_PORT_TYPE"] >= 0} {
+						set port_type_0 [hsi get_property CONFIG.C_CPM_PCIE0_PORT_TYPE $drv]
+					}
+					if {[lsearch -nocase $avail_param "CONFIG.C_CPM_PCIE1_PORT_TYPE"] >= 0} {
+						set port_type_1 [hsi get_property CONFIG.C_CPM_PCIE1_PORT_TYPE $drv]
+					}
 			}
 		}
 		if {($rev_num == 0) && ($port_type_0 || $port_type_1)} {
@@ -2756,7 +2766,7 @@ proc update_system_dts_include {include_file} {
 	set proctype [get_hw_family]
 	if {[regexp "microblaze" $proctype match]} {
 		global env
-		set path $env(REPO)
+		set path $env(CUSTOM_SDT_REPO)
 		#set drvname [get_drivers $drv_handle]
 		#set common_file "$path/device_tree/data/config.yaml"
 		set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
@@ -2795,7 +2805,7 @@ proc update_system_dts_include {include_file} {
 
 proc get_dts_include {} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set family [get_hw_family]
 	set common_file "$path/device_tree/data/config.yaml" 
         set dir [get_user_config $common_file -output_dir]
@@ -2809,7 +2819,7 @@ proc get_dts_include {} {
 proc set_drv_def_dts {drv_handle} {
 	proc_called_by
 	global env
-	#set path $env(REPO)
+	#set path $env(CUSTOM_SDT_REPO)
 
 	#set drvname [get_drivers $drv_handle]
 	#set common_file "$path/device_tree/data/config.yaml"
@@ -2827,6 +2837,16 @@ proc set_drv_def_dts {drv_handle} {
 	}
 
 	return $default_dts
+}
+
+proc return_tree_obj {drv_handle} {
+	set dts_file [set_drv_def_dts $drv_handle]
+	if {[string match -nocase $dts_file "pcw.dtsi"]} {
+		set treeobj "pcwdt"
+	} elseif {[string match -nocase $dts_file "pl.dtsi"]} {
+		set treeobj "pldt"
+	}
+	return $treeobj
 }
 
 proc dt_node_def_checking {node_label node_name node_ua node_obj} {
@@ -3220,12 +3240,12 @@ proc add_driver_prop {drv_handle dt_node prop} {
 
 proc gen_ps_mapping {} {
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	set family [get_hw_family]
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
 		if { $is_versal_net_platform } {
-			if { $is_versal_gen2_platform } {
+			if { $is_versal_2ve_2vm_platform } {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1
 				dict set def_ps_mapping eb350000 label ipi2
@@ -3896,7 +3916,7 @@ proc zynq_gen_pl_clk_binding {drv_handle} {
 	set plattype [get_hw_family]
 	# Assuming these device supports the clocks
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 
 	#set drvname [get_drivers $drv_handle]
 	#
@@ -4303,7 +4323,7 @@ proc gen_dfx_clk_property {drv_handle dts_file child_node dfx_node} {
 
 proc gen_axis_switch_clk_property {drv_handle dts_file node} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	#set drvname [get_drivers $drv_handle]
 	#set common_file "$path/device_tree/data/config.yaml"
 	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
@@ -4576,7 +4596,7 @@ proc gen_clk_property {drv_handle} {
 	}
 
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	#set drvname [get_drivers $drv_handle]
 	#set common_file "$path/device_tree/data/config.yaml"
 	set common_file [file join [file dirname [dict get [info frame 0] file]] "config.yaml"]
@@ -5942,7 +5962,7 @@ proc gen_compatible_property {drv_handle} {
 	set slave [hsi::get_cells -hier ${drv_handle}]
 	set proctype [hsi get_property IP_TYPE $slave]
 	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "microblaze"] &&
-		![string match -nocase $ip_name "microblaze_riscv"]} {
+		![string match -nocase $ip_name "microblaze_riscv"] && ![string match -nocase $ip_name "tmr_inject"]} {
 		return 0
 	}
 	set comp_prop [gen_compatible_string $slave]
@@ -5951,7 +5971,7 @@ proc gen_compatible_property {drv_handle} {
 		set comp_prop "${comp_prop}${index}"
 	}
 	regsub -all {_} $comp_prop {-} comp_prop
-	if {[string match -nocase $proctype "processor"]} {
+	if {[string match -nocase $proctype "processor"] && ![string match -nocase $ip_name "tmr_inject"]} {
 		set proctype [get_hw_family]
 		set bus_name [detect_bus_name $drv_handle]
 		set count [get_microblaze_nr $drv_handle]
@@ -6198,7 +6218,7 @@ proc ps7_reset_handle {drv_handle reset_pram conf_prop} {
 		if {[regexp "^MIO" $value matched]} {
 			# switch with kernel version
 			global env
-			set path $env(REPO)
+			set path $env(CUSTOM_SDT_REPO)
 
 			#set drvname [get_drivers $drv_handle]
 			#
@@ -6282,7 +6302,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	set ip_type [hsi get_property IP_NAME $ip]
 	set node [get_node $drv_handle]
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set ignore_list "PERIPHERAL axi_noc mig_7series"
 	if {[string match -nocase $ip_type "psu_pcie"]} {
@@ -6475,12 +6495,14 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 					"mdm" - "axi_uartlite" - "axi_uart16550" { set dev_type "serial" }
 					"axi_timer" { set dev_type "timer" }
 
-					# Below BRAM controller entry is a workaround. Encountered a design in Vivado
-					# test suite where there were 2 bram controllers, both starting at same
-					# address 0. None of them were mapped to any processor, their MASTER INTERFACEs
-					# were PCI interfaces. This was leading to duplicate node names (axi_bram_ctrl@0)
-					# with different labels in SDT.
-					"axi_bram_ctrl" { set dev_type $ip }
+					"axi_bram_ctrl" {
+                        # Below BRAM controller entry is a workaround. Encountered a design in Vivado
+                        # test suite where there were 2 bram controllers, both starting at same
+                        # address 0. None of them were mapped to any processor, their MASTER INTERFACEs
+                        # were PCI interfaces. This was leading to duplicate node names (axi_bram_ctrl@0)
+                        # with different labels in SDT.
+                        set dev_type $ip
+                    }
 				}
 				set t [get_ip_property $drv_handle IP_NAME]
 				set rt_node [create_node -n ${dev_type} -l ${label} -u ${unit_addr} -d ${default_dts} -p $bus_node]
@@ -6512,7 +6534,7 @@ proc detect_bus_name {ip_drv} {
 
 	set valid_proc_list "ps7_cortexa9 psu_cortexa53 psv_cortexa72 psv_cortexr5 psv_pmc psu_pmu psu_cortexr5 psx_cortexa78 psx_cortexr52 psx_pmc psx_psm cortexa78 cortexr52 pmc psm"
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 		if {[is_pl_ip $ip_drv]}  {
 			# create the parent_node for pl.dtsi
@@ -6613,7 +6635,7 @@ proc add_or_get_bus_node {ip_drv dts_file} {
 	dtg_debug "bus_name: $bus_name"
 	dtg_debug "bus_label: $bus_name"
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set proctype [get_hw_family]
 	set bus_node $bus_name
@@ -7106,8 +7128,8 @@ proc is_orgate { intc_src_port ip_name} {
 #TODO: cache the data
 proc get_psu_interrupt_id { ip_name port_name } {
 	proc_called_by
-	global is_versal_gen2_platform
-	set versal_gen2_irq_dict {
+	global is_versal_2ve_2vm_platform
+	set versal_2ve_2vm_irq_dict {
 		"pl_lpd_irq0" 104 "pl_lpd_irq1" 105 "pl_lpd_irq2" 106 "pl_lpd_irq3" 107 "pl_lpd_irq4" 108 "pl_lpd_irq5" 109 "pl_lpd_irq6" 110 "pl_lpd_irq7" 111
 		"pl_fpd_irq0" 143 "pl_fpd_irq1" 144 "pl_fpd_irq2" 145 "pl_fpd_irq3" 146 "pl_fpd_irq4" 147 "pl_fpd_irq5" 148 "pl_fpd_irq6" 149 "pl_fpd_irq7" 150
 		"pl_lpd_irq8" 51 "pl_lpd_irq9" 52 "pl_lpd_irq10" 53 "pl_lpd_irq11" 54
@@ -7115,7 +7137,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		"pl_lpd_irq18" 88 "pl_lpd_irq19" 89 "pl_lpd_irq20" 90 "pl_lpd_irq21" 91 "pl_lpd_irq22" 92 "pl_lpd_irq23" 93
 		"pl_mmi_irq0" 163 "pl_mmi_irq1" 163
 	}
-	set versal_gen2_irq_names_list [dict keys $versal_gen2_irq_dict]
+	set versal_2ve_2vm_irq_names_list [dict keys $versal_2ve_2vm_irq_dict]
 	global or_id
 	global or_cnt
 
@@ -7271,8 +7293,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 				}
 				if {$en_cascade_mode == 1} {
 					set number [regexp -all -inline -- {[0-9]+} $sink_pn]
-					if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
-						set number [lsearch $versal_gen2_irq_names_list $sink_pin]
+					if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
+						set number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
 					}
 					return $number
 				}
@@ -7308,8 +7330,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 		# check for direct connection or concat block connected
 		if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
 			set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin]
-			if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
-				set pin_number [lsearch $versal_gen2_irq_names_list $sink_pin]
+			if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
+				set pin_number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
 			}
 			set number 0
 			global intrpin_width
@@ -7378,8 +7400,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 					set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
 					if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
 						set number [regexp -all -inline -- {[0-9]+} $sink_pin]
-						if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
-							set number [lsearch $versal_gen2_irq_names_list $sink_pin]
+						if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
+							set number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
 						}
 						set dout "dout"
 						set concat_block 1
@@ -7429,11 +7451,11 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set ret [expr 84 + $number]
 		}
 	} elseif {[regexp "^pl_lpd_irq.*|^pl_fpd_irq.*|^pl_mmi_irq.*" "$sink_pin" match]} {
-		if {$is_versal_gen2_platform && $sink_pin in $versal_gen2_irq_names_list} {
+		if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
 			if {$concat_block == "0"} {
-				set ret [dict get $versal_gen2_irq_dict $sink_pin]
-			} elseif {$number < [llength $versal_gen2_irq_names_list]} {
-				set ret [dict get $versal_gen2_irq_dict [lindex $versal_gen2_irq_names_list $number]]
+				set ret [dict get $versal_2ve_2vm_irq_dict $sink_pin]
+			} elseif {$number < [llength $versal_2ve_2vm_irq_names_list]} {
+				set ret [dict get $versal_2ve_2vm_irq_dict [lindex $versal_2ve_2vm_irq_names_list $number]]
 			}
 		}
 	} elseif {[regexp "^pl_psx_irq.*" "$sink_pin" match] && \
@@ -7735,4 +7757,37 @@ proc split_string_to_32_bit_cell {addr} {
 	set higher_32bit_cell "0x[string range $addr 0 [expr {${rem} - 1}]]"
 	set higher_32bit_cell [format 0x%08x $higher_32bit_cell]
 	return "$higher_32bit_cell $lower_32bit_cell"
+}
+
+proc map_node_to_processor {node_label processor reg bit_format baseaddr size} {
+	set proc_ip_name [get_ip_property $processor IP_NAME]
+	set memmap_key ""
+	switch $proc_ip_name {
+		"microblaze" - "microblaze_riscv" - "psu_cortexr5" - "psv_cortexr5" - "psx_cortexr52" - "cortexr52" {
+			set memmap_key $processor
+		}
+		"psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
+			set memmap_key "a53"
+		}
+		"psv_psm" - "psx_psm" - "psm" {
+			set memmap_key "psm"
+		}
+		"psv_pmc" - "psx_pmc" - "pmc" {
+			set memmap_key "pmc"
+		}
+		"psu_pmu" {
+			set memmap_key "pmu"
+		}
+		"asu" {
+			set memmap_key "asu"
+		}
+	}
+	if {![string_is_empty $memmap_key]} {
+		if {$proc_ip_name in {"microblaze" "microblaze_riscv"}} {
+			if {$bit_format == 32} {
+				set reg "0x0 $baseaddr 0x0 $size"
+			}
+		}
+		set_memmap "${node_label}" $memmap_key $reg
+	}
 }

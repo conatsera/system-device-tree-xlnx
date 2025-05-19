@@ -158,6 +158,7 @@ proc visp_ss_generate {drv_handle} {
 	}
 	set reg_mapping {}
 	set rpu_ids {}
+	set rpu_info_list {}
 	pldt delete $node
 	for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
@@ -198,6 +199,7 @@ proc visp_ss_generate {drv_handle} {
 			set net_fps [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_NETFPS]
 			set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
 			lappend rpu_ids $rpu
+			lappend rpu_info_list [list $rpu $io_type]
 			add_prop "$sub_node" "xlnx,io_mode" "$io_mode_name" string $default_dts
 			add_prop "$sub_node" "xlnx,num_streams" $live_inputs int $default_dts
 			add_prop "$sub_node" "xlnx,mem_inputs" $mem_inputs int $default_dts
@@ -218,7 +220,7 @@ proc visp_ss_generate {drv_handle} {
 					set rprocn "E_1_$rpu"
 				}
 			}
-			add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
+			#add_prop "$sub_node" "memory-region" "<&rproc_${rprocn}_calib_load>" noformating $default_dts
 			if {[dict size $intr_mapping] > 0} {
 				set tile_intrnames ""
 				dict for {key value} $intr_mapping {
@@ -251,18 +253,19 @@ proc visp_ss_generate {drv_handle} {
 			} elseif {$io_type == 3} {
 				set compatible_name "xlnx,visp-ss-mimo-1.0"
 			} else {
-				set compatible_name "xlnx,Unknown"
+				set compatible_name "xlnx,visp-disabled"
+				add_prop "$sub_node" "status" "disabled" string $default_dts
 			}
-
 			add_prop "$sub_node" "compatible" "$compatible_name" string $default_dts
+
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
-	generate_reserved_memory $rpu_ids $default_dts $bus_name
-	generate_remoteproc_node $rpu_ids $default_dts $bus_name
-	generate_tcm_nodes $rpu_ids $default_dts $bus_name
-	generate_mbox_nodes $rpu_ids $default_dts $bus_name
-	generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
+	#generate_reserved_memory $rpu_ids $default_dts $bus_name
+	#generate_remoteproc_node $rpu_ids $default_dts $bus_name
+	#generate_tcm_nodes $rpu_ids $default_dts $bus_name
+	generate_mbox_nodes $rpu_info_list $default_dts $bus_name
+	#generate_ipi_mailbox_nodes $rpu_ids $default_dts $bus_name
 
 	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
 	foreach proc $proclist {
@@ -294,83 +297,97 @@ proc create_vcp_node {sub_node default_dts isp_id bus_name} {
 	set vcp_node [create_node -l visp_video_${isp_id} -n "visp_video_${isp_id}" -p $bus_name -d $default_dts]
 	add_prop "$vcp_node" "compatible" "xlnx,visp-video" string $default_dts
 	add_prop "$vcp_node" "status" "okay" string $default_dts
+	add_prop "$vcp_node" "id" $isp_id int $default_dts
 	return $vcp_node
 }
 
-#IO_MODE==2 (LIMO)
 proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
 	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
+
 	set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
 	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp}" -n "ports" -p $vcp_node -d $default_dts]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
-	set reg_counter 1
+
+	set reg_counter 0
 	set vcap_reg_counter 1
+	set port_addr_counter 0
+	set skip_default_port_creation 0  ;# Added flag
+
 	for {set iba 0} {$iba < $live_stream} {incr iba} {
+		set iba_mod [expr $iba % 4]
+
 		for {set j 0} {$j < 5} {incr j} {
 			set port_idx [expr $iba * 5 + $j]
-			if {$isp == 1 && $io_mode == 2 && $live_stream <= 2 && $port_idx % 5 == 0} {
+			set port_num $port_idx
+
+			# Special-case: ISP1 live_stream 1 or 2
+			if {$isp == 1 && $io_mode == 2 && $live_stream <= 2 && $port_idx % 5 == 0 && $iba == 0 && !$skip_default_port_creation} {
 				set iba_values {}
 				if {$live_stream == 1} {
 					lappend iba_values 4
-					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
 				} elseif {$live_stream == 2} {
 					lappend iba_values 4 3
-					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_values $tile
 				}
-				foreach iba $iba_values {
-					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
+				foreach iba_val $iba_values {
+					add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_val $tile
+					set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba_val}"
 					set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
-					visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
+					visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_addr_counter}" $port_addr_counter $visp_inip
+					incr port_addr_counter 5
 				}
-			} elseif {$port_idx % 5 == 0} {
-				add_iba_properties $drv_handle $sub_node $default_dts $isp $iba $tile
-				set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba}"
+				set skip_default_port_creation 1
+				continue
+			}
+
+			# Skip generic fallback IBA block if already handled special case
+			if {$skip_default_port_creation && $port_idx % 5 == 0} {
+				continue
+			}
+
+			# Fallback: IBA input port creation
+			if {$port_idx % 5 == 0} {
+				add_iba_properties $drv_handle $sub_node $default_dts $isp $iba_mod $tile
+				set visp_ip_name "TILE${tile}_ISP_MIPI_VIDIN${iba_mod}"
 				set visp_inip [find_valid_visp_inip $drv_handle $visp_ip_name]
-				visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_idx}" $visp_inip
-			} else {
-				if {$port_idx % 5 == 1} {
-					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
-					incr vcap_reg_counter
-					set endpoint_node_mp [create_node -n "endpoint" -l "visp_isp${isp_id}_port${tile}${isp}${iba}_mp" -p $port -d $default_dts]
-					add_prop "$endpoint_node_mp" "remote-endpoint" visp_video_${isp_id}_${iba}_0 reference $default_dts
-					add_prop "$endpoint_node_mp" "type" "output" string $default_dts
+				visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_addr_counter}" $port_addr_counter $visp_inip
+				incr port_addr_counter 5
 
-					set vcp_ports [create_node -n "v_port${tile}${isp}@${port_idx}" -p $vcap_ports_node -d $default_dts]
-					add_prop "$vcp_ports" "reg" $reg_counter int $default_dts
-					incr reg_counter
-					set vcp_endpoint_node_mp [create_node -n "endpoint" -l "visp_video_${isp_id}_${iba}_0"  -p $vcp_ports -d $default_dts]
-					add_prop "$vcp_endpoint_node_mp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_mp reference $default_dts
-				}
-				if {$port_idx % 5 == 2} {
-					set port [create_node -n "port${tile}${isp}@${port_idx}" -p $ports_node -d $default_dts]
-					add_prop "$port" "reg" $vcap_reg_counter int $default_dts
-					incr vcap_reg_counter
-					set endpoint_node_sp [create_node -n "endpoint" -l "visp_isp${isp_id}_port${tile}${isp}${iba}_sp"  -p $port -d $default_dts]
-					add_prop "$endpoint_node_sp" "remote-endpoint" visp_video_${isp_id}_${iba}_1 reference $default_dts
-					add_prop "$endpoint_node_sp" "type" "output" string $default_dts
+			} elseif {$port_idx % 5 == 1 || $port_idx % 5 == 2} {
+				# MP or SP output port creation
+				set type [expr {$port_idx % 5 == 1 ? "mp" : "sp"}]
+				set visp_label "visp_isp${isp_id}_port${tile}${isp}${iba_mod}_${type}"
+				set video_label "visp_video_${isp_id}_${iba_mod}_[expr {$type eq "mp" ? 0 : 1}]"
+				set vport_label "vport${tile}${isp}${port_idx}"
 
-					set vcp_ports1 [create_node -n "v_port${tile}${isp}@${port_idx}" -p $vcap_ports_node -d $default_dts]
-					add_prop "$vcp_ports1" "reg" $reg_counter int $default_dts
-					incr reg_counter
-					set vcp_endpoint_node_sp [create_node -n "endpoint" -l "visp_video_${isp_id}_${iba}_1"  -p $vcp_ports1 -d $default_dts]
-					add_prop "$vcp_endpoint_node_sp" "remote-endpoint" visp_isp${isp_id}_port${tile}${isp}${iba}_sp reference $default_dts
-				}
+				# VISP side
+				set port [create_node -l "port${tile}${isp}${port_idx}" -n "port@${port_num}" -p $ports_node -d $default_dts]
+				add_prop "$port" "reg" $port_num int $default_dts
+				set endpoint_node [create_node -n "endpoint" -l $visp_label -p $port -d $default_dts]
+				add_prop "$endpoint_node" "remote-endpoint" $video_label reference $default_dts
+				add_prop "$endpoint_node" "type" "output" string $default_dts
+
+				# Video side
+				set vcp_ports [create_node -l $vport_label -n "port@${reg_counter}" -p $vcap_ports_node -d $default_dts]
+				add_prop "$vcp_ports" "reg" $reg_counter int $default_dts
+				incr reg_counter
+
+				set vcp_endpoint [create_node -n "endpoint" -l $video_label -p $vcp_ports -d $default_dts]
+				add_prop "$vcp_endpoint" "remote-endpoint" $visp_label reference $default_dts
 			}
 		}
 	}
 }
-
 # IO_MODE==1 (LILO)
 proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
 	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
-	set port0 [create_node -n "port${tile}${isp}" -p $ports_node -d $default_dts]
+	set port0 [create_node -l "port${tile}${isp}" -n "port${tile}${isp}" -p $ports_node -d $default_dts]
 	add_prop "$port0" "reg" 1 int $default_dts
+	set port_addr_counter 0
 	set pin_name ""
 	if {$isp == 0} {
 		set pin_name "TILE${tile}_ISP_MIPI_VIDIN0"
@@ -382,7 +399,8 @@ proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 		return
 	}
 	set visp_inip [find_valid_visp_inip $drv_handle $pin_name]
-	visp_ss_inip_endpoints $drv_handle $ports_node $default_dts $sub_node_label $visp_inip
+	visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_addr_counter}" $port_addr_counter $visp_inip
+	incr port_addr_counter 5
 	set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "TILE${tile}_ISP${isp}_VIDOUT_PO"]
 	visp_ss_outip_endpoints $drv_handle $port0 $default_dts $sub_node_label $outip
 
@@ -404,7 +422,7 @@ proc isp_handle_condition {drv_handle tile isp io_mode live_stream isp_id defaul
 	}
 }
 
-proc visp_ss_inip_endpoints {drv_handle node default_dts sub visp_inip} {
+proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter visp_inip} {
 	global end_mappings
 	global remo_mappings
 	global port1_end_mappings
@@ -420,8 +438,9 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub visp_inip} {
 	global port2_broad_end_mappings
 	global broad_port2_remo_mappings
 
-	set port_node [create_node -n "port$sub" -l visp_ss_ports$sub$drv_handle -p $node -d $default_dts]
-	add_prop "$port_node" "reg" 0 int $default_dts 1
+	set port_node [create_node -n "port@$port_addr_counter" -l visp_ss_ports$sub$drv_handle -p $node -d $default_dts]
+	#add_prop "$port_node" "reg" 0 int $default_dts 1
+	add_prop "$port_node" "reg" $port_addr_counter int $default_dts 1
 	set len [llength $visp_inip]
 
 	if {$len > 1} {
@@ -721,7 +740,7 @@ proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip
 
 proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 	set bus_node [detect_bus_name $drv_handle]
-	set vcap [create_node -n "vcap_$sub_node_label" -p $bus_node -d $dts_file]
+	set vcap [create_node -n "vcap_$sub_node_label" -l vcap_$sub_node_label -p $bus_node -d $dts_file]
 	add_prop $vcap "compatible" "xlnx,video" string $dts_file
 	add_prop $vcap "dmas" "$outip 0" reference $dts_file
 	add_prop $vcap "dma-names" "port0" string $dts_file
@@ -739,7 +758,7 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 
 proc find_valid_visp_inip {drv_handle visp_ip_name} {
     set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
-    set valid_patterns "^(axis_broadcaster|axis_switch|mipi_.*)\$"
+    set valid_patterns "^(axis_broadcaster|axis_switch|.*mipi_.*)\$"
 
     # Check if any IP matches the valid patterns
     set visp_list [split $visp_inip " "]
@@ -991,25 +1010,67 @@ proc generate_tcm_nodes {rpu_ids default_dts bus_name} {
 	}
 }
 
-proc generate_mbox_nodes {rpu_ids default_dts bus_name} {
-    foreach rpu_id $rpu_ids {
+proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
+    # Map to collect compatible strings per rpu_id
+    array set compat_map {}
+
+    # Map rpu_id to child label (child0..child3)
+    array set rpu_to_child {
+        6 child0
+        7 child1
+        8 child2
+        9 child3
+    }
+
+    foreach rpu_info $rpu_info_list {
+        lassign $rpu_info rpu_id io_type
+
+        # Determine compatible string based on io_type
+        if {$io_type == 3} {
+            set compat_str "xlnx,mimo-mbox"
+        } elseif {$io_type == 1 || $io_type == 2} {
+            set compat_str "xlnx,mbox"
+        } else {
+            puts "Warning: Invalid io_type '$io_type' for RPU $rpu_id. Skipping mbox node creation."
+            continue
+        }
+
+        # Collect unique compatible strings per rpu_id
+        if {[info exists compat_map($rpu_id)]} {
+            if {[lsearch -exact $compat_map($rpu_id) $compat_str] == -1} {
+                lappend compat_map($rpu_id) $compat_str
+            }
+        } else {
+            set compat_map($rpu_id) [list $compat_str]
+        }
+    }
+
+    # Create one mbox node per rpu_id
+    foreach rpu_id [array names compat_map] {
         set mbox_label "visp_mbox_rpu_${rpu_id}"
         set mbox_name "visp_mbox_rpu_${rpu_id}"
-        # Create the mailbox node under the bus
+        set compat_list $compat_map($rpu_id)
+
+        puts "Creating mbox node for RPU $rpu_id with compatible: $compat_list"
+
         set mbox_node [create_node -l $mbox_label -n $mbox_name -p $bus_name -d $default_dts]
-        add_prop "$mbox_node" "compatible" "xlnx,mbox" string $default_dts
-        add_prop "$mbox_node" "rpu_id" "$rpu_id" int $default_dts
-        # Reference to the corresponding RPU node
-        add_prop "$mbox_node" "isp,rproc" "<&r52f_${rpu_id}>" noformating $default_dts
-        # Set mailbox properties dynamically
-        set mboxes "<&ipi_mailbox_rpu${rpu_id} 0>, <&ipi_mailbox_rpu${rpu_id} 1>"
-        add_prop "$mbox_node" "mboxes" $mboxes noformating $default_dts
-		# Define mbox-names properly as a list
-        set mbox_names [list "tx" "rx"]
-        add_prop "$mbox_node" "mbox-names" $mbox_names stringlist $default_dts
+        add_prop "$mbox_node" "compatible" $compat_list stringlist $default_dts
+        add_prop "$mbox_node" "rpu_id" $rpu_id int $default_dts
+        add_prop "$mbox_node" "mbox-names" [list "tx" "rx"] stringlist $default_dts
         add_prop "$mbox_node" "status" "okay" string $default_dts
+
+        # Add mboxes property referencing the correct child node
+        if {[info exists rpu_to_child($rpu_id)]} {
+            set child_label $rpu_to_child($rpu_id)
+            #add_prop "$mbox_node" "mboxes" "<&${child_label} 0>, <&${child_label} 1>" noformating $default_dts
+        } else {
+            puts "Warning: No child label mapping found for rpu_id=$rpu_id. Skipping mboxes property."
+        }
+
+        #add_prop "$mbox_node" "memory-region" "<&isp_mbox_buffer>" noformating $default_dts
     }
 }
+
 
 proc generate_ipi_mailbox_nodes {rpu_ids default_dts bus_name} {
     set ipi_node [create_node -n "ipi_nobuf1" -p $bus_name -d $default_dts]

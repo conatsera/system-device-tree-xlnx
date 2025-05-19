@@ -3,7 +3,7 @@
 # Based on original code:
 # (C) Copyright 2007-2014 Michal Simek
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # Michal SIMEK <monstr@monstr.eu>
 #
@@ -42,7 +42,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axi_bram_ctrl" "axi_bram"
 	dict set ::sdtgen::namespacelist "lmb_bram_if_cntlr" "axi_bram"
 	dict set ::sdtgen::namespacelist "can" "axi_can"
-	dict set ::sdtgen::namespacelist "canfd" "axi_can"
+	dict set ::sdtgen::namespacelist "canfd" "canfd"
 	dict set ::sdtgen::namespacelist "axi_cdma" "axi_cdma"
 	dict set ::sdtgen::namespacelist "clk_wiz" "axi_clk_wiz"
 	dict set ::sdtgen::namespacelist "clkx5_wiz" "axi_clk_wiz"
@@ -59,7 +59,9 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ethernet_1_10_25g" "axi_ethernet"
 	dict set ::sdtgen::namespacelist "usxgmii" "axi_ethernet"
 	dict set ::sdtgen::namespacelist "axi_gpio" "axi_gpio"
+	dict set ::sdtgen::namespacelist "axi_hwicap" "axi_hwicap"
 	dict set ::sdtgen::namespacelist "axi_iic" "axi_iic"
+	dict set ::sdtgen::namespacelist "axi_i3c" "axi_i3c"
 	dict set ::sdtgen::namespacelist "axi_mcdma" "axi_mcdma"
 	dict set ::sdtgen::namespacelist "axi_pcie" "axi_pcie"
 	dict set ::sdtgen::namespacelist "axi_pcie3" "axi_pcie"
@@ -77,8 +79,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "axi_vdma" "axi_vdma"
 	dict set ::sdtgen::namespacelist "xadc_wiz" "axi_xadc"
 	dict set ::sdtgen::namespacelist "system_management_wiz" "sysmon"
-	dict set ::sdtgen::namespacelist "psu_canfd" "canfdps"
-	dict set ::sdtgen::namespacelist "psv_canfd" "canfdps"
+	dict set ::sdtgen::namespacelist "psu_canfd" "canfd"
+	dict set ::sdtgen::namespacelist "psv_canfd" "canfd"
 	dict set ::sdtgen::namespacelist "ps7_can" "canps"
 	dict set ::sdtgen::namespacelist "psu_can" "canps"
 	dict set ::sdtgen::namespacelist "psv_can" "canps"
@@ -211,7 +213,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psx_psm" "pmups"
 	dict set ::sdtgen::namespacelist "psm" "pmups"
 	dict set ::sdtgen::namespacelist "dfx_decoupler" "pr_decoupler"
-	dict set ::sdtgen::namespacelist "prc dfx_controller" "prc"
+	dict set ::sdtgen::namespacelist "dfx_controller" "prc"
 	dict set ::sdtgen::namespacelist "psu_ocm_ram_0" "psu_ocm"
 	dict set ::sdtgen::namespacelist "psv_ocm_ram_0" "psu_ocm"
 	dict set ::sdtgen::namespacelist "ptp_1588_timer_syncer" "ptp_1588_timer_syncer"
@@ -245,7 +247,10 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "slv1_psv_pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "slv2_psv_pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "slv3_psv_pmc_sysmon" "sysmonpsv"
+	dict set ::sdtgen::namespacelist "pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "axi_timer" "tmrctr"
+	dict set ::sdtgen::namespacelist "tmr_manager" "tmr_manager"
+	dict set ::sdtgen::namespacelist "tmr_inject" "tmr_inject"
 	dict set ::sdtgen::namespacelist "tsn_endpoint_ethernet_mac" "tsn"
 	dict set ::sdtgen::namespacelist "ps7_ttc" "ttcps"
 	dict set ::sdtgen::namespacelist "psu_ttc" "ttcps"
@@ -280,8 +285,8 @@ proc init_proclist {} {
 
 	dict set ::sdtgen::namespacelist "psx_apm" "apmps"
 	dict set ::sdtgen::namespacelist "apm" "apmps"
-	dict set ::sdtgen::namespacelist "psx_canfd" "canfdps"
-	dict set ::sdtgen::namespacelist "canfd" "canfdps"
+	dict set ::sdtgen::namespacelist "psx_canfd" "canfd"
+	dict set ::sdtgen::namespacelist "canfd" "canfd"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_adma" "dmaps"
 	dict set ::sdtgen::namespacelist "adma" "dmaps"
@@ -325,6 +330,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "dfx_axi_shutdown_manager" "dfx_axi_shutdown_manager"
 	dict set ::sdtgen::namespacelist "mmi_dc" "axi_mmi_dc"
 	dict set ::sdtgen::namespacelist "mmi_udh_dp" "axi_mmi_dptx"
+	dict set ::sdtgen::namespacelist "mmi_usb_cfg" "mmi_usb"
 }
 
 proc Pop {varname {nth 0}} {
@@ -359,10 +365,10 @@ proc print_usage args {
 proc set_sdt_default_repo {} {
 	global env
 	variable ::sdtgen::loader_path
-	if { ![info exists ::env(REPO)] } {
-		set env(REPO) [file dirname [file dirname [file dirname $::sdtgen::loader_path]]]
+	if { ![info exists ::env(CUSTOM_SDT_REPO)] } {
+		set env(CUSTOM_SDT_REPO) [file dirname [file dirname [file dirname $::sdtgen::loader_path]]]
 	}
-	return $env(REPO)
+	return $env(CUSTOM_SDT_REPO)
 }
 
 proc set_dt_param args {
@@ -399,12 +405,12 @@ proc set_dt_param args {
 					if {[string tolower [file extension $board_dts_file]] eq ".dtsi"} {
 						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
 					}
-					set env(board) $board_dts_file
+					set env(sdt_board_dts) $board_dts_file
 				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
                                 -dir {set env(dir) [Pop args 1]}
-                                -repo {set env(REPO) [Pop args 1]}
+                                -repo {set env(CUSTOM_SDT_REPO) [Pop args 1]}
                                 -zocl {set env(zocl) [Pop args 1]}
                                 -user_dts {set env(user_dts) [Pop args 1]}
                                 -include_dts {set env(user_dts) [Pop args 1]}
@@ -433,12 +439,12 @@ proc get_dt_param args {
                } -rm_xsa {
                      if {[catch {set val $env(rm_xsa)} msg ]} {}
                } -repo {
-                        if {[catch {set val $env(REPO)} msg ]} {
+                        if {[catch {set val $env(CUSTOM_SDT_REPO)} msg ]} {
                                 set val [set_sdt_default_repo]
                        }
                } -board -
                  -board_dts {
-                       if {[catch {set val $env(board)} msg ]} {}
+                       if {[catch {set val $env(sdt_board_dts)} msg ]} {}
                } -mainline_kernel {
                        if {[catch {set val $env(kernel)} msg ]} {}
                } -kernel_ver {
@@ -694,20 +700,20 @@ proc gen_sata_laneinfo {} {
 
 proc gen_include_headers {} {
 	global env
-	set common_file "$env(REPO)/device_tree/data/config.yaml"
+	set common_file "$env(CUSTOM_SDT_REPO)/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
-	set includes_dir [file normalize "$env(REPO)/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
+	set includes_dir [file normalize "$env(CUSTOM_SDT_REPO)/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
 	set dir_path [get_user_config $common_file -dir]
 	# Copy full include directory to dt WS
 	if {[file exists $includes_dir]} {
-		file delete -force -- $dir_path/include
+		file delete -force $dir_path/include
 		file copy -force $includes_dir $dir_path
 	}
 }
 
 proc include_custom_dts {} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	# Windows treats an empty env variable as not defined
 	if {[catch {set user_dts $env(user_dts)} msg]} {
 		set user_dts ""
@@ -962,6 +968,9 @@ proc gen_pss_ref_clk_freq {drv_handle node ip_name} {
 		}
 	}
 	if {![string_is_empty $pss_ref_clk_mhz]} {
+		if {[llength [split $pss_ref_clk_mhz "."]] > 1} {
+			set pss_ref_clk_mhz [scan [expr $pss_ref_clk_mhz * 1000000] %d]
+		}
 	        add_prop $node "xlnx,pss-ref-clk-freq" $pss_ref_clk_mhz int "pcw.dtsi"
 	}
 }
@@ -969,21 +978,22 @@ proc gen_pss_ref_clk_freq {drv_handle node ip_name} {
 proc gen_board_info {} {
 	global env
 	global is_versal_net_platform
-	global is_versal_gen2_platform
-	set path $env(REPO)
+	global is_versal_2ve_2vm_platform
+	set path $env(CUSTOM_SDT_REPO)
 	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
 	set kernel_ver [get_user_config $common_file -kernel_ver]
 	set dtsi_file [get_user_config $common_file -board_dts]
 	set dir_path [get_user_config $common_file -dir]
 	set device [hsi get_property DEVICE [hsi::current_hw_design]]
+	set ddr5_handle [hsi::get_cells -hier -filter {IP_NAME==noc_mc_ddr5}]
 	add_prop "root" "device_id" "${device}" string $default_dts
 
 	set family [get_hw_family]
 	switch $family {
 		"versal" {
-			if {$is_versal_gen2_platform} {
-				set family "VersalGen2"
+			if {$is_versal_2ve_2vm_platform} {
+				set family "Versal_2VE_2VM"
 			} elseif {$is_versal_net_platform} {
 				set family "VersalNet"
 			} else {
@@ -1006,10 +1016,25 @@ proc gen_board_info {} {
 	}
 	add_prop "root" "family" "${family}" string $default_dts
 
+	if {[llength $ddr5_handle] > 0} {
+	   foreach ddr5_cell $ddr5_handle {
+		   set ddr_type [hsi::get_property CONFIG.DDRMC5_DEVICE_TYPE $ddr5_cell]
+		   if {$ddr_type eq "RDIMMs" || $ddr_type eq "UDIMMs"} {
+			   add_prop "root" "xlnx,ddrmc5-device-type" $ddr_type string $default_dts
+			   break
+                   }
+	   }
+	}
+
 	if {[hsi get_current_part] != ""} {
 		set slrcount [common::get_property NUM_OF_SLRS [hsi get_current_part]]
 		if {$slrcount != -1} {
 			add_prop "root" "slrcount" $slrcount int $default_dts
+		}
+		set speed_grade [common::get_property SPEEDGRADE [hsi current_hw_design]]
+		regsub -all {^-} $speed_grade {} speed_grade
+		if {$speed_grade != ""} {
+			add_prop "root" "speed_grade" "${speed_grade}" string $default_dts
 		}
 	}
 	set sem_mem_scan [get_sem_property CONFIG.SEM_MEM_SCAN]
@@ -1045,89 +1070,29 @@ proc gen_board_info {} {
 	}
 	set dts_name $dtsi_file
 
-	set include_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/include"]
-	set include_list "include*"
-	set gpio_list "gpio.h"
-	set intr_list "irq.h"
-	set phy_list  "phy.h"
-	set input_list "input.h"
-	set pinctrl_list "pinctrl-zynqmp.h"
-    set tidp_list "ti-dp83867.h"
-	set gpiodir "$dir_path/include/dt-bindings/gpio"
-	set phydir "$dir_path/include/dt-bindings/phy"
-	set intrdir "$dir_path/include/dt-bindings/interrupt-controller"
-	set inputdir "$dir_path/include/dt-bindings/input"
-	set pinctrldir "$dir_path/include/dt-bindings/pinctrl"
-    set tidpdir "$dir_path/include/dt-bindings/net"
-	file mkdir $phydir
-	file mkdir $gpiodir
-	file mkdir $intrdir
-	file mkdir $inputdir
-	file mkdir $pinctrldir
-    file mkdir $tidpdir
-	if {[file exists $include_dtsi]} {
-		foreach file [glob [file normalize [file dirname ${include_dtsi}]/*/*/*/*]] {
-			if {[string first $gpio_list $file] != -1} {
-				file copy -force $file $gpiodir
-			} elseif {[string first $phy_list $file] != -1} {
-				file copy -force $file $phydir
-			} elseif {[string first $intr_list $file] != -1} {
-				file copy -force $file $intrdir
-			} elseif {[string first $input_list $file] != -1} {
-				file copy -force $file $inputdir
-			} elseif {[string first $pinctrl_list $file] != -1} {
-				file copy -force $file $pinctrldir
-            } elseif {[string first $tidp_list $file] != -1} {
-                    file copy -force $file $tidpdir
-			}
-		}
-	}
-	if {[string match -nocase $dts_name "template"]} {
-		return
-	}
 	if {[llength $dts_name] == 0} {
 		return
 	}
-	set mainline_ker [get_user_config $common_file -mainline_kernel]
-	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
-	if {[lsearch $valid_mainline_kernel_list $mainline_ker] >= 0 } {
-		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${mainline_ker}/board"]
-		if {[file exists $mainline_dtsi]} {
-			set mainline_board_file 0
-			foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/board/*]] {
-				set dtsi_name "$dts_name.dtsi"
-				# NOTE: ./ works only if we did not change our directory
-				if {[regexp $dtsi_name $file match]} {
-					file copy -force $file $dir_path
-					update_system_dts_include [file tail $file]
-					set mainline_board_file 1
-				}
+
+	set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
+	if {[file exists $kernel_dtsi]} {
+		set valid_board_file 0
+		foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
+			set dtsi_name "$dts_name.dtsi"
+			# NOTE: ./ works only if we did not change our directory
+			if {[regexp $dtsi_name $file match]} {
+				file copy -force $file $dir_path
+				update_system_dts_include [file tail $file]
+				set valid_board_file 1
+				gen_include_dtfile "${file}" "${dir_path}"
+				break
 			}
-			if {$mainline_board_file == 0} {
-				error "Error:$dtsi_name board file is not present in DTG. Please add a vaild board."
-			}
+		}
+		if {$valid_board_file == 0} {
+			error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
 		}
 	} else {
-		set kernel_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${kernel_ver}/BOARD"]
-		if {[file exists $kernel_dtsi]} {
-			set valid_board_file 0
-			foreach file [glob [file normalize [file dirname ${kernel_dtsi}]/BOARD/*]] {
-				set dtsi_name "$dts_name.dtsi"
-				# NOTE: ./ works only if we did not change our directory
-				if {[regexp $dtsi_name $file match]} {
-					file copy -force $file $dir_path
-					update_system_dts_include [file tail $file]
-					set valid_board_file 1
-					gen_include_dtfile "${file}" "${dir_path}"
-					break
-				}
-			}
-			if {$valid_board_file == 0} {
-				error "Error:$dtsi_name board file is not present in DTG. Please add a valid board."
-			}
-		} else {
-			puts "File not found\n\r"
-		}
+		puts "$kernel_dtsi folder is not found"
 	}
 }
 
@@ -1261,20 +1226,14 @@ proc gen_opp_freq {} {
 			if {[lsearch -nocase $avail_param "CONFIG.PSU__CRF_APB__ACPU_CTRL__FREQMHZ"] >= 0} {
 				set act_freq ""
 				set div ""
-				set freq [hsi get_property CONFIG.PSU__CRF_APB__ACPU_CTRL__FREQMHZ [hsi get_cells -hier $periph]]
-				if {[string match -nocase $freq "1200"]} {
-					# This is the default value set, so no need to calcualte
-					return
-				}
 				if {[lsearch -nocase $avail_param "CONFIG.PSU__CRF_APB__ACPU_CTRL__ACT_FREQMHZ"] >= 0} {
 					set act_freq [hsi get_property CONFIG.PSU__CRF_APB__ACPU_CTRL__ACT_FREQMHZ [hsi get_cells -hier $periph]]
-					set act_freq [expr $act_freq * 1000000]
 				}
 				if {[lsearch -nocase $avail_param "CONFIG.PSU__CRF_APB__ACPU_CTRL__DIVISOR0"] >= 0} {
 					set div [hsi get_property CONFIG.PSU__CRF_APB__ACPU_CTRL__DIVISOR0 [hsi get_cells -hier $periph]]
 				}
 				if {[llength $act_freq] && [llength $div]} {
-					set opp_freq  [expr $act_freq * $div]
+					set opp_freq [expr ceil([expr ($act_freq * $div) ]) * 1000000]
 				}
 				# if design don't have clock configs then skip adding new opps
 				if {$opp_freq == ""} {
@@ -1525,6 +1484,7 @@ proc generate_sdt args {
 	global baseaddr_dict
 	global highaddr_dict
 	global processor_ip_list
+	global 64_bit_processor_list
 	global linear_spi_list
 	global cur_hw_iss_data
 	global non_val_list
@@ -1545,9 +1505,9 @@ Generates system device tree based on args given in:
 
 	global env
 	set path [set_sdt_default_repo]
-	if {[catch {set path $env(REPO)} msg]} {
+	if {[catch {set path $env(CUSTOM_SDT_REPO)} msg]} {
 		set path "."
-		set env(REPO) $path
+		set env(CUSTOM_SDT_REPO) $path
 	}
 	if {[catch {set debug $env(debug)} msg]} {
 		set env(debug) "disable"
@@ -1626,8 +1586,9 @@ Generates system device tree based on args given in:
 	set peri_list [move_match_elements_to_top $peri_list "clk_wizard"]
 	set peri_list [move_match_elements_to_top $peri_list "clkx5_wiz"]
 
-	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR && IP_NAME != "tmr_inject"}]
 	set processor_ip_list [list]
+	set 64_bit_processor_list [list]
 	set is_64_bit_mb 0
 
 	# TODO: Consolidate this.
@@ -1657,7 +1618,7 @@ Generates system device tree based on args given in:
 	get_pl_ip_list
 
 	# Generate properties only once if different instances of the same IP is 
-	# having a common base address. (e.g. mailbox connected to muliple 
+	# having a common base address. (e.g. tmr_inject connected to muliple
 	# microblazes). This is to avoid the duplicate node name dtc compilation 
 	# error.
 
@@ -1693,7 +1654,7 @@ Generates system device tree based on args given in:
 			set skip1 1
 		}
 		if {[lsearch -nocase $non_val_ip_types $ip_type] >= 0 &&
-		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1} {
+		    [lsearch -nocase $monitor_ip_exclusion_list $ip_name] == -1 && ![string match -nocase $ip_name "tmr_inject"]} {
 			set skip1 1
 		}
 		if {[string match -nocase $ip_name "gmii_to_rgmii"]} {
@@ -1702,7 +1663,7 @@ Generates system device tree based on args given in:
 		if { [dict exists $dup_periph_handle $drv_handle] } {
 			set skip1 1
 		}
-		if { [string_is_empty [get_baseaddr ${drv_handle}]] } {
+		if { [string_is_empty [get_baseaddr ${drv_handle}]] && ![string match -nocase $ip_name "mailbox"] } {
 			set skip1 1
 			lappend no_reg_drv_handle ${drv_handle}
 		}
@@ -1880,7 +1841,7 @@ proc delete_tree {dttree head} {
 		} else {
 			foreach amba_cchild $amba_childs {
 				set val [$dttree getall $amba_cchild]
-				if {[string match -nocase $val ""]} {
+				if {[string match -nocase $val ""] && [string_is_empty [$dttree children $amba_cchild]]} {
 					$dttree delete $amba_cchild
 				}
 			}
@@ -1943,6 +1904,7 @@ proc proc_mapping {} {
 	global is_versal_net_platform
 	global linear_spi_list
 	global monitor_ip_exclusion_list
+	global 64_bit_processor_list
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -2044,6 +2006,12 @@ proc proc_mapping {} {
 			if {$ipname == "visp_ss"} {
 				continue
 			}
+			if {$ipname == "mutex"} {
+				continue
+			}
+			if {$ipname == "mailbox"} {
+				continue
+			}
 			if {$ipname in {"tsn_endpoint_ethernet_mac_block"}} {
 				continue
 			}
@@ -2053,6 +2021,12 @@ proc proc_mapping {} {
 			set base [get_baseaddr $periph "" $val]
 			set high [get_highaddr $periph "" $val]
 			set mem_size [format 0x%x [expr {${high} - ${base} + 1}]]
+			if {([regexp -nocase {0x([0-9a-f]{9})} "$base" match] || \
+				[regexp -nocase {0x([0-9a-f]{9})} "$mem_size" match]) && \
+				!($val in $64_bit_processor_list)} {
+					continue
+			}
+
 			if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
                             set addr_64 "1"
                             set temp $base
@@ -2174,7 +2148,7 @@ proc proc_mapping {} {
 
 proc add_skeleton {} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 
 	set common_file "$path/device_tree/data/config.yaml"
 
@@ -2265,7 +2239,7 @@ proc update_memory_node {} {
 
 proc gen_cpu_cluster {} {
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	global mb_dict_64_bit
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
@@ -2355,7 +2329,7 @@ proc gen_cpu_cluster {} {
     		set r5_cores 2
     		if { $is_versal_net_platform } {
     			set r5_cores 4
-			if { $is_versal_gen2_platform } {
+			if { $is_versal_2ve_2vm_platform } {
 				set r5_cores 10
 			}
     		}
@@ -2566,7 +2540,7 @@ proc update_cpu_node {} {
 	# proper cpu listing for linux, the extra cpu nodes from static files have to be
 	# deleted. In order to remove these nodes, all the references corresponding to
 	# these nodes also have to be removed. Removing all the existing references is a
-	# challenge and error prone. Platforms like Versal Net and Versal Gen2 with A78
+	# challenge and error prone. Platforms like Versal Net and Versal_2VE_2VM with A78
 	# processors have clusters and the node name is not easy to decode. It would
 	# involve complicated logic to remove cpu nodes along with all its references.
 	# Popular known use case is only for ZYNQMP CG devices and DTG contains
@@ -2586,15 +2560,26 @@ proc update_cpu_node {} {
 		set cpu_node [create_node -n $delete_node_label -d "system-top.dts" -p root]
 		for {set i $len_apu_cores_in_design} {$i < 4} {incr i} {
 			add_prop $delete_node_label "/delete-node/ cpu@$i" boolean "system-top.dts"
+			add_prop root "/delete-node/ &psu_cortexa53_${i}_debug;" boolean "pcw.dtsi"
     		}
 		# Update the existing interrupt-affinity property of pmu node that contains apu references.
 		set intr_affinity ""
+		set cpu_cooling_maps ""
 		set pmu_node [create_node -n pmu -d "system-top.dts" -p root]
 		for {set i 0} {$i < $len_apu_cores_in_design} {incr i} {
 			append intr_affinity "<&psu_cortexa53_$i>, "
+			append cpu_cooling_maps "<&psu_cortexa53_$i THERMAL_NO_LIMIT THERMAL_NO_LIMIT>, "
 		}
 		set intr_affinity [string trimright $intr_affinity ", "]
 		add_prop $pmu_node "interrupt-affinity" $intr_affinity noformating "system-top.dts"
+
+		# Update the existing cooling-device property of thermal-zones that contains apu references.
+		set cpu_cooling_maps [string trimright $cpu_cooling_maps ", "]
+		set thermal_zone_node [create_node -n thermal-zones -d $default_dts -p root]
+		set apu_thermal_node [create_node -n apu-thermal -d $default_dts -p $thermal_zone_node]
+		set cooling_maps_node [create_node -n cooling-maps -d $default_dts -p $apu_thermal_node]
+		set maps_node [create_node -n map -d $default_dts -p $cooling_maps_node]
+		add_prop $maps_node "cooling-device" $cpu_cooling_maps noformating $default_dts
 	}
 }
 
@@ -2602,7 +2587,7 @@ proc update_alias {} {
 	global is_versal_net_platform
 	global dup_periph_handle
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set mainline_ker [get_user_config $common_file -mainline_kernel]
 	set valid_mainline_kernel_list "v4.17 v4.18 v4.19 v5.0 v5.1 v5.2 v5.3 v5.4"
@@ -2743,7 +2728,7 @@ proc update_alias {} {
 
 proc gen_xppu {drv_handle} {
 	global env
-	set path $env(REPO)
+	set path $env(CUSTOM_SDT_REPO)
 	set common_file "$path/device_tree/data/config.yaml"
 	set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
 	set node [get_node $drv_handle]
@@ -4166,9 +4151,9 @@ proc gen_xppu {drv_handle} {
 proc gen_power_domains {drv_handle} {
         global env
         global is_versal_net_platform
-        global is_versal_gen2_platform
+        global is_versal_2ve_2vm_platform
 
-        set path $env(REPO)
+        set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
         set ip [hsi get_property IP_NAME [hsi::get_cells -hier $drv_handle]]
         set node [get_node $drv_handle]
@@ -4178,7 +4163,7 @@ proc gen_power_domains {drv_handle} {
 
         if {[string match -nocase $family "versal"] && [is_ps_ip $drv_handle]} {
 		if { $is_versal_net_platform } {
-			if { $is_versal_gen2_platform } {
+			if { $is_versal_2ve_2vm_platform } {
 				return
 			}
 			set firmware_name "versal_net_firmware"

@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -15,13 +15,13 @@
 proc cpu_cortexa78_generate {drv_handle} {
 	global dtsi_fname
 	global is_versal_net_platform
-	global is_versal_gen2_platform
+	global is_versal_2ve_2vm_platform
 	global platform_filename ""
 	set bus_name "amba"
 	set fields [split [get_ip_property $drv_handle NAME] "_"]
 	set cpu_nr [lindex $fields end]
 	if { $is_versal_net_platform } {
-		if {$is_versal_gen2_platform} {
+		if {$is_versal_2ve_2vm_platform} {
 			set platform_filename "versal2"
             update_system_dts_include [file tail "${platform_filename}-clk-ccf.dtsi"]
 			set cpu_node [create_node -n "&cortexa78_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
@@ -34,7 +34,7 @@ proc cpu_cortexa78_generate {drv_handle} {
 		update_system_dts_include [file tail ${dtsi_fname}]
 	}
 	if {[string_is_empty $platform_filename]} {
-		error "Invalid board family for A78. Only Versal-Net and Versal-Gen2 are supported."
+		error "Invalid board family for A78. Only Versal-Net and Versal_2VE_2VM platforms are supported."
 	}
 
 	set ip_name [get_ip_property $drv_handle IP_NAME]
@@ -45,4 +45,7 @@ proc cpu_cortexa78_generate {drv_handle} {
 	gen_drv_prop_from_ip $drv_handle
 	gen_pss_ref_clk_freq $drv_handle $cpu_node $ip_name
 	set amba_node [create_node -n "&${bus_name}" -d "pcw.dtsi" -p root]
+
+	global 64_bit_processor_list
+	lappend 64_bit_processor_list $drv_handle
 }
