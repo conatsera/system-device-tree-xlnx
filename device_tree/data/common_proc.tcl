@@ -787,7 +787,7 @@ proc write_value {type value} {
                         puts "unknown type $type"
                 }
         } {error}]} {
-		puts $error
+		dtg_warning $error
                 set val "\"$value\""
         }
         return $val
