@@ -326,6 +326,7 @@ proc remove_duplicate_addr args {
 			continue
 		}
 		if { $periph_addr ne "" && [is_ps_ip $drv_handle] != 1 && [lsearch $non_val_list $ip_name] < 0 } {
+			set periph_addr [format "0x%lx" $periph_addr]
 			if { [dict exists $addr_dict $periph_addr $ip_name] } {
 				dict set dup_periph_handle $drv_handle [dict get $addr_dict $periph_addr $ip_name]
 			} else {
