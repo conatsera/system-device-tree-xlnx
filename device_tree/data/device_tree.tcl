@@ -1933,7 +1933,11 @@ proc proc_mapping {} {
 			}
 		}
 		#puts "$val: [time {
-		set periph_list [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]
+		# When get_mem_ranges output of a processor is a nested list and is too large,
+		# after certain number of elements, a ... is observed in the output.
+		# Add a join statement to avoid such behavior.
+		set periph_list [join [hsi::get_mem_ranges -of_objects [hsi::get_cells -hier $val]]]
+
 		set hier_mapped_list [::struct::set intersect $periph_list $hier_periph_list]
 		foreach entry $hier_mapped_list {
 			set hier_mem_filter \
@@ -1953,6 +1957,12 @@ proc proc_mapping {} {
 			# proc.
 			set ip_type [get_ip_property [hsi::get_cells -hier $periph] IP_TYPE]
 			set ipname [get_ip_property [hsi::get_cells -hier $periph] IP_NAME]
+
+			# Do not process memory object if the corresponding cell object doesnt have the IP NAME
+			if {[string_is_empty $ipname]} {
+				continue
+			}
+
 			if {[lsearch $overall_periph_list $periph] < 0 || \
 				([string match -nocase $ip_type "MONITOR"] && \
 					!($ipname in $monitor_ip_exclusion_list))} {
