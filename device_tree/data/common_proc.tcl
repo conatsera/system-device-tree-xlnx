@@ -3337,6 +3337,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f19a8000 label i3c6
 				dict set def_ps_mapping f19b0000 label i2c7
 				dict set def_ps_mapping f19b8000 label i3c7
+				dict set def_ps_mapping f1000000 label i2c8
+				dict set def_ps_mapping f1008000 label i3c8
 				dict set def_ps_mapping f0300000 label iomodule0
 				dict set def_ps_mapping ebe80000 label asu_iomodule0
 				dict set def_ps_mapping f1010000 label ospi
