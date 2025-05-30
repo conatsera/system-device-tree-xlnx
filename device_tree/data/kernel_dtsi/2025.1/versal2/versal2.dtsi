@@ -262,6 +262,7 @@
 		i2c5 = &i2c5;
 		i2c6 = &i2c6;
 		i2c7 = &i2c7;
+		i2c8 = &i2c8;
 		spi0 = &ospi;
 		spi1 = &qspi;
 		spi2 = &spi0;
@@ -994,6 +995,14 @@
 			interrupts = <0 102 0x04>;
 		};
 
+		i2c8: i2c@f1000000 {
+			compatible = "cdns,i2c-r1p14";
+			status = "disabled";
+			reg = <0 0xf1000000 0 0x1000>;
+			interrupt-parent = <&imux>;
+			interrupts = <0 203 4>;
+		};
+
 		i3c0: i3c@f1948000 {
 			compatible = "snps,dw-i3c-master-1.00a";
 			status = "disabled";
@@ -1072,6 +1081,16 @@
 			reg = <0 0xf19b8000 0 0x1000>;
 			interrupt-parent = <&imux>;
 			interrupts = <0 102 4>;
+		};
+
+		i3c8: i3c@f1008000 {
+			compatible = "snps,dw-i3c-master-1.00a";
+			status = "disabled";
+			#address-cells = <3>;
+			#size-cells = <0>;
+			reg = <0 0xf1008000 0 0x1000>;
+			interrupt-parent = <&imux>;
+			interrupts = <0 203 4>;
 		};
 
 		iomodule0: iomodule@f0300000 {
