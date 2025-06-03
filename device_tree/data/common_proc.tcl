@@ -6272,6 +6272,18 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 	if {[string_is_empty $dev_type] == 1} {
 		set ps_mapping [gen_ps_mapping]
 		if {[catch {set tmp [dict get $ps_mapping $unit_addr label]} msg] || [is_pl_ip $drv_handle]} {
+			#In a use case, a pl_ip is labelled similar to an existing one in a dtsi file. This leads to a
+			#duplicate node issue and sdtgen fails because of that. Hence add a check to append pl_ips
+			#labels properly to avoid such issues.
+			if {[is_pl_ip $drv_handle]} {
+				foreach {base_addr entry} $ps_mapping {
+					if {[dict exists $entry label]&& \
+						[lindex [split [dict get $entry label] ": "] 0]==$drv_handle} {
+						set label "pl_$drv_handle"
+						break
+					}
+				}
+			}
 			set dev_type [get_ip_property $ip IP_NAME]
 			set hier_name [get_ip_property $ip HIER_NAME]
 			if {![string_is_empty $hier_name] && [llength [split $hier_name "/"]] > 1} {
