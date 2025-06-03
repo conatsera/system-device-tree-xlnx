@@ -19,7 +19,6 @@
                 return
         }
         set dts_file [set_drv_def_dts $drv_handle]
-        pldt append $node compatible "\ \, \"xlnx,v-tc-6.1\""
         pldt append $node compatible "\ \, \"xlnx,bridge-v-tc-6.1\""
         set generate_en [hsi get_property CONFIG.C_GENERATE_EN [hsi::get_cells -hier $drv_handle]]
         if {$generate_en == 1} {

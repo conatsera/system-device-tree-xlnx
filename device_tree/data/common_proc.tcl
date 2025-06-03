@@ -326,6 +326,7 @@ proc remove_duplicate_addr args {
 			continue
 		}
 		if { $periph_addr ne "" && [is_ps_ip $drv_handle] != 1 && [lsearch $non_val_list $ip_name] < 0 } {
+			set periph_addr [format "0x%lx" $periph_addr]
 			if { [dict exists $addr_dict $periph_addr $ip_name] } {
 				dict set dup_periph_handle $drv_handle [dict get $addr_dict $periph_addr $ip_name]
 			} else {
@@ -3336,6 +3337,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f19a8000 label i3c6
 				dict set def_ps_mapping f19b0000 label i2c7
 				dict set def_ps_mapping f19b8000 label i3c7
+				dict set def_ps_mapping f1000000 label i2c8
+				dict set def_ps_mapping f1008000 label i3c8
 				dict set def_ps_mapping f0300000 label iomodule0
 				dict set def_ps_mapping ebe80000 label asu_iomodule0
 				dict set def_ps_mapping f1010000 label ospi
