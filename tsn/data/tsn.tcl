@@ -44,7 +44,9 @@
 	}
         set num_priorites [hsi get_property CONFIG.NUM_PRIORITIES $eth_ip]
         if {$num_priorites > 3} {
-            for {set i 0} {$i < $num_priorites} {incr i} {
+            set start_i [expr {8 - $num_priorites}]
+            for {set i $start_i} {$i < 8} {incr i} {
+                set j [expr {$i - $start_i}]
                 set connected_ip [get_connected_stream_ip $eth_ip "tx_axis_pri_$i"]
                 set connected_intf [get_connected_intf $eth_ip "tx_axis_pri_$i"]
                 # Extract number from M05_AXIS (M followed by digits)
@@ -80,7 +82,7 @@
                         set connectrx_ip [lappend connectrx_ip $connect_ip]
                     }
                 }
-                set queue_channel_map($i) "$channel_type:$channel"
+                set queue_channel_map($j) "$channel_type:$channel"
             }
         }
         if {$num_priorites <= 3} {
