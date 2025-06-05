@@ -116,9 +116,9 @@ proc dp_txss14_generate {drv_handle} {
 					set index [lsearch $links $stream_name]
 					append phy_names " dp-phy$index"
 					if {$index == 0} {
-						set phys "${link_data_inst}txphy_lane$index 0 1 1 0"
+						set phys "${link_data_inst}txphy_lane$index 0 1 1 1"
 					} else {
-						append phys " <&${link_data_inst}txphy_lane$index 0 1 1 0"
+						append phys " <&${link_data_inst}txphy_lane$index 0 1 1 1"
 					}
 					if {$index != [expr {[llength $links] - 1}]} {
 						append phys ">,"

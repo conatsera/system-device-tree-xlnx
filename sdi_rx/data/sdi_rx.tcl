@@ -21,6 +21,9 @@ proc sdi_rx_generate {drv_handle} {
         set dtsi_file [set_drv_def_dts $drv_handle]
         set compatible [get_comp_str $drv_handle]
         pldt append $node compatible "\ \, \"xlnx,v-smpte-uhdsdi-rx-ss\""
+        set dbpc [hsi get_property CONFIG.C_DYNAMIC_BPP_CHANGE [hsi get_cells -hier $drv_handle]]
+        set dbpc [expr {$dbpc eq "true" ? 1 : 0}]
+        add_prop "${node}" "xlnx,dbpc" $dbpc int $dts_file 1
 	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
 	switch $sdiline_rate {
 		"3G_SDI" {
