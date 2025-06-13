@@ -2659,7 +2659,7 @@ proc update_alias {} {
 	                set pos [lsearch $uart_address $addr]
 	                set list_pos1 [lsearch $all_drivers [lindex $ps_uarts 0]]
 	                set list_pos2 [lsearch $all_drivers [lindex $ps_uarts 1]]
-			if {($pos >= 1)&&($list_pos1 > $list_pos2)} {
+			if {($pos % 2 == 1) || ($list_pos1 > $list_pos2)} {
 	                        set all_drivers [lreplace $all_drivers $list_pos1 $list_pos1 [lindex $ps_uarts 1]]
 	                        set all_drivers [lreplace $all_drivers $list_pos2 $list_pos2 [lindex $ps_uarts 0]]
 	                }
