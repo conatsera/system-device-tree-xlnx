@@ -966,30 +966,6 @@
 			xlnx,dma-type = <2>;
 		};
 
-		pmc_trng: pmc_trng@f1230000 {
-			compatible = "xlnx,psv-pmc-trng-1.0";
-			status = "disabled";
-			reg = <0x0 0xf1230000 0x0 0x10000>;
-		};
-
-		pmc_cfi_cframe_0: cframe@f12d0000 {
-			compatible = "xlnx,psv-pmc-cfi-cframe-1.0";
-			status = "disabled";
-			reg = <0x0 0xf12d0000 0x0 0x1000>;
-		};
-
-		pmc_cfu_apb_0: cfu_apb@f12b0000 {
-			compatible = "xlnx,psv-pmc-cfu-apb-1.0";
-			status = "disabled";
-			reg = <0x0 0xf12b0000 0x0 0x10000>;
-		};
-
-		pmc_ppu1_mdm_0: ppu1_mdm@f0310000 {
-			compatible = "xlnx,psv-pmc-ppu1-mdm-1.0";
-			status = "disabled";
-			reg = <0x0 0xf0310000 0x0 0x8000>;
-		};
-
 		iomodule0: iomodule@f0280000 {
 			status = "disabled";
 			compatible = "xlnx,iomodule-3.1";
@@ -1164,7 +1140,6 @@
 			status = "disabled";
 			reg = <0x0 0xf0800000 0x0 0x10000>;
 		};
-
 	};
 
 	psv_r5_0_atcm_global: psv_r5_0_atcm_global@ffe00000 {

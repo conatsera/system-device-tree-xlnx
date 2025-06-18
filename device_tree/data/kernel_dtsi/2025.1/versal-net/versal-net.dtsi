@@ -1366,24 +1366,5 @@
 			status = "disabled";
 			reg = <0x0 0xf1230000 0x0 0x10000>;
 		};
-
-		pmc_cfi_cframe_0: cframe@f12d0000 {
-			compatible = "xlnx,psx-pmc-cfi-cframe-11.0";
-			status = "disabled";
-			reg = <0x0 0xf12d0000 0x0 0x1000>;
-		};
-
-		pmc_cfu_apb_0: cfu_apb@f12b0000 {
-			compatible = "xlnx,psx-pmc-cfu-apb-11.0";
-			status = "disabled";
-			reg = <0x0 0xf12b0000 0x0 0x10000>;
-		};
-
-		pmc_ppu1_mdm_0: ppu1_mdm@f0310000 {
-			compatible = "xlnx,psx-pmc-ppu1-mdm-11.0";
-			status = "disabled";
-			reg = <0x0 0xf0310000 0x0 0x8000>;
-		};
-
 	};
 };
