@@ -320,7 +320,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "psx_pmc_trng" "trngpsx"
 	dict set ::sdtgen::namespacelist "pmc_trng" "trngpsx"
-   dict set ::sdtgen::namespacelist "visp_ss" "visp_ss"
+	dict set ::sdtgen::namespacelist "visp_ss" "visp_ss"
 
 	dict set ::sdtgen::namespacelist "asu" "asu"
 	dict set ::sdtgen::namespacelist "axis_switch" "axis_switch"
@@ -372,18 +372,18 @@ proc set_sdt_default_repo {} {
 }
 
 proc set_dt_param args {
-        global env
-        if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
-                print_usage
-        } else {
-                while {[string match -* [lindex $args 0]]} {
-                        if {[string match -nocase [lindex $args 1] ""] && ![string match -nocase [lindex $args 0] "-help"]} {
-                                puts "invalid value for [lindex $args 0]"
-                                print_usage
-                        }
-                        switch -glob -- [lindex $args 0] {
-                                -force {set force_create 1}
-                                -xsa {
+	global env
+	if {[llength $args] == 0 || ![string match -* [lindex $args 0]]} {
+		print_usage
+	} else {
+		while {[string match -* [lindex $args 0]]} {
+			if {[string match -nocase [lindex $args 1] ""] && ![string match -nocase [lindex $args 0] "-help"]} {
+				puts "invalid value for [lindex $args 0]"
+				print_usage
+			}
+			switch -glob -- [lindex $args 0] {
+				-force {set force_create 1}
+				-xsa {
 					set xsa_file [Pop args 1]
 					if {![regexp {^(file|link)$} [file type $xsa_file]] } {
 						error "ERROR: set_dt_param expects an XSA file as an input. Please check -xsa argument."
@@ -392,12 +392,12 @@ proc set_dt_param args {
 				}
 				-rm_xsa {
 					set rm_xsa_file [Pop args 1]
-                    set rm_xsa_list [split $rm_xsa_file " "]
-                    foreach xsa $rm_xsa_list {
-					    if {![regexp {^(file|link)$} [file type $xsa]]} {
-						    error "ERROR: set_dt_param expects an XSA file as an input. Please check -rm_xsa argument."
-					    }
-                    }
+					set rm_xsa_list [split $rm_xsa_file " "]
+					foreach xsa $rm_xsa_list {
+						if {![regexp {^(file|link)$} [file type $xsa]]} {
+							error "ERROR: set_dt_param expects an XSA file as an input. Please check -rm_xsa argument."
+						}
+					}
 					set env(rm_xsa) $rm_xsa_file
 				}
 				-board_dts {
@@ -406,6 +406,13 @@ proc set_dt_param args {
 						error "ERROR: board_dts expects file name without .dtsi extension. Please update"
 					}
 					set env(sdt_board_dts) $board_dts_file
+				}
+				-domain {
+					set dt_domain [Pop args 1]
+					if {$dt_domain != "pmc"} {
+						error "ERROR: Invalid domain option '$dt_domain'. Only Valid option is 'pmc'."
+					}
+					set env(dt_domain) $dt_domain
 				}
                                 -mainline_kernel {set env(kernel) [Pop args 1] }
                                 -kernel_ver {set env(kernel_ver) [Pop args 1]}
@@ -430,51 +437,51 @@ proc set_dt_param args {
 }
 
 proc get_dt_param args {
-       global env
-       set param [lindex $args 0]
-       set val ""
-       switch $param {
-                -xsa {
-                     if {[catch {set val $env(xsa)} msg ]} {}
-               } -rm_xsa {
-                     if {[catch {set val $env(rm_xsa)} msg ]} {}
-               } -repo {
-                        if {[catch {set val $env(CUSTOM_SDT_REPO)} msg ]} {
-                                set val [set_sdt_default_repo]
-                       }
-               } -board -
-                 -board_dts {
-                       if {[catch {set val $env(sdt_board_dts)} msg ]} {}
-               } -mainline_kernel {
-                       if {[catch {set val $env(kernel)} msg ]} {}
-               } -kernel_ver {
-                       if {[catch {set val $env(kernel_ver)} msg ]} {}
-               } -dir {
-                       if {[catch {set val $env(dir)} msg ]} {}
-               } -trace {
-                       if {[catch {set val $env(trace)} msg ]} {
-				set val "disable"
-			}
-               } -debug {
-                       if {[catch {set val $env(debug)} msg ]} {
-				set val "disable"
-			}
-               } -zocl {
-                       if {[catch {set val $env(zocl)} msg ]} {
-				set val "disable"
-                       }
-               } -user_dts {
-			if {[catch {set val $env(user_dts)} msg ]} {}
-               } -include_dts {
-                       if {[catch {set val $env(user_dts)} msg ]} {}
-               } -help {
-	               set val [print_usage] 
-               } default {
-                       puts "unknown option $param"
-                       set val [print_usage]
-               }
-       }
-       return $val
+	global env
+	set param [lindex $args 0]
+	set val ""
+	switch $param {
+	-xsa {
+		if {[catch {set val $env(xsa)} msg ]} {}
+	} -rm_xsa {
+		if {[catch {set val $env(rm_xsa)} msg ]} {}
+	} -repo {
+		if {[catch {set val $env(CUSTOM_SDT_REPO)} msg ]} {
+			set val [set_sdt_default_repo]
+		}
+	} -board -
+	 -board_dts {
+		if {[catch {set val $env(sdt_board_dts)} msg ]} {}
+	} -mainline_kernel {
+		if {[catch {set val $env(kernel)} msg ]} {}
+	} -kernel_ver {
+		if {[catch {set val $env(kernel_ver)} msg ]} {}
+	} -dir {
+		if {[catch {set val $env(dir)} msg ]} {}
+	} -trace {
+		if {[catch {set val $env(trace)} msg ]} {
+			set val "disable"
+		}
+	} -debug {
+		if {[catch {set val $env(debug)} msg ]} {
+			set val "disable"
+		}
+	} -zocl {
+		if {[catch {set val $env(zocl)} msg ]} {
+			set val "disable"
+		}
+	} -user_dts {
+		if {[catch {set val $env(user_dts)} msg ]} {}
+	} -include_dts {
+		if {[catch {set val $env(user_dts)} msg ]} {}
+	} -help {
+		set val [print_usage]
+	} default {
+		puts "unknown option $param"
+		set val [print_usage]
+	}
+	}
+	return $val
 }
 
 proc inc_os_prop {drv_handle os_conf_dev_var var_name conf_prop} {
@@ -1546,11 +1553,19 @@ Generates system device tree based on args given in:
 
 	set common_file "$path/device_tree/data/config.yaml"
 	set dir [get_user_config $common_file -dir]
+	if [catch { set retstr [file mkdir $dir] } errmsg] {
+		error "cannot create directory"
+	}
+
+	if {[catch {set dt_domain $env(dt_domain)} msg]} {
+	} elseif {$dt_domain == "pmc"} {
+		source [file join $path "device_tree" "data" "pmc_dt.tcl"]
+		generate_pmc_dt $xsa $dir
+		return
+	}
+
 	set cur_hw_design [hsi::get_hw_designs]
 	if {[string match -nocase $cur_hw_design ""]} {
-		if [catch { set retstr [file mkdir $dir] } errmsg] {
-			error "cannot create directory"
-		}
 		file copy -force $xsa $dir
 		set xsa_name [file tail $xsa]
 		set xsa_path "$dir/$xsa_name"
@@ -1586,7 +1601,7 @@ Generates system device tree based on args given in:
 	set peri_list [move_match_elements_to_top $peri_list "clk_wizard"]
 	set peri_list [move_match_elements_to_top $peri_list "clkx5_wiz"]
 
-	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR && IP_NAME != "tmr_inject"}]
+	set proclist [get_valid_proc_list]
 	set processor_ip_list [list]
 	set 64_bit_processor_list [list]
 	set is_64_bit_mb 0
