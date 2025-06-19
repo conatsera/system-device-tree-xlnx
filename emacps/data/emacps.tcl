@@ -70,6 +70,17 @@
         }
     }
 
+   proc emacps_get_tsu_enable {params key} {
+        if {[dict exists $params $key]} {
+                set tsu_dict [dict get $params $key]
+                if {[dict exists $tsu_dict "ENABLE"]} {
+                        return [dict get $tsu_dict "ENABLE"]
+                }
+        }
+        # Return an empty string if TSU enable parameter is not found
+        return ""
+}
+
     proc emacps_generate {drv_handle} {
         global env
         global is_versal_2ve_2vm_platform
@@ -102,30 +113,27 @@
 	set clk ""
 	if {![string_is_empty $psx_wizard_periph]} {
 		set psx_pmcx_params [hsi get_property CONFIG.PSX_PMCX_CONFIG [hsi get_cells -hier $psx_wizard_periph]]
-		set psx_gem_tsu_enable ""
-		if {[llength $psx_pmcx_params]} {
-			set psx_gem_tsu ""
-			if {[dict exists $psx_pmcx_params "PSX_GEM_TSU"]} {
-				set psx_gem_tsu [dict get $psx_pmcx_params "PSX_GEM_TSU"]
-				if {[dict exists $psx_gem_tsu "ENABLE"]} {
-					set tsu_enable [dict get $psx_gem_tsu "ENABLE"]
-				}
-			}
-		}
+                set tsu_enable [emacps_get_tsu_enable $psx_pmcx_params "PSX_GEM_TSU"]
 		set clk [emacps_set_tsu_ext_clk versal $node versal_net_clk]
 	} elseif {![string_is_empty $ps_wizard_periph]} {
-		set ps_pmc_params [hsi get_property CONFIG.PS_PMC_CONFIG [hsi get_cells -hier $ps_wizard_periph]]
-		set ps_gem_tsu_enable ""
-		if {[llength $ps_pmc_params]} {
-			set ps_gem_tsu ""
-			if {[dict exists $ps_pmc_params "PS_GEM_TSU"]} {
-				set ps_gem_tsu [dict get $ps_pmc_params "PS_GEM_TSU"]
-				if {[dict exists $ps_gem_tsu "ENABLE"]} {
-					set tsu_enable [dict get $ps_gem_tsu "ENABLE"]
-				}
-			}
+                if {[string match -nocase $ip_name "mmi_10gbe"]} {
+                        set config_prop "CONFIG.MMI_CONFIG"
+                        # Use fixed 150 MHz clock for MMI 10GbE as required by hardware specification
+                        set sys_clk "clk150"
+                        # Check for GEM_EXT_TSU_EN in CONFIG.MMI_CONFIG property
+                       set mmi_10gbe_params [hsi get_property $config_prop [hsi get_cells -hier $ps_wizard_periph]]
+                       if {[dict exists $mmi_10gbe_params "GEM_EXT_TSU_EN"]} {
+                                set tsu_enable [dict get $mmi_10gbe_params "GEM_EXT_TSU_EN"]
+                        }
+                } else {
+			set config_prop [expr {$is_versal_2ve_2vm_platform ? "CONFIG.PS11_CONFIG" : "CONFIG.PS_PMC_CONFIG"}]
+			set sys_clk [expr {$is_versal_2ve_2vm_platform ? "versal2_clk" : "versal_clk"}]
 		}
-		set clk [emacps_set_tsu_ext_clk versal $node]
+                set ps_pmc_params [hsi get_property $config_prop [hsi get_cells -hier $ps_wizard_periph]]
+                if {$tsu_enable == ""} {
+                        set tsu_enable [emacps_get_tsu_enable $ps_pmc_params "PS_GEM_TSU"]
+                }
+                set clk [emacps_set_tsu_ext_clk versal $node $sys_clk]
 	} elseif {![string_is_empty $versal_periph]} {
 		set tsu_enable [get_ip_property $versal_periph "CONFIG.PS_GEM_TSU_ENABLE"]
 		set clk [emacps_set_tsu_ext_clk versal $node]
@@ -134,15 +142,23 @@
 		set clk [emacps_set_tsu_ext_clk zynqmp $node zynqmp_clk]
 	}
 
-	if {$tsu_enable == 1} {
+        if {$tsu_enable == 1} {
+                # Configure TSU (Time Stamp Unit) clock node and properties
+                set tsu_node_name "tsu_ext_clk"
+                set clock_names "pclk hclk tx_clk rx_clk tsu_clk"
+                # For mmi_10gbe, use a different node and clock-names
+                if {[string match -nocase $ip_name "mmi_10gbe"]} {
+                        set clock_names "pclk hclk tx_clk tsu_clk"
+                        set tsu_node_name "mmi_tsu_ext_clk"
+                }
                 set default_dts [set_drv_def_dts $drv_handle]
                 set tsu_node [create_node -n / -d $default_dts -p root]
-                set tsu_node [create_node -n "tsu_ext_clk" -l "tsu_ext_clk" -d $default_dts -p /]
+                set tsu_node [create_node -n "$tsu_node_name" -l "$tsu_node_name" -d $default_dts -p /]
                 add_prop "${tsu_node}" "compatible" "fixed-clock" stringlist $default_dts
                 add_prop "${tsu_node}" "#clock-cells" 0 int $default_dts
                 set tsu-clk-freq [hsi get_property CONFIG.C_ENET_TSU_CLK_FREQ_HZ [hsi::get_cells -hier $drv_handle]]
                 add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
-                set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" $node stringlist
+		set_drv_prop_if_empty $drv_handle "clock-names" "$clock_names" $node stringlist
                 set_drv_prop_if_empty $drv_handle "clocks" $clk $node reference
         }
 
@@ -436,6 +452,8 @@
 			set clocks "${clk} 82>, <&${clk} 88>, <&${clk} 49>, <&${clk} 48>, <&tsu_ext_clk"
 		} elseif {[string match -nocase $node "&gem1"]} {
 			set clocks "${clk} 82>, <&${clk} 89>, <&${clk} 51>, <&${clk} 50>, <&tsu_ext_clk"
+		} elseif {[string match -nocase $node "&mmi_10gbe"]} {
+			set clocks "${clk}>, <&${clk}>, <&${clk}>, <&mmi_tsu_ext_clk"
 		}
 	}
 	return $clocks
