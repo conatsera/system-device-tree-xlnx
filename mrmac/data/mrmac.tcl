@@ -1862,6 +1862,8 @@
         set ipnode [get_node $target_handle]
         set values [pldt getall $ipnode]
         set intr_parent ""
+        set intr_val ""
+        set intrnames ""
         if {[regexp "interrupt*" $values match]} {
                 set intr_val [pldt get $ipnode interrupts]
                 set intr_val [string trimright $intr_val " >"]
@@ -1880,13 +1882,19 @@
                 set int2 [string trimright [lindex $names 1] "\" "]
                 set int2 [string trimleft $int2 "\" "]
                 }
+        } else {
+                dtg_warning "Interrupts are not generated...please check the design"
         }
-
         set dts_file "pl.dtsi"
-        add_prop "${node}" "interrupts" $intr_val intlist $dts_file
-        add_prop "${node}" "interrupt-parent" $intr_parent reference $dts_file
-        add_prop "${node}" "interrupt-names" $int_names noformating $dts_file
-
+        if {[llength  $intr_val]} {
+                add_prop "${node}" "interrupts" $intr_val intlist $dts_file
+        }
+        if {[llength $intr_parent]} {
+                add_prop "${node}" "interrupt-parent" $intr_parent reference $dts_file
+        }
+        if {[llength $intrnames]} {
+                add_prop "${node}" "interrupt-names" $int_names noformating $dts_file
+        }
     }
 
     proc mrmac_check_size {base node} {
