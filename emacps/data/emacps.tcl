@@ -92,12 +92,6 @@
         }
         ps7_reset_handle $drv_handle CONFIG.C_ENET_RESET CONFIG.enet-reset
 
-        # only generate the mdio node if it has mdio
-        set has_mdio [hsi get_property CONFIG.C_HAS_MDIO $slave]
-        if { $has_mdio == "0" } {
-            return 0
-        }
-
         set proc_type [get_hw_family]
 
 	set tsu_enable ""
@@ -150,6 +144,12 @@
                 add_prop "${tsu_node}" "clock-frequency" ${tsu-clk-freq} int $default_dts
                 set_drv_prop_if_empty $drv_handle "clock-names" "pclk hclk tx_clk rx_clk tsu_clk" $node stringlist
                 set_drv_prop_if_empty $drv_handle "clocks" $clk $node reference
+        }
+
+        # only generate the mdio node if it has mdio
+        set has_mdio [hsi get_property CONFIG.C_HAS_MDIO $slave]
+        if { $has_mdio == "0" } {
+            return 0
         }
 
         # check if gmii2rgmii converter is used.
