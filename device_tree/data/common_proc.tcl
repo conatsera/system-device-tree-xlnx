@@ -402,7 +402,7 @@ proc set_hw_family {proclist} {
 				set ps_design 1
 				set is_versal_net_platform 1
 				set apu_proc_ip $ip_name
-				if {[llength [hsi::get_cells -hier -filter "IP_NAME==ps11"]]} {
+				if {[llength [hsi::get_cells -hier -filter {IP_NAME==ps11 || IP_NAME==ps11xgui}]]} {
 					set is_versal_2ve_2vm_platform 1
 				}
 			} "psv_cortexa72" {
