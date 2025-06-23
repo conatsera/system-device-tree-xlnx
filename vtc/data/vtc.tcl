@@ -32,6 +32,9 @@
 	set inhex [format %x $arbitrary_res_en]
 	append arbitrary "/bits/ 8 <0x$inhex>"
 	add_prop "${node}" "xlnx,arbitrary-res-en" $arbitrary noformating $dts_file 1
+
+	set ppc [hsi get_property CONFIG.VID_PPC [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,pixels-per-clock" $ppc hexint $dts_file 1
     }
 
 
