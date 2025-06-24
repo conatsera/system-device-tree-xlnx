@@ -93,16 +93,16 @@
 
         if {$part_num == "xcvp2502"} {
                 #s100
-                set power_domain "${power_domain_family} 0x18225072"
+                set power_domain "${power_domain_family} 0x18801000"
         } elseif {$part_num == "xcvp2802"} {
                 #s200
-                set power_domain "${power_domain_family} 0x18227072"
+                set power_domain "${power_domain_family} 0x18803000"
         } elseif {$part_num_v70 == "xcv70"} {
                 #v70
-                set power_domain "${power_domain_family} 0x18224072"
+                set power_domain "${power_domain_family} 0x18800000"
         } else {
 		#NON SSIT devices
-		set power_domain "${power_domain_family} 0x18224072"
+		set power_domain "${power_domain_family} 0x18800000"
 	}
         add_prop "${node}" "power-domains" $power_domain reference "pl.dtsi"
         add_prop "${node}" "#address-cells" 2 hexlist "pl.dtsi"
@@ -155,17 +155,17 @@
 
         if {$part_num == "xcvp2502"} {
                 #s100
-                set power_domain "${power_domain_family} 0x18225072"
+                set power_domain "${power_domain_family} 0x18801000"
                 add_prop "${aperture_node}" "xlnx,device-name" "100" int "pl.dtsi"
                 set aperture_nodeid 0x18801000
         } elseif {$part_num == "xcvp2802"} {
                 #s200
-                set power_domain "${power_domain_family} 0x18227072"
+                set power_domain "${power_domain_family} 0x18803000"
                 add_prop "${aperture_node}" "xlnx,device-name" "200" int "pl.dtsi"
                 set aperture_nodeid 0x18803000
         } elseif {$part_num_v70 == "xcv70"} {
                 #v70
-                set power_domain "${power_domain_family} 0x18224072"
+                set power_domain "${power_domain_family} 0x18800000"
                 add_prop "${aperture_node}" "xlnx,device-name" "0" int "pl.dtsi"
                 set aperture_nodeid 0x18800000
         } else {
@@ -174,7 +174,7 @@
                 lappend intr_names "interrupt2"
                 lappend intr_names "interrupt3"
                 set intr_num "0x0 0x94 0x4>, <0x0 0x95 0x4>, <0x0 0x96 0x4"
-                set power_domain "${power_domain_family} 0x18224072"
+                set power_domain "${power_domain_family} 0x18800000"
                 add_prop "${aperture_node}" "interrupt-names" $intr_names stringlist "pl.dtsi"
                 add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
                 add_prop "${aperture_node}" "interrupt-parent" imux reference "pl.dtsi"
