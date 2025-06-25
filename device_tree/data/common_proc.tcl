@@ -304,6 +304,25 @@ proc get_label_addr args {
 	return $value
 }
 
+# Get the reference label needed to refer this node
+proc get_label {drv_handle} {
+	set node_entry [get_node $drv_handle]
+	if {[string_is_empty $node_entry]} {
+		return ""
+	}
+	if {[string match "&*" $node_entry]} {
+		return $node_entry
+	} else {
+		set node_label [lindex [split $node_entry ": "] 0]
+		return "&$node_label"
+	}
+}
+
+proc get_valid_proc_list {} {
+	set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR && IP_NAME != "tmr_inject"}]
+	return $proclist
+}
+
 proc remove_duplicate_addr args {
 	set peri_list [lindex $args 0]
 	set non_val_list [lindex $args 1]
@@ -402,7 +421,7 @@ proc set_hw_family {proclist} {
 				set ps_design 1
 				set is_versal_net_platform 1
 				set apu_proc_ip $ip_name
-				if {[llength [hsi::get_cells -hier -filter "IP_NAME==ps11"]]} {
+				if {[llength [hsi::get_cells -hier -filter {IP_NAME==ps11 || IP_NAME==ps11xgui}]]} {
 					set is_versal_2ve_2vm_platform 1
 				}
 			} "psv_cortexa72" {
@@ -2216,6 +2235,15 @@ proc get_ip_property {drv_handle parameter} {
 	return $val
 }
 
+proc get_obj_property {handle parameter} {
+	# Helps in fetching properties for both cell and memory object.
+	# It is caller's responsibility to pass the correct object.
+	if {[catch {set val [hsi get_property ${parameter} $handle]} msg]} {
+		set val ""
+	}
+	return $val
+}
+
 proc is_it_in_pl {ip} {
 	# FIXME: This is a workaround to check if IP that's in PL however,
 	# this is not entirely correct, it is a hack and only works for
@@ -3441,6 +3469,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f1df0000 label ttc3
 				dict set def_ps_mapping f1e00000 label usb0
 				dict set def_ps_mapping f1e10000 label usb1
+				dict set def_ps_mapping f1b00000 label dwc3_0
+				dict set def_ps_mapping f1c00000 label dwc3_1
 				dict set def_ps_mapping ecc10000 label wwdt0
 				dict set def_ps_mapping ecd10000 label wwdt1
 				dict set def_ps_mapping ece10000 label wwdt2
