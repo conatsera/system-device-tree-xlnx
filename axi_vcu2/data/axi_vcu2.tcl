@@ -25,6 +25,11 @@
         add_prop $node "#clock-cells" 1 int $dts_file
         set vcu2_ip [hsi::get_cells -hier $drv_handle]
         set baseaddr [hsi get_property CONFIG.C_BASEADDR [hsi::get_cells -hier $drv_handle]]
+        foreach ip_mem_bank [hsi::get_mem_ranges $drv_handle -of_objects [lindex [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}] 0]] {
+            if ([string match "VCU2_0_S_AXI" [hsi get_property ADDRESS_BLOCK $ip_mem_bank]]) {
+                set baseaddr [hsi get_property BASE_VALUE $ip_mem_bank]
+            }
+        }
         set intr_val [pldt get $node interrupts]
         set intr_val [string trimright $intr_val ">"]
         set intr_val [string trimleft $intr_val "<"]
