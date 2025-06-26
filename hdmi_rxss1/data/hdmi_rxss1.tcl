@@ -208,6 +208,10 @@
 	set inhex [format %x $max_bpc]
 	append max_bits_per_pixel "/bits/ 8 <0x$inhex>"
 	add_prop "${node}" "xlnx,max-bits-per-component" $max_bits_per_pixel noformating $dts_file 1
+	set vid_interface [hsi get_property CONFIG.C_VID_INTERFACE [hsi::get_cells -hier $drv_handle]]
+	set inhex [format %x $vid_interface]
+	append vidinterface "/bits/ 8 <0x$inhex>"
+	add_prop "${node}" "xlnx,vid-interface" $vidinterface noformating $dts_file 1
 
 }
 

@@ -52,17 +52,17 @@ proc sdi_rxss_generate {drv_handle} {
         add_prop "$port_node" "xlnx,video-width" 10 int $dts_file 1
         add_prop "$port_node" "reg" 0 int $dts_file 1
 
-        set sdirxip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "VIDEO_OUT"]
-	if {[llength $sdirxip]} {
-		if {[string match -nocase [hsi get_property IP_NAME $sdirxip] "axis_broadcaster"]} {
-			set hdmirxnode [create_node -n "endpoint" -l sdirx_out$drv_handle -p $port_node -d $dts_file]
+        set outip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "VIDEO_OUT"]
+	if {[llength $outip]} {
+		if {[string match -nocase [hsi get_property IP_NAME $outip] "axis_broadcaster"]} {
+			set sdirxnode [create_node -n "endpoint" -l sdirx_out$drv_handle -p $port_node -d $dts_file]
 	                gen_endpoint $drv_handle "sdirx_out$drv_handle"
-		        add_prop "$portnode" "remote-endpoint" $sdirxip$drv_handle reference $dts_file
-			gen_remoteendpoint $drv_handle "$sdirxip$drv_handle"
+		        add_prop "$sdirxnode" "remote-endpoint" $outip$drv_handle reference $dts_file
+			gen_remoteendpoint $drv_handle "$outip$drv_handle"
 		}
 	}
 
-        foreach ip $sdirxip {
+        foreach ip $outip {
 			if {[string match -nocase $ip "axis_data_fifo_Video"]} {
 				 set cell [hsi::get_cells -of [hsi::get_intf_nets -of [hsi::get_intf_pins -of_objects [hsi get_cells -hier $ip] M_AXIS]]]
 				 foreach rp $cell {

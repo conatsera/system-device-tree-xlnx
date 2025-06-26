@@ -28,6 +28,13 @@
         if {$detect_en == 1} {
                 add_prop "${node}" "xlnx,detector" boolean $dts_file
         }
+	set arbitrary_res_en [hsi get_property CONFIG.C_ARBITRARY_RES_EN [hsi::get_cells -hier $drv_handle]]
+	set inhex [format %x $arbitrary_res_en]
+	append arbitrary "/bits/ 8 <0x$inhex>"
+	add_prop "${node}" "xlnx,arbitrary-res-en" $arbitrary noformating $dts_file 1
+
+	set ppc [hsi get_property CONFIG.VID_PPC [hsi::get_cells -hier $drv_handle]]
+	add_prop "${node}" "xlnx,pixels-per-clock" $ppc hexint $dts_file 1
     }
 
 
