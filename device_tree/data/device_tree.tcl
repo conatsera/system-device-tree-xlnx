@@ -1015,8 +1015,10 @@ proc gen_board_info {} {
 		}
 		"microblaze" {
 			set family "microblaze"
+			add_prop "root" "model" "Microblaze" string $default_dts
 			set mb_riscv_proc [hsi::get_cells -hier -filter {IP_NAME==microblaze_riscv}]
 			if {[llength $mb_riscv_proc]} {
+				add_prop "root" "model" "Microblaze RISCV" string $default_dts 1
 				set family "microblaze_riscv"
 			}
 		}
