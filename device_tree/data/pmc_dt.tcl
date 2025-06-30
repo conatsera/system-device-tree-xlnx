@@ -334,11 +334,11 @@ proc update_domain_stdout {default_uart_handle} {
 		return
 	}
 	set chosen_node [systemdt insert root end "chosen"]
-	# FIXME: Dummy alias node is needed for assists to work.
 	set alias_node [systemdt insert root end "aliases"]
 	set uart_node_label [get_label $default_uart_handle]
 	regsub -all {^&} $uart_node_label {} uart_node_label
-	add_prop $chosen_node "stdout-path" "${uart_node_label}:115200n8" string "system-top.dts"
+	add_prop $chosen_node "stdout-path" "serial0:115200n8" string "system-top.dts"
+	add_prop $alias_node "serial0" &${uart_node_label} aliasref "system-top.dts"
 }
 
 
