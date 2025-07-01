@@ -30,8 +30,8 @@ set mdm_uart_ip_names {"psv_pmc_ppu1_mdm" "psx_pmc_ppu1_mdm" "pmc_ppu1_mdm"}
 set ipi_ip_names {"psv_ipi" "psx_ipi" "ipi"}
 
 # List of drivers from embeddedsw:
-# cframe, cfupmc, csudma, emacps, gpiops, i2cps, i3cps, iomodule, ipipsu, qspipsu
-# ospipsv, rtcpsu, sdps/emmc, spips, sysmonpsv, trngpsv/x, ttcps,
+# cframe, cfupmc, csudma, emacps, gpiops, i2cps, iomodule, ipipsu, qspipsu
+# ospipsv, sdps/emmc, sysmonpsv, trngpsv/x, ttcps,
 # uartlite (for no PS uart case, mdm), uartpsv, ufspsxc, usbpsu, wdttb, zdma
 
 # Below list is without uart, mdm and IPI entries, those are concatenated in the next line.
@@ -44,13 +44,10 @@ set plm_supported_ips {
 	"psv_ethernet" "psx_ethernet" "ethernet" \
 	"psv_pmc_gpio" "psx_pmc_gpio" "pmc_gpio" \
 	"psv_pmc_i2c" "psx_pmc_i2c" "pmc_i2c" \
-	"psx_pmc_i3c" "pmc_i3c" \
 	"iomodule" "psx_iomodule" \
 	"psv_pmc_qspi" "psx_pmc_qspi" "pmc_qspi" \
 	"psv_pmc_ospi" "psx_pmc_ospi" "pmc_ospi" \
-	"psv_pmc_rtc" "psx_pmc_rtc" "pmc_rtc" \
 	"psv_pmc_sd" "psx_pmc_sd" "psx_pmc_emmc" "pmc_sd" "pmc_emmc" \
-	"psv_spi" "psx_spi" "spi" \
 	"psv_pmc_sysmon" "psx_pmc_sysmon" "pmc_sysmon" \
 	"psv_pmc_trng" "psx_pmc_trng" "pmc_trng" \
 	"psv_ttc" "psx_ttc" "ttc" \
