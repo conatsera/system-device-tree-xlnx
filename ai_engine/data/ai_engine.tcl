@@ -129,6 +129,15 @@
         set path $env(CUSTOM_SDT_REPO)
 	global is_versal_2ve_2vm_platform
 
+        set hw_gen "AIE"
+        set CommandExists [ namespace which hsi::get_hw_primitives]
+        if {$CommandExists != ""} {
+                set aie_prop [hsi::get_hw_primitives aie]
+                if {$aie_prop != ""} {
+                        set hw_gen [hsi get_property HWGEN [hsi::get_hw_primitives aie]]
+                }
+        }
+
         set node [get_node $drv_handle]
         if {$node == 0} {
                 return
@@ -173,7 +182,14 @@
                 set intr_names "interrupt1"
                 lappend intr_names "interrupt2"
                 lappend intr_names "interrupt3"
-                set intr_num "0x0 0x94 0x4>, <0x0 0x95 0x4>, <0x0 0x96 0x4"
+                switch $hw_gen {
+                        "AIE2PS" {
+                                set intr_num "0x0 0xce 0x4>, <0x0 0xcf 0x4>, <0x0 0xb0 0x4"
+                        }
+                        default {
+                                set intr_num "0x0 0x94 0x4>, <0x0 0x95 0x4>, <0x0 0x96 0x4"
+                        }
+                }
                 set power_domain "${power_domain_family} 0x18224072"
                 add_prop "${aperture_node}" "interrupt-names" $intr_names stringlist "pl.dtsi"
                 add_prop "${aperture_node}" "interrupts" $intr_num hexlist "pl.dtsi"
