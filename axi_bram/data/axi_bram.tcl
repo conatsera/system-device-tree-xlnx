@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2021 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -61,7 +61,7 @@
 
         set ip_mem_handles [hsi::get_mem_ranges $slave]
         set drv_ip [get_ip_property $drv_handle IP_NAME]
-        set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+        set proclist [get_proc_list_without_pmc]
         foreach procc $proclist {
                 set proc_ip_name [get_ip_property $procc IP_NAME]
                 if { $proc_ip_name == $apu_proc_ip} {
@@ -146,10 +146,6 @@
                         if {$proc_ip_name == "psu_pmu"} {
                                 set_memmap "${drv_handle}_memory" pmu $reg
                                 set proc_key pmu
-                        }
-                        if {$proc_ip_name in {"psv_pmc" "psx_pmc" "pmc"}} {
-                                set_memmap "${drv_handle}_memory" pmc $reg
-                                set proc_key pmc
                         }
                         if {$proc_ip_name in {"psv_psm" "psx_psm" "psm"}} {
                                 set_memmap "${drv_handle}_memory" psm $reg

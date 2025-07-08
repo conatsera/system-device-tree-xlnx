@@ -995,7 +995,6 @@
             set_memmap $label pmu $reg
         } else {
             set_memmap $label a53 $reg
-            set_memmap $label pmc $reg
         }
         set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5}]
         set_memmap $label [lindex $r5_procs 0] $reg

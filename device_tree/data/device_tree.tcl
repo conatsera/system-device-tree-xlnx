@@ -1548,6 +1548,7 @@ Generates system device tree based on args given in:
 	source [file join $path "device_tree" "data" "xillib_internal.tcl"]
 	source [file join $path "device_tree" "data" "xillib_sw.tcl"]
 	source [file join $path "device_tree" "data" "partial_proc.tcl"]
+	source [file join $path "device_tree" "data" "pmc_dt.tcl"]
 
 	if { $::sdtgen::namespacelist == "" } {
 		init_proclist
@@ -1561,7 +1562,6 @@ Generates system device tree based on args given in:
 
 	if {[catch {set dt_domain $env(dt_domain)} msg]} {
 	} elseif {$dt_domain == "pmc"} {
-		source [file join $path "device_tree" "data" "pmc_dt.tcl"]
 		generate_pmc_dt $xsa $dir
 		return
 	}
@@ -1922,6 +1922,8 @@ proc proc_mapping {} {
 	global linear_spi_list
 	global monitor_ip_exclusion_list
 	global 64_bit_processor_list
+	global pmc_ip_names
+	global plm_supported_ips
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -1977,6 +1979,10 @@ proc proc_mapping {} {
 
 			# Do not process memory object if the corresponding cell object doesnt have the IP NAME
 			if {[string_is_empty $ipname]} {
+				continue
+			}
+
+			if {($iptype in $pmc_ip_names) && !($ipname in $plm_supported_ips)} {
 				continue
 			}
 

@@ -99,9 +99,6 @@ proc configure_memmap {node_label proc reg bit_format baseaddr size} {
 		"psv_psm" - "psx_psm" - "psm" {
 			set memmap_key "psm"
 		}
-		"psv_pmc" - "psx_pmc" - "pmc" {
-			set memmap_key "pmc"
-		}
 		"psu_pmu" {
 			set memmap_key "pmu"
 		}
