@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -62,9 +62,6 @@
             }
             "psu_pmu" {
                 set_memmap "${drv_handle}_memory" pmu [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
-            }
-            "psv_pmc" {
-                set_memmap "${drv_handle}_memory" pmc [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]
             }
             "psv_psm" {
                 set_memmap "${drv_handle}_memory" psm [ddrps_get_union_reg_prop $proc_addr_list $name $32_bit_format]

@@ -323,6 +323,19 @@ proc get_valid_proc_list {} {
 	return $proclist
 }
 
+proc get_proc_list_without_pmc {} {
+	set proclist [get_valid_proc_list]
+	set req_proc_handle_list [list]
+	foreach proc_entry $proclist {
+		set proc_ipname [get_ip_property $proc_entry IP_NAME]
+		# Using regular expression to avoid slv*_pmc IPs as well.
+		if {![string match *pmc $proc_ipname]} {
+			lappend req_proc_handle_list $proc_entry
+		}
+	}
+	return $req_proc_handle_list
+}
+
 proc remove_duplicate_addr args {
 	set peri_list [lindex $args 0]
 	set non_val_list [lindex $args 1]
@@ -7826,9 +7839,6 @@ proc map_node_to_processor {node_label processor reg bit_format baseaddr size} {
 		}
 		"psv_psm" - "psx_psm" - "psm" {
 			set memmap_key "psm"
-		}
-		"psv_pmc" - "psx_pmc" - "pmc" {
-			set memmap_key "pmc"
 		}
 		"psu_pmu" {
 			set memmap_key "pmu"

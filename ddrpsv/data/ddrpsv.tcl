@@ -61,9 +61,6 @@ proc ddrpsv_node_info_map {drv_handle feature} {
 			"psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
 				set_memmap "${label}" a53 $reg_val
 			}
-			"psv_pmc" - "psx_pmc" - "pmc" {
-				set_memmap "${label}" pmc $reg_val
-			}
 			"psv_psm" - "psx_psm" - "psm" {
 				set_memmap "${label}" psm $reg_val
 			}

@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2021 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -62,9 +62,6 @@
                 }
                 if {[string match -nocase ${proc_ip_name} "psu_pmu"]} {
                         set_memmap "${drv_handle}_memory" pmu [psu_ocm_get_union_reg_prop $proc_addr_list $name $32_bit_format]
-                }
-                if {$proc_ip_name in {"psv_pmc" "psx_pmc" "pmc"}} {
-                        set_memmap "${drv_handle}_memory" pmc [psu_ocm_get_union_reg_prop $proc_addr_list $name $32_bit_format]
                 }
                 if {$proc_ip_name in {"psv_psm" "psx_psm" "psm"}} {
                         set_memmap "${drv_handle}_memory" psm [psu_ocm_get_union_reg_prop $proc_addr_list $name $32_bit_format]

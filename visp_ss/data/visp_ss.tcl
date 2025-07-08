@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2024 - 2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -278,9 +278,6 @@ proc visp_ss_generate {drv_handle} {
 					}
 					"cortexa78" {
 						set_memmap "${label}" a53 $reg_val
-					}
-					"pmc" {
-						set_memmap "${label}" pmc $reg_val
 					}
 					"asu" {
 						set_memmap "${label}" asu $reg_val
