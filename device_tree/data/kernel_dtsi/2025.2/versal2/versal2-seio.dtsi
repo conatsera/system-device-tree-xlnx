@@ -1,0 +1,94 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for AMD Versal 2 VE and 2VM devices SEIO block
+ *
+ * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ *
+ * Onkar Harsh <onkar.harsh@amd.com>
+ */
+
+
+&amba {
+
+    seio_spi_0: spi@ed010000 {
+        compatible = "cdns,spi-r1p6";
+        status = "disabled";
+        interrupt-parent = <&imux>;
+        interrupts = <0 181 4>;
+        reg = <0 0xed010000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
+    };
+
+    seio_spi_1: spi@ed020000 {
+        compatible = "cdns,spi-r1p6";
+        status = "disabled";
+        interrupt-parent = <&imux>;
+        interrupts = <0 182 4>;
+        reg = <0 0xed020000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
+    };
+
+    seio_spi_2: spi@ed030000 {
+        compatible = "cdns,spi-r1p6";
+        status = "disabled";
+        interrupt-parent = <&imux>;
+        interrupts = <0 183 4>;
+        reg = <0 0xed030000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
+    };
+
+    seio_spi_3: spi@ed040000 {
+        compatible = "cdns,spi-r1p6";
+        status = "disabled";
+        interrupt-parent = <&imux>;
+        interrupts = <0 184 4>;
+        reg = <0 0xed040000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
+    };
+
+    seio_uart_0: serial@ed050000 {
+        bootph-all;
+        compatible = "arm,pl011", "arm,primecell";
+        status = "disabled";
+        reg = <0 0xed050000 0 0x1000>;
+        interrupt-parent = <&imux>;
+        interrupts = <0 185 4>;
+        reg-io-width = <4>;
+        clock-names = "uartclk", "apb_pclk";
+    };
+
+    seio_uart_1: serial@ed060000 {
+        bootph-all;
+        compatible = "arm,pl011", "arm,primecell";
+        status = "disabled";
+        reg = <0 0xed060000 0 0x1000>;
+        interrupt-parent = <&imux>;
+        interrupts = <0 186 4>;
+        reg-io-width = <4>;
+        clock-names = "uartclk", "apb_pclk";
+    };
+
+    seio_uart_2: serial@ed070000 {
+        bootph-all;
+        compatible = "arm,pl011", "arm,primecell";
+        status = "disabled";
+        reg = <0 0xed070000 0 0x1000>;
+        interrupt-parent = <&imux>;
+        interrupts = <0 187 4>;
+        reg-io-width = <4>;
+        clock-names = "uartclk", "apb_pclk";
+    };
+
+    seio_gpio: gpio@ed080000 {
+        compatible = "xlnx,versal-gpio-1.0";
+        status = "disabled";
+        reg = <0 0xed080000 0 0x1000>;
+        interrupt-parent = <&imux>;
+        interrupts = <0 180 4>;
+        #gpio-cells = <2>;
+        gpio-controller;
+        #interrupt-cells = <2>;
+        interrupt-controller;
+    };
+
+};

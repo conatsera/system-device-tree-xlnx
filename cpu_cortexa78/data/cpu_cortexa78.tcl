@@ -16,6 +16,7 @@ proc cpu_cortexa78_generate {drv_handle} {
 	global dtsi_fname
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
+	global is_versal_2ve_2vm_seio_platform
 	global platform_filename ""
 	set bus_name "amba"
 	set fields [split [get_ip_property $drv_handle NAME] "_"]
@@ -23,7 +24,10 @@ proc cpu_cortexa78_generate {drv_handle} {
 	if { $is_versal_net_platform } {
 		if {$is_versal_2ve_2vm_platform} {
 			set platform_filename "versal2"
-            update_system_dts_include [file tail "${platform_filename}-clk-ccf.dtsi"]
+			update_system_dts_include [file tail "${platform_filename}-clk-ccf.dtsi"]
+			if {$is_versal_2ve_2vm_seio_platform} {
+				update_system_dts_include [file tail "${platform_filename}-seio.dtsi"]
+			}
 			set cpu_node [create_node -n "&cortexa78_${cpu_nr}" -d "pcw.dtsi" -p root -h $drv_handle]
 		} else {
 			set platform_filename "versal-net"
