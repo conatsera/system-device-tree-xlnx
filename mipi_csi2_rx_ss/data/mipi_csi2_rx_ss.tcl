@@ -337,21 +337,16 @@ proc mipi_csi2_rx_ss_gen_gpio_reset {drv_handle node dts_file} {
 					set periph [hsi get_cells -of_objects $pin]
 					if {[llength $periph]} {
 						set ip [hsi get_property IP_NAME $periph]
-						if {[string match -nocase $proc_type "psv_cortexa72"] } {
-							if { $ip in { "versal_cips" "ps_wizard" }} {
-								# As versal has only bank0 for MIOs
-								set gpio [expr $gpio + 26]
-								add_prop "$node" "video-reset-gpios" "gpio0 $gpio 1" reference $dts_file
-								break
-							}
-
+						if { $ip in { "versal_cips" "ps_wizard" }} {
+							# As versal has only bank0 for MIOs
+							set gpio [expr $gpio + 26]
+							add_prop "$node" "video-reset-gpios" "gpio0 $gpio 1" reference $dts_file
+							break
 						}
-						if {[string match -nocase $proc_type "psu_cortexa53"] } {
-							if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
-								set gpio [expr $gpio + 78]
-								add_prop "$node" "video-reset-gpios" "gpio $gpio 1" reference $dts_file
-								break
-							}
+						if {[string match -nocase $ip "zynq_ultra_ps_e"]} {
+							set gpio [expr $gpio + 78]
+							add_prop "$node" "video-reset-gpios" "gpio $gpio 1" reference $dts_file
+							break
 						}
 						if {[string match -nocase $ip "axi_gpio"]} {
 							add_prop "$node" "video-reset-gpios" "$periph $gpio 1" reference $dts_file
