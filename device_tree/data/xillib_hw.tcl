@@ -724,7 +724,7 @@ proc get_real_sink_pins_traverse_in { test_pin } {
     }
     set ipname [hsi get_property IP_NAME [hsi::get_cells -of_objects $test_pin]]
     set source_type [hsi get_property BD_TYPE [hsi::get_cells -of_objects $test_pin]]
-    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "ps11" ] || [ string match -nocase $ipname "ps11xgui" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ]} {
+    if { [ string match -nocase $source_type "block_container" ] || [ string match -nocase $ipname "ps11" ] || [ string match -nocase $ipname "ps11xgui" ] || [ string match -nocase $ipname "psxt" ] || [ string match -nocase $ipname "versal_cips" ] || [ string match -nocase $ipname "pspmc" ] || [ string match -nocase $ipname "psxl" ] || [ string match -nocase $ipname "psx_wizard" ] || [ string match -nocase $ipname "pmcps" ] || [ string match -nocase $ipname "ps_wizard" ]} {
     
         set lower_net [hsi::get_nets -boundary_type lower -of_objects $test_pin]
         set upper_net [hsi::get_nets -boundary_type upper -of_objects $test_pin]
