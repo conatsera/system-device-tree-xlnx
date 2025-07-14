@@ -42,8 +42,8 @@ set plm_supported_ips {
 	"psv_pmc_cfu_apb" "psx_pmc_cfu_apb" "pmc_cfu_apb" \
 	"psv_pmc_dma" "psx_pmc_dma" "pmc_dma" \
 	"psv_ethernet" "psx_ethernet" "ethernet" \
-	"psv_pmc_gpio" "psx_pmc_gpio" "pmc_gpio" \
-	"psv_pmc_i2c" "psx_pmc_i2c" "pmc_i2c" \
+	"psv_pmc_gpio" "psx_pmc_gpio" "pmc_gpio" "psv_gpio" "psx_gpio" "gpio" \
+	"psv_pmc_i2c" "psx_pmc_i2c" "pmc_i2c" "psv_i2c" "psx_i2c" "i2c" \
 	"iomodule" "psx_iomodule" \
 	"psv_pmc_qspi" "psx_pmc_qspi" "pmc_qspi" \
 	"psv_pmc_ospi" "psx_pmc_ospi" "pmc_ospi" \
