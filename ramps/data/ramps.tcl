@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2014-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -20,7 +20,7 @@
         set memory_node [create_node -n "memory" -l "${drv_handle}_memory" -u $addr -p root -d "system-top.dts"]
         add_prop "${memory_node}" "device_type" "memory" string "system-top.dts"
         add_prop "${memory_node}" "compatible" [gen_compatible_string $slave] string "system-top.dts"
-        set proclist [hsi::get_cells -hier -filter {IP_TYPE==PROCESSOR}]
+        set proclist [get_proc_list_without_pmc]
         set proc_scanned ""
         foreach procc $proclist {
                 set proc_ip [hsi get_property IP_NAME $procc]

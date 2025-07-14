@@ -323,6 +323,19 @@ proc get_valid_proc_list {} {
 	return $proclist
 }
 
+proc get_proc_list_without_pmc {} {
+	set proclist [get_valid_proc_list]
+	set req_proc_handle_list [list]
+	foreach proc_entry $proclist {
+		set proc_ipname [get_ip_property $proc_entry IP_NAME]
+		# Using regular expression to avoid slv*_pmc IPs as well.
+		if {![string match *pmc $proc_ipname]} {
+			lappend req_proc_handle_list $proc_entry
+		}
+	}
+	return $req_proc_handle_list
+}
+
 proc remove_duplicate_addr args {
 	set peri_list [lindex $args 0]
 	set non_val_list [lindex $args 1]
@@ -405,6 +418,7 @@ proc set_hw_family {proclist} {
 	global design_family
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
+	global is_versal_2ve_2vm_seio_platform
 	global apu_proc_ip
 	set apu_proc_ip ""
 	set design_family ""
@@ -412,6 +426,7 @@ proc set_hw_family {proclist} {
 	set ps_design 0
 	set is_versal_net_platform 0
 	set is_versal_2ve_2vm_platform 0
+	set is_versal_2ve_2vm_seio_platform 0
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
@@ -423,6 +438,9 @@ proc set_hw_family {proclist} {
 				set apu_proc_ip $ip_name
 				if {[llength [hsi::get_cells -hier -filter {IP_NAME==ps11 || IP_NAME==ps11xgui}]]} {
 					set is_versal_2ve_2vm_platform 1
+				}
+				if {[llength [hsi::get_cells -hier -filter {IP_NAME==seio}]]} {
+					set is_versal_2ve_2vm_seio_platform 1
 				}
 			} "psv_cortexa72" {
 				set design_family "versal"
@@ -3270,6 +3288,7 @@ proc add_driver_prop {drv_handle dt_node prop} {
 proc gen_ps_mapping {} {
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
+	global is_versal_2ve_2vm_seio_platform
 	set family [get_hw_family]
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
@@ -3412,6 +3431,17 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ed000000 label gpu
 				dict set def_ps_mapping edd00000 label mmi_dc
 				dict set def_ps_mapping ede00000 label mmi_dptx
+
+				if {$is_versal_2ve_2vm_seio_platform} {
+					dict set def_ps_mapping ed010000 label seio_spi_0
+					dict set def_ps_mapping ed020000 label seio_spi_1
+					dict set def_ps_mapping ed030000 label seio_spi_2
+					dict set def_ps_mapping ed040000 label seio_spi_3
+					dict set def_ps_mapping ed050000 label seio_uart_0
+					dict set def_ps_mapping ed060000 label seio_uart_1
+					dict set def_ps_mapping ed070000 label seio_uart_2
+					dict set def_ps_mapping ed080000 label seio_gpio
+				}
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1
@@ -7826,9 +7856,6 @@ proc map_node_to_processor {node_label processor reg bit_format baseaddr size} {
 		}
 		"psv_psm" - "psx_psm" - "psm" {
 			set memmap_key "psm"
-		}
-		"psv_pmc" - "psx_pmc" - "pmc" {
-			set memmap_key "pmc"
 		}
 		"psu_pmu" {
 			set memmap_key "pmu"

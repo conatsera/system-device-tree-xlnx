@@ -242,6 +242,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_spi" "spips"
 	dict set ::sdtgen::namespacelist "psu_spi" "spips"
 	dict set ::sdtgen::namespacelist "psv_spi" "spips"
+	dict set ::sdtgen::namespacelist "seio_spi" "spips"
+	dict set ::sdtgen::namespacelist "spi" "spips"
 	dict set ::sdtgen::namespacelist "sync_ip" "sync_ip"
 	dict set ::sdtgen::namespacelist "psv_pmc_sysmon" "sysmonpsv"
 	dict set ::sdtgen::namespacelist "slv1_psv_pmc_sysmon" "sysmonpsv"
@@ -298,6 +300,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ethernet" "emacps"
 	dict set ::sdtgen::namespacelist "psx_gpio" "gpiops"
 	dict set ::sdtgen::namespacelist "gpio" "gpiops"
+	dict set ::sdtgen::namespacelist "seio_gpio" "gpiops"
 	dict set ::sdtgen::namespacelist "psx_i3c" "i3cpsx"
 	dict set ::sdtgen::namespacelist "i3c" "i3cpsx"
 	dict set ::sdtgen::namespacelist "psx_acpu_gic" "scugic"
@@ -310,6 +313,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ttc" "ttcps"
 	dict set ::sdtgen::namespacelist "psx_sbsauart" "uartps"
 	dict set ::sdtgen::namespacelist "sbsauart" "uartps"
+	dict set ::sdtgen::namespacelist "seio_uart" "uartps"
 	dict set ::sdtgen::namespacelist "axi_noc2" "ddrpsv"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_ocm_ram" "psu_ocm"
@@ -1548,6 +1552,7 @@ Generates system device tree based on args given in:
 	source [file join $path "device_tree" "data" "xillib_internal.tcl"]
 	source [file join $path "device_tree" "data" "xillib_sw.tcl"]
 	source [file join $path "device_tree" "data" "partial_proc.tcl"]
+	source [file join $path "device_tree" "data" "pmc_dt.tcl"]
 
 	if { $::sdtgen::namespacelist == "" } {
 		init_proclist
@@ -1561,7 +1566,6 @@ Generates system device tree based on args given in:
 
 	if {[catch {set dt_domain $env(dt_domain)} msg]} {
 	} elseif {$dt_domain == "pmc"} {
-		source [file join $path "device_tree" "data" "pmc_dt.tcl"]
 		generate_pmc_dt $xsa $dir
 		return
 	}
@@ -1797,6 +1801,11 @@ Generates system device tree based on args given in:
 	if {[string match -nocase $family "versal"] || [string match -nocase $family "zynq"] || [is_zynqmp_platform $family]} {
 		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
 		foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/*]] {
+			set filename [file tail $file]
+			global is_versal_2ve_2vm_seio_platform
+			if {$filename == "versal2-seio.dtsi" && !($is_versal_2ve_2vm_seio_platform)} {
+				continue
+			}
 			# NOTE: ./ works only if we did not change our directory
 			file copy -force $file $dir
 		}
@@ -1922,6 +1931,8 @@ proc proc_mapping {} {
 	global linear_spi_list
 	global monitor_ip_exclusion_list
 	global 64_bit_processor_list
+	global pmc_ip_names
+	global plm_supported_ips
 	set proctype [get_hw_family]
 	set default_dts "system-top.dts"
 	set overall_periph_list [hsi::get_cells -hier]
@@ -1977,6 +1988,10 @@ proc proc_mapping {} {
 
 			# Do not process memory object if the corresponding cell object doesnt have the IP NAME
 			if {[string_is_empty $ipname]} {
+				continue
+			}
+
+			if {($iptype in $pmc_ip_names) && !($ipname in $plm_supported_ips)} {
 				continue
 			}
 

@@ -105,9 +105,6 @@
                                 "cortexa78" {
                                         set_memmap "mmi_dcdma" a53 $reg_val
                                 }
-                                "pmc" {
-                                        set_memmap "mmi_dcdma" pmc $reg_val
-                                }
                                 "asu" {
                                         set_memmap "mmi_dcdma" asu $reg_val
                                 }
