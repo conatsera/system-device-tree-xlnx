@@ -237,8 +237,8 @@ proc ipi_cpu_mapping {drv_handle node base} {
 proc get_cpu_memmap_key {cpu} {
 	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52 || IP_NAME==cortexr52}]
 	set memmap_key ""
-	switch $cpu {
-		"APU" - "A72" - "A78_0" {
+	switch -glob $cpu {
+		"APU" - "A72" - "A78_*" {
 			set memmap_key "a53"
 		}
 		"RPU0" - "R5_0" - "R52_0" {
