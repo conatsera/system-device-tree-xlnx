@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 #
 # This program is free software; you can redistribute it and/or
@@ -487,7 +487,7 @@
                                    set sink_periph [::hsi::get_cells -of_objects $port_pins]
                            }
 
-           if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"]} {
+           if {[get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                    set intf "dout"
                    set intr1_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$intf"]
                    set sink_pins [get_sink_pins $intr1_pin]
@@ -517,7 +517,7 @@
                                    set rx_periph [::hsi::get_cells -of_objects $port_pins]
                            }
 
-           if {[string match -nocase [hsi get_property IP_NAME $rx_periph] "xlconcat"]} {
+           if {[get_ip_property $rx_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                    set intf "dout"
                    set in1_pin [hsi::get_pins -of_objects $rx_periph -filter "NAME==$intf"]
                    set sink_pins [get_sink_pins $in1_pin]
@@ -577,12 +577,12 @@
         if {[llength $gt_reset_pins]} {
                 set gt_reset_periph [hsi get_cells -of_objects $gt_reset_pins]
                 if {[llength $gt_reset_periph]} {
-                        if {[string match -nocase [hsi get_property IP_NAME $gt_reset_periph] "xlconcat"]} {
+                        if {[get_ip_property $gt_reset_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                                 set intf "In0"
                                 set in1_pin [::hsi::get_pins -of_objects $gt_reset_periph -filter "NAME==$intf"]
                                 set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_periph] $in1_pin]]
                                 set gt_per [::hsi::get_cells -of_objects $sink_pins]
-                                if {[string match -nocase [hsi get_property IP_NAME $gt_per] "xlslice"]} {
+                                if {[get_ip_property $gt_per IP_NAME] in {"xlslice" "ilslice"}} {
                                         set intf "Din"
                                         set in1_pin [::hsi::get_pins -of_objects $gt_per -filter "NAME==$intf"]
                                         set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_per] $in1_pin]]
@@ -600,7 +600,7 @@
         set gt_pll_per ""
             if {[llength $gt_pll_pins]} {
                     set gt_pll_periph [::hsi::get_cells -of_objects $gt_pll_pins]
-                    if {[string match -nocase [hsi get_property IP_NAME $gt_pll_periph] "xlconcat"]} {
+                    if {[get_ip_property $gt_pll_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                             set intf "dout"
                             set in1_pin [::hsi::get_pins -of_objects $gt_pll_periph -filter "NAME==$intf"]
                             set sink_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_pll_periph] $in1_pin]]
@@ -608,7 +608,7 @@
                                     if {[string match -nocase $pin "In0"]} {
                                             set gt_per [::hsi::get_cells -of_objects $sink_pins]
                                             foreach per $gt_per {
-                                                    if {[string match -nocase [hsi get_property IP_NAME $per] "xlconcat"]} {
+                                                    if {[get_ip_property $per IP_NAME] in {"xlconcat" "ilconcat"}} {
                                                             set intf "dout"
                                                             set in1_pin [::hsi::get_pins -of_objects $per -filter "NAME==$intf"]
                                                             set sink_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $per] $in1_pin]]
@@ -667,7 +667,7 @@
                                    set tod1_sink_periph [::hsi::get_cells -of_objects $port_pins]
                            }
 
-           if {[string match -nocase [hsi get_property IP_NAME $tod1_sink_periph] "xlconcat"]} {
+           if {[get_ip_property $tod1_sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                    set intf "dout"
                    set in1_pin [hsi::get_pins -of_objects $tod1_sink_periph -filter "NAME==$intf"]
                    set in1sink_pins [get_sink_pins $in1_pin]
@@ -697,7 +697,7 @@
                                    set rx_periph1 [::hsi::get_cells -of_objects $port_pins]
                            }
 
-           if {[string match -nocase [hsi get_property IP_NAME $rx_periph1] "xlconcat"]} {
+           if {[get_ip_property $rx_periph1 IP_NAME] in {"xlconcat" "ilconcat"}} {
                    set intf "dout"
                    set inrx1_pin [hsi::get_pins -of_objects $rx_periph1 -filter "NAME==$intf"]
                    set rxtodsink_pins [get_sink_pins $inrx1_pin]
@@ -1032,7 +1032,7 @@
                            set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $tod2_sink_periph] "tx_timestamp_tod"]]
                            set tod2_sink_periph [::hsi::get_cells -of_objects $port_pins]
                    }
-           if {[string match -nocase [hsi get_property IP_NAME $tod2_sink_periph] "xlconcat"]} {
+           if {[get_ip_property $tod2_sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                    set intf "dout"
                    set in2_pin [hsi::get_pins -of_objects $tod2_sink_periph -filter "NAME==$intf"]
                    set in2sink_pins [get_sink_pins $in2_pin]
@@ -1060,7 +1060,7 @@
                            set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_periph2] "rx_timestamp_tod"]]
                            set rx_periph2 [::hsi::get_cells -of_objects $port_pins]
                 }
-           if {[string match -nocase [hsi get_property IP_NAME $rx_periph2] "xlconcat"]} {
+           if {[get_ip_property $rx_periph2 IP_NAME] in {"xlconcat" "ilconcat"}}  {
                    set intf "dout"
                    set inrx2_pin [hsi::get_pins -of_objects $rx_periph2 -filter "NAME==$intf"]
                    set rxtodsink_pins [get_sink_pins $inrx2_pin]
@@ -1368,7 +1368,7 @@
                            set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $tod3_sink_periph] "tx_timestamp_tod"]]
                            set tod3_sink_periph [::hsi::get_cells -of_objects $port_pins]
                    }
-           if {[string match -nocase [hsi get_property IP_NAME $tod3_sink_periph] "xlconcat"]} {
+           if {[get_ip_property $tod3_sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                    set intf "dout"
                    set in3_pin [hsi::get_pins -of_objects $tod3_sink_periph -filter "NAME==$intf"]
                    set in3sink_pins [get_sink_pins $in3_pin]
@@ -1392,7 +1392,7 @@
         if {[llength $rxtod3_pins]} {
            set rx_periph3 [::hsi::get_cells -of_objects $rxtod3_pins]
            if {[llength $rx_periph3]} {
-           if {[string match -nocase [hsi get_property IP_NAME $rx_periph3] "xlconcat"]} {
+           if {[get_ip_property $rx_periph3 IP_NAME] in {"xlconcat" "ilconcat"}} {
                    set intf "dout"
                    set inrx3_pin [hsi::get_pins -of_objects $rx_periph3 -filter "NAME==$intf"]
                    set rxtodsink_pins [get_sink_pins $inrx3_pin]
@@ -1748,7 +1748,7 @@
 
     proc mrmac_connect_axistream {drv_handle node sink_periph dts_file} {
 
-         if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"]} {
+         if {[get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                 set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $sink_periph] "dout"]]
                 set sink_periph [hsi::get_cells -of_objects $fifo_pin]
          }
@@ -1938,7 +1938,7 @@
                                 set peri [hsi::get_cells -of_objects $pins]
                                 set mrclk "$clk$i"
                                 if {[llength $peri]} {
-                                           if {[string match -nocase [hsi get_property IP_NAME $peri] "xlconcat"]} {
+                                           if {[get_ip_property $peri IP_NAME] in {"xlconcat" "ilconcat"}} {
                                                    set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects [hsi::get_cells $peri] In$i]] -filter "DIRECTION==O"]
                                                    set clk_peri [hsi::get_cells -of_objects $pins]
                                            }

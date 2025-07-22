@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2013-2021 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -77,9 +77,9 @@ proc get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb -1} } {
             if { [llength $source_cell] } {
                 set ip_name [hsi get_property IP_NAME $source_cell]
                 #Cascading case of concat IP
-                if { [string match -nocase $ip_name "xlconcat"] } {
+                if {$ip_name in {"xlconcat" "ilconcat"}} {
                     set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell]]
-                } elseif { [string match -nocase $ip_name "xlslice"] } {
+                } elseif {$ip_name in {"xlslice" "ilslice"}} {
                     set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
                 } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
                     set source_pins [list {*}$source_pins {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
@@ -104,9 +104,9 @@ proc get_slice_interrupt_sources { slice_ip_obj } {
         if { [llength $source_cell] } {
             set ip_name [hsi get_property IP_NAME $source_cell]
             #Cascading case of xlslice IP
-            if { [string match -nocase $ip_name "xlslice"] } {
+            if {$ip_name in {"xlslice" "ilslice"}} {
                 set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
-            } elseif { [string match -nocase $ip_name "xlconcat"] } {
+            } elseif {$ip_name in {"xlconcat" "ilconcat"}} {
                 set from [::hsi get_property CONFIG.DIN_FROM $slice_ip_obj]
                 set to [::hsi get_property CONFIG.DIN_TO $slice_ip_obj]
                 set lsb [expr $from < $to ? $from : $to]
@@ -135,9 +135,9 @@ proc get_util_reduced_logic_interrupt_sources { url_ip_obj } {
         if { [llength $source_cell] } {
             set ip_name [hsi get_property IP_NAME $source_cell]
             
-            if { [string match -nocase $ip_name "xlslice"] } {
+            if {$ip_name in {"xlslice" "ilslice"}} {
                 set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
-            } elseif { [string match -nocase $ip_name "xlconcat"] } {
+            } elseif {$ip_name in {"xlconcat" "ilconcat"}} {
                 set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
 		    #Cascading case of util_reduced_logic IP

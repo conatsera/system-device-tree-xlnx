@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2013-2021 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -316,9 +316,9 @@ proc get_intr_src_pins {interrupt_pin} {
         if { [llength $source_cell ] } {
             #For concat IP, we need to bring pin source for other end
             set ip_name [hsi get_property IP_NAME $source_cell]
-            if { [string match -nocase $ip_name "xlconcat" ] } {
+            if {$ip_name in {"xlconcat" "ilconcat"}} {
                 set interrupt_sources [list {*}$interrupt_sources {*}[get_concat_interrupt_sources $source_cell]]
-            } elseif { [string match -nocase $ip_name "xlslice"] } {
+            } elseif {$ip_name in {"xlslice" "ilslice"}} {
                 set interrupt_sources [list {*}$interrupt_sources {*}[get_slice_interrupt_sources $source_cell]]
             } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
                 set interrupt_sources [list {*}$interrupt_sources {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
@@ -1070,11 +1070,11 @@ proc get_connected_intr_cntrl { periph_name intr_pin_name } {
         set sink_periph [lindex [hsi::get_cells -of_objects $intr_sink] 0]
         if { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
             lappend intr_cntrl $sink_periph
-        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"] } {
+        } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"})} {
             #this the case where interrupt port is connected to XLConcat IP.
             #changes made to fix CR 933826 
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "dout"]]
-        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlslice"] } {
+        } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"})} {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Dout"]]
         } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]

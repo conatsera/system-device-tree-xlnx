@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2024-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -21,7 +21,7 @@ proc isppipeline_gen_reset_gpio {drv_handle node dts_file} {
 			if {[string match -nocase $sink_ip "axi_gpio"]} {
 				add_prop "$node" "reset-gpios" "$sink_periph 0 1" reference $dts_file
 			}
-			if {[string match -nocase $sink_ip "xlslice"]} {
+			if {$sink_ip in {"xlslice" "ilslice"}} {
 				set gpio [hsi get_property CONFIG.DIN_FROM $sink_periph]
 				set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
 			foreach pin $pins {
