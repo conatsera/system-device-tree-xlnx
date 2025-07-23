@@ -49,10 +49,21 @@
         add_prop $node "xlnx,ip-name" $ip_name string "pl.dtsi"
         set model "$ip_name,[get_ip_version $drv_handle]"
         add_prop $node "model" $model string "pl.dtsi"
+        set variant ""
 	if {$ip_name in {"microblaze" "microblaze_riscv"}} {
                 set family [get_ip_property $drv_handle CONFIG.C_FAMILY]
 		add_prop $node "xlnx,family" $family string "pl.dtsi"
+                set variant $family
+                if {[hsi get_property DEVICE [hsi current_hw_design]] in {"xcsu200p"}} {
+                        set variant spartanuplusaes1
+                }
 	}
+        if {[regexp "spartanuplus.*" "$variant" match] && ($variant != "spartanuplus")} {
+                set variant "spartanuplus $variant"
+        }
+        if {![string_is_empty $variant]} {
+                add_prop "root" "variant" $variant stringlist system-top.dts 1
+        }
         add_prop $node "reg" $nr hexint "pl.dtsi"
         add_prop $node "bus-handle" "amba_pl" reference "pl.dtsi"
 
