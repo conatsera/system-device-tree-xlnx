@@ -663,7 +663,7 @@ proc vproc_ss_gen_gpio_reset {drv_handle node topology dts_file} {
 			if {[string match -nocase $sink_ip "axi_gpio"]} {
 				add_prop "$node" "reset-gpios" "$sink_periph 0 1" reference $dts_file
 			}
-			if {[string match -nocase $sink_ip "xlslice"]} {
+			if {$sink_ip in {"xlslice" "ilslice"}} {
 				set gpio [hsi::get_property CONFIG.DIN_FROM $sink_periph]
 				set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
 				foreach pin $pins {

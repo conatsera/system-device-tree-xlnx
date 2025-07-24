@@ -162,7 +162,7 @@
             if {[llength $port_pins]} {
                     set periph [::hsi::get_cells -of_objects $port_pins]
                     if {[llength $periph]} {
-                        if {[string match -nocase [hsi get_property IP_NAME $periph] "xlslice"]} {
+                        if {[get_ip_property $periph IP_NAME] in {"xlslice" "ilslice"}}  {
                             set intf "Din"
                             set in1_pin [::hsi::get_pins -of_objects $periph -filter "NAME==$intf"]
                             set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $periph] $in1_pin]]
@@ -186,7 +186,7 @@
             if {[llength $rxfifo_port_pins]} {
                 set periph [::hsi::get_cells -of_objects $rxfifo_port_pins]
                 if {[llength $periph]} {
-                    if {[string match -nocase [hsi get_property IP_NAME $periph] "xlconcat"]} {
+                    if {[get_ip_property $periph IP_NAME] in {"xlconcat" "ilconcat"}} {
                         set intf "dout"
                         set in1_pin [::hsi::get_pins -of_objects $periph -filter "NAME==$intf"]
                         set sink_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $periph] $in1_pin]]

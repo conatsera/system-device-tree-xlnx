@@ -755,7 +755,7 @@
             set sink_periph [hsi::get_cells -of_objects $pin]
             if {[llength $sink_periph]} {
                 set sink_ip [hsi::get_property IP_NAME $sink_periph]
-                if {[string match -nocase $sink_ip "xlslice"]} {
+                if {$sink_ip in {"xlslice" "ilslice"}} {
                     set gpio [hsi::get_property CONFIG.DIN_FROM $sink_periph]
                     set pins [hsi::get_pins -of_objects [hsi::get_nets -of_objects [hsi::get_pins -of_objects $sink_periph "Din"]]]
                     foreach pin $pins {

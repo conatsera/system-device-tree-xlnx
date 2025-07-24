@@ -859,8 +859,8 @@ proc create_node args {
 		}
 		Pop args
 	}
-	set ignore_list "fifo_generator clk_wiz clk_wizard xlconcat xlconstant \
-		util_vector_logic xlslice util_ds_buf proc_sys_reset axis_data_fifo \
+	set ignore_list "fifo_generator clk_wiz clk_wizard xlconcat ilconcat xlconstant ilconstant \
+		util_vector_logic xlslice ilslice util_ds_buf proc_sys_reset axis_data_fifo \
 		v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic \
 		gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr \
 		perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr \
@@ -5382,9 +5382,9 @@ proc get_interrupt_parent {  periph_name intr_pin_name } {
         set sink_periph [lindex [::hsi::get_cells -of_objects $intr_sink] 0]
         if { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
             lappend intr_cntrl $sink_periph
-        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"] } {
+        } elseif {[llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
            set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "dout"]]
-        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlslice"] } {
+         } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"}) } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Dout"]]
         } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]
@@ -6970,13 +6970,12 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 				if { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "axi_intc"] } {
 					# this the case where interrupt port is connected to axi_intc.
 					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "irq"]
-				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"] } {
+				} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
 					# this the case where interrupt port is connected to XLConcat IP.
 					lappend intr_cntrl [get_intr_cntrl_name $sink_periph "dout"]
 				} elseif { [llength $sink_periph ] && [is_intr_cntrl $sink_periph] == 1 } {
 					lappend intr_cntrl $sink_periph
-				} elseif { [llength $sink_periph] && ([string match -nocase [hsi get_property IP_NAME $sink_periph] "microblaze"] ||
-			                 [string match -nocase [hsi get_property IP_NAME $sink_periph] "microblaze_riscv"])} {
+				} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"microblaze" "microblaze_riscv"})} {
 					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "tmr_voter"] } {
 					lappend intr_cntrl $sink_periph
@@ -7036,10 +7035,10 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 			} else {
 				lappend intr_cntrl $sink_periph
 			}
-		} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"] } {
+		} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
 			# this the case where interrupt port is connected to XLConcat IP.
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "dout"]
-		} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlslice"]} {
+		} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"}) } {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Dout"]
 		} elseif {[llength $sink_periph] &&  [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_reduced_logic"]} {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Res"]
@@ -7165,7 +7164,7 @@ proc get_gpio_channel_nr { periph_name intr_pin_name } {
 		}
 		set intr_sink_pins [get_sink_pins $intr_pin]
 		set sink_periph [hsi::get_cells -of_objects $intr_sink_pins]
-		if { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "xlconcat"] } {
+		if { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}) } {
 			# this the case where interrupt port is connected to XLConcat IP.
 			return [get_gpio_channel_nr $sink_periph "dout"]
 		}
@@ -7195,7 +7194,7 @@ proc is_orgate { intc_src_port ip_name} {
 	set intr_sink_pins [get_sink_pins $intc_src_port]
 	set sink_periph [hsi::get_cells -of_objects $intr_sink_pins]
 	set ipname [hsi get_property IP_NAME $sink_periph]
-	if { $ipname == "xlconcat" } {
+	if {$ipname in {"xlconcat" "ilconcat"}} {
 		set intf "dout"
 		set intr1_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$intf"]
 		set intr_sink_pins [get_sink_pins $intr1_pin]
@@ -7345,7 +7344,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set sink_pn [get_sink_pins $intr_pin]
 			set peri [hsi::get_cells -of_objects $sink_pn]
 			set periph_ip [hsi get_property IP_NAME [hsi::get_cells -hier $peri]]
-			if {[string match -nocase $periph_ip "xlconcat"]} {
+			if {$periph_ip in {"xlconcat" "ilconcat"}} {
 				set dout "dout"
 				set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
 				set pins [get_sink_pins "$intr_pin"]
@@ -7367,7 +7366,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set sink_pn [get_sink_pins $intr_pin]
 			set peri [hsi::get_cells -of_objects $sink_pn]
 			set periph_ip [hsi get_property IP_NAME [hsi::get_cells -hier $peri]]
-			if {[string match -nocase $periph_ip "xlconcat"]} {
+			if {$periph_ip in {"xlconcat" "ilconcat"}} {
 				set dout "dout"
 				set intr_pin [hsi::get_pins -of_objects $peri -filter "NAME==$dout"]
 				set pins [get_sink_pins "$intr_pin"]
@@ -7413,7 +7412,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	}
 	if {[llength $connected_ip]} {
 		# check for direct connection or concat block connected
-		if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
+		if {"$connected_ip" in {"xlconcat" "ilconcat"}} {
 			set pin_number [regexp -all -inline -- {[0-9]+} $sink_pin]
 			if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
 				set pin_number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
@@ -7443,7 +7442,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			}
 
 	                while {[llength $connected_ip]} {
-				if {![string match -nocase "$connected_ip" "xlconcat"]} {
+				if {!("$connected_ip" in {"xlconcat" "ilconcat"})} {
 					break
 				}
 	                       set dout "dout"
@@ -7483,7 +7482,7 @@ proc get_psu_interrupt_id { ip_name port_name } {
 				set sink_periph [hsi::get_cells -of_objects $sink_pin]
 				if {[llength $sink_periph]} {
 					set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
-					if { [string compare -nocase "$connected_ip" "xlconcat"] == 0 } {
+					if {"$connected_ip" in {"xlconcat" "ilconcat"}} {
 						set number [regexp -all -inline -- {[0-9]+} $sink_pin]
 						if {$is_versal_2ve_2vm_platform && $sink_pin in $versal_2ve_2vm_irq_names_list} {
 							set number [lsearch $versal_2ve_2vm_irq_names_list $sink_pin]
