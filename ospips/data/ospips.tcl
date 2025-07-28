@@ -23,8 +23,9 @@
         if {$ospi_mode == 1} {
              set is_stacked 1
         }
-        add_prop $node "is-dual" $is_dual int "pcw.dtsi"
-        add_prop $node "is-stacked" $is_stacked int "pcw.dtsi"
+        set dtsi_name [set_drv_def_dts $drv_handle]
+        add_prop $node "is-dual" $is_dual int $dtsi_name
+        add_prop $node "is-stacked" $is_stacked int $dtsi_name
     }
 
 

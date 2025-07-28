@@ -1438,15 +1438,7 @@ proc write_dt args {
 				set val_temp [string trimright $val " "]
 				set val_temp [string trimleft $val_temp " "]
 				if {[llength $val] > 1} {
-					set first_str "\"[lindex $val 0]\""
-					set first_str ""
-					set first true
-                			foreach element $val {
-                				if {$first != true} {
-                				} 
-						set first false
-					}
-					puts $fd "\t$prop = $first_str;"
+					puts $fd "\t$prop = $val;"
 				} else {
 					if {[string match -nocase $val ""]} {
 						if {$bool_col} {
