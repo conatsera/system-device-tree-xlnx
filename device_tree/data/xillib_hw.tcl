@@ -320,7 +320,7 @@ proc get_intr_src_pins {interrupt_pin} {
                 set interrupt_sources [list {*}$interrupt_sources {*}[get_concat_interrupt_sources $source_cell]]
             } elseif {$ip_name in {"xlslice" "ilslice"}} {
                 set interrupt_sources [list {*}$interrupt_sources {*}[get_slice_interrupt_sources $source_cell]]
-            } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
+            } elseif {$ip_name in {"util_reduced_logic" "ilreduced_logic"}} {
                 set interrupt_sources [list {*}$interrupt_sources {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
             } else {
                 lappend interrupt_sources $source_pin 
@@ -1076,7 +1076,7 @@ proc get_connected_intr_cntrl { periph_name intr_pin_name } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "dout"]]
         } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"})} {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Dout"]]
-        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
+        } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"util_reduced_logic" "ilreduced_logic"})} {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]
         }
     }
