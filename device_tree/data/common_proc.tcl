@@ -860,8 +860,8 @@ proc create_node args {
 		Pop args
 	}
 	set ignore_list "fifo_generator clk_wiz clk_wizard xlconcat ilconcat xlconstant ilconstant \
-		util_vector_logic xlslice ilslice util_ds_buf proc_sys_reset axis_data_fifo \
-		v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic \
+		util_vector_logic ilvector_logic xlslice ilslice util_ds_buf proc_sys_reset axis_data_fifo \
+		v_vid_in_axi4s bufg_gt axis_tdest_editor util_reduced_logic ilreduced_logic \
 		gt_quad_base noc_nsw blk_mem_gen emb_mem_gen lmb_bram_if_cntlr \
 		perf_axi_tg noc_mc_ddr4 c_counter_binary timer_sync_1588 oddr \
 		axi_noc dp_videoaxi4s_bridge axi4svideo_bridge axi_vip \
@@ -5378,7 +5378,7 @@ proc get_interrupt_parent {  periph_name intr_pin_name } {
            set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "dout"]]
          } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"}) } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Dout"]]
-        } elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_reduced_logic"] } {
+        } elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"util_reduced_logic" "ilreduced_logic"}) } {
             set intr_cntrl [list {*}$intr_cntrl {*}[get_connected_intr_cntrl $sink_periph "Res"]]
         }  elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
 		set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
@@ -7032,7 +7032,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "dout"]
 		} elseif { [llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"xlslice" "ilslice"}) } {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Dout"]
-		} elseif {[llength $sink_periph] &&  [string match -nocase [hsi get_property IP_NAME $sink_periph] "util_reduced_logic"]} {
+		} elseif {[llength $sink_periph] && ([get_ip_property $sink_periph IP_NAME] in {"util_reduced_logic" "ilreduced_logic"})} {
 			lappend intr_cntrl [get_intr_cntrl_name $sink_periph "Res"]
 		} elseif {[llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "axi_gpio"]} {
 			set intr_present [hsi get_property CONFIG.C_INTERRUPT_PRESENT $sink_periph]
@@ -7192,7 +7192,7 @@ proc is_orgate { intc_src_port ip_name} {
 		set intr_sink_pins [get_sink_pins $intr1_pin]
 		set sink_periph [hsi::get_cells -of_objects $intr_sink_pins]
 		set ipname [hsi get_property IP_NAME $sink_periph]
-		if {$ipname == "util_reduced_logic"} {
+		if {$ipname in {"util_reduced_logic" "ilreduced_logic"}} {
 			set width [hsi get_property CONFIG.C_SIZE $sink_periph]
 			return $width
 		}
@@ -7428,8 +7428,8 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	                set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
                         # When xlconcate connected via util_reduced_logic(OR) there is only one
                         # possiblity to get the interrupt so dont treat it as concat to assign the single
-                        # interrupt number for all ip's connected to xlconcate
-			if {[llength $connected_ip] && [string match -nocase "$connected_ip" "util_reduced_logic"]} {
+                        # interrupt number for all ip's connected to xlconcat
+			if {[llength $connected_ip] && ("$connected_ip" in {"util_reduced_logic" "ilreduced_logic"})} {
 				set concat_block 0
 			}
 

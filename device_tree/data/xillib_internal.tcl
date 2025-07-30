@@ -81,7 +81,7 @@ proc get_concat_interrupt_sources { concat_ip_obj {lsb -1} {msb -1} } {
                     set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell]]
                 } elseif {$ip_name in {"xlslice" "ilslice"}} {
                     set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
-                } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
+                } elseif {$ip_name in {"util_reduced_logic" "ilreduced_logic"} } {
                     set source_pins [list {*}$source_pins {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
                 } else {
                     lappend source_pins $pin
@@ -113,7 +113,7 @@ proc get_slice_interrupt_sources { slice_ip_obj } {
                 set msb [expr $from > $to ? $from : $to]
                 incr msb
                 set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell $lsb $msb]]
-            } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
+            } elseif {$ip_name in {"util_reduced_logic" "ilreduced_logic"}} {
                     set source_pins [list {*}$source_pins {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
             } else {
                 lappend source_pins $pin
@@ -139,7 +139,7 @@ proc get_util_reduced_logic_interrupt_sources { url_ip_obj } {
                 set source_pins [list {*}$source_pins {*}[get_slice_interrupt_sources $source_cell]]
             } elseif {$ip_name in {"xlconcat" "ilconcat"}} {
                 set source_pins [list {*}$source_pins {*}[get_concat_interrupt_sources $source_cell]]
-            } elseif { [string match -nocase $ip_name "util_reduced_logic"] } {
+            } elseif {$ip_name in {"util_reduced_logic" "ilreduced_logic"}} {
 		    #Cascading case of util_reduced_logic IP
                     set source_pins [list {*}$source_pins {*}[get_util_reduced_logic_interrupt_sources $source_cell]]
             } else {
