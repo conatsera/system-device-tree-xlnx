@@ -990,6 +990,7 @@ proc gen_board_info {} {
 	global env
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
+	global is_versal_2ve_2vm_small_platform
 	set path $env(CUSTOM_SDT_REPO)
 	set default_dts "system-top.dts"
 	set common_file "$path/device_tree/data/config.yaml"
@@ -1039,6 +1040,10 @@ proc gen_board_info {} {
 		if {[regexp "spartanuplus.*" "$variant" match] && ($variant != "spartanuplus")} {
 			set variant "spartanuplus $variant"
 		}
+	}
+
+	if {$is_versal_2ve_2vm_small_platform} {
+		set variant "Versal_2VE_2VM_Small"
 	}
 
 	if {![string_is_empty $variant]} {
