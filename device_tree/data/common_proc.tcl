@@ -419,6 +419,7 @@ proc set_hw_family {proclist} {
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
 	global is_versal_2ve_2vm_seio_platform
+	global is_versal_2ve_2vm_small_platform
 	global apu_proc_ip
 	set apu_proc_ip ""
 	set design_family ""
@@ -427,6 +428,7 @@ proc set_hw_family {proclist} {
 	set is_versal_net_platform 0
 	set is_versal_2ve_2vm_platform 0
 	set is_versal_2ve_2vm_seio_platform 0
+	set is_versal_2ve_2vm_small_platform 0
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
         	set ip_name [hsi get_property IP_NAME $proc_drv_handle]
@@ -436,11 +438,15 @@ proc set_hw_family {proclist} {
 				set ps_design 1
 				set is_versal_net_platform 1
 				set apu_proc_ip $ip_name
-				if {[llength [hsi::get_cells -hier -filter {IP_NAME==ps11 || IP_NAME==ps11xgui || IP_NAME==psxt}]]} {
+				if {[llength [hsi::get_cells -hier -filter {IP_NAME==ps11 || IP_NAME==ps11xgui}]]} {
 					set is_versal_2ve_2vm_platform 1
 				}
 				if {[llength [hsi::get_cells -hier -filter {IP_NAME==seio}]]} {
 					set is_versal_2ve_2vm_seio_platform 1
+				}
+				if {[llength [hsi::get_cells -hier -filter {IP_NAME==psxt}]]} {
+					set is_versal_2ve_2vm_platform 1
+					set is_versal_2ve_2vm_small_platform 1
 				}
 			} "psv_cortexa72" {
 				set design_family "versal"
@@ -3351,6 +3357,8 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping f19f0000 label can1
 				dict set def_ps_mapping f1a00000 label can2
 				dict set def_ps_mapping f1a10000 label can3
+				dict set def_ps_mapping f1a90000 label can4
+				dict set def_ps_mapping f1aa0000 label can5
 				dict set def_ps_mapping f11c0000 label dma0
 				dict set def_ps_mapping f11d0000 label dma1
 				dict set def_ps_mapping ebe8c000 label asu_dma0
