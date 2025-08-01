@@ -1519,6 +1519,11 @@ proc generate_sdt args {
 	global non_val_list
 	global non_val_ip_types
 	global monitor_ip_exclusion_list
+	# For some of the Versal Premium devices, there is a duplication of PS IP cell objects.
+	# One set of names starts with pmcps_0_<ip_name> and other with ps_wizard_0_pmcps_0_<ip_name>.
+	# Below variables are needed to distinguish the redundant entries.
+	global parent_ipi_node_accessed
+	set parent_ipi_node_accessed [list]
 	set endpoint_proc_dict [dict create]
 
 	set linear_spi_list "psu_qspi_linear ps7_qspi_linear"
