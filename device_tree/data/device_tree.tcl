@@ -1029,6 +1029,22 @@ proc gen_board_info {} {
 	}
 	add_prop "root" "family" "${family}" string $default_dts
 
+	set variant ""
+	if {$family in {"microblaze" "microblaze_riscv"}} {
+		set mb_cpu_handle [lindex [hsi get_cells -hier -filter IP_NAME==$family] 0]
+		set variant [get_ip_property $mb_cpu_handle CONFIG.C_FAMILY]
+		if {$device in {"xcsu200p"}} {
+			set variant spartanuplusaes1
+		}
+		if {[regexp "spartanuplus.*" "$variant" match] && ($variant != "spartanuplus")} {
+			set variant "spartanuplus $variant"
+		}
+	}
+
+	if {![string_is_empty $variant]} {
+		add_prop "root" "variant" $variant stringlist system-top.dts 1
+	}
+
 	if {[llength $ddr5_handle] > 0} {
 	   foreach ddr5_cell $ddr5_handle {
 		   set ddr_type [hsi::get_property CONFIG.DDRMC5_DEVICE_TYPE $ddr5_cell]
