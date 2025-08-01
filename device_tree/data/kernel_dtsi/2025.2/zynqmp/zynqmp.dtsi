@@ -685,6 +685,7 @@
                        reg = <0x0 0xfec10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
                        cpu = <&psu_cortexa53_0>;
+		       status = "disabled";
                };
 
                psu_cortexa53_1_debug: debug@fed10000 {
@@ -692,6 +693,7 @@
                        reg = <0x0 0xfed10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
                        cpu = <&psu_cortexa53_1>;
+                       status = "disabled";
                };
 
                psu_cortexa53_2_debug: debug@fee10000 {
@@ -699,6 +701,7 @@
                        reg = <0x0 0xfee10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
                        cpu = <&psu_cortexa53_2>;
+                       status = "disabled";
                };
 
                psu_cortexa53_3_debug: debug@fef10000 {
@@ -706,6 +709,7 @@
                        reg = <0x0 0xfef10000 0x0 0x1000>;
                        clock-names = "apb_pclk";
                        cpu = <&psu_cortexa53_3>;
+                       status = "disabled";
                };
 
 		/* GDMA */
