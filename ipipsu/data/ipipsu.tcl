@@ -14,15 +14,22 @@
 #
 
 proc ipipsu_generate {drv_handle} {
+	global parent_ipi_node_accessed
 	set ipi_list [hsi get_cells -hier -filter {IP_NAME == "psu_ipi" || IP_NAME == "psv_ipi" || IP_NAME == "psx_ipi" || IP_NAME == "ipi"}]
 	set src_buffer_index [hsi get_property CONFIG.C_BUFFER_INDEX [hsi get_cells -hier $drv_handle]]
 	set src_buffer_base [hsi get_property CONFIG.C_BUFFER_BASE [hsi get_cells -hier $drv_handle]]
 	set base [get_baseaddr $drv_handle]
 	set node [get_node $drv_handle]
+	# For some of the Versal Premium devices, there is a duplication of PS IP cell objects.
+	# One set of names starts with pmcps_0_<ip_name> and other with ps_wizard_0_pmcps_0_<ip_name>.
+	# Below is needed to distinguish the redundant entries.
+	if {!($node in $parent_ipi_node_accessed)} {
+		lappend parent_ipi_node_accessed $node
+	} else {
+		return
+	}
 	set proctype [get_hw_family]
 	set dts_file "pcw.dtsi"
-
-	add_prop $node "xlnx,ipi-target-count" [llength $ipi_list] int $dts_file
 
 	if {![is_zynqmp_platform $proctype]} {
 		generate_reg_versal $node $dts_file $src_buffer_base $src_buffer_index $drv_handle
@@ -32,8 +39,10 @@ proc ipipsu_generate {drv_handle} {
 	# Map IPI nodes to corresponding CPU Master
 	ipi_cpu_mapping $drv_handle $node $base
 
-	# Generate all the available IPI child nodes
-	generate_ipi_child_nodes $ipi_list $node $drv_handle $src_buffer_base $src_buffer_index $dts_file $proctype
+	# Generate all the available IPI child nodes and return the target ipi count
+	set target_count [generate_ipi_child_nodes $ipi_list $node $drv_handle $src_buffer_base $src_buffer_index $dts_file $proctype]
+	add_prop $node "xlnx,ipi-target-count" $target_count int $dts_file
+
 }
 
 # Generate IPI child nodes
@@ -45,11 +54,19 @@ proc generate_ipi_child_nodes {ipi_list node drv_handle src_buffer_base src_buff
 
 	set src_name [extract_ipi_number [hsi get_property NAME $drv_handle]]
 	set idx 0
-
+	set child_node_label_list [list]
 	foreach ipi_slave $ipi_list {
 		# Generate child node label
 		set dest_name [extract_ipi_number [hsi get_property NAME $ipi_slave]]
 		set child_node_label "${src_name}_to_${dest_name}"
+		# For some of the Versal Premium devices, there is a duplication of PS IP cell objects.
+		# One set of names starts with pmcps_0_<ip_name> and other with ps_wizard_0_pmcps_0_<ip_name>.
+		# Below is needed to distinguish the redundant entries.
+		if {!($child_node_label in $child_node_label_list)} {
+			lappend child_node_label_list $child_node_label
+		} else {
+			continue
+		}
 
 		# Create child node for this IPI slave
 		set slv_node [create_node -n "child" -l "$child_node_label" -u $idx -d $dts_file -p $node]
@@ -94,6 +111,7 @@ proc generate_ipi_child_nodes {ipi_list node drv_handle src_buffer_base src_buff
 
 		incr idx
 	}
+	return $idx
 }
 
 # Generate child node compatible string
