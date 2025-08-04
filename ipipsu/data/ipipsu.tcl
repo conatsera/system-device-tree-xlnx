@@ -30,6 +30,7 @@ proc ipipsu_generate {drv_handle} {
 	}
 	set proctype [get_hw_family]
 	set dts_file "pcw.dtsi"
+	set cpu [hsi get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $drv_handle]]
 
 	if {![is_zynqmp_platform $proctype]} {
 		generate_reg_versal $node $dts_file $src_buffer_base $src_buffer_index $drv_handle
@@ -37,7 +38,12 @@ proc ipipsu_generate {drv_handle} {
 	}
 
 	# Map IPI nodes to corresponding CPU Master
-	ipi_cpu_mapping $drv_handle $node $base
+	ipi_cpu_mapping $cpu $drv_handle $node $base
+
+	# if the CPU name is PL, then call interrupt update
+	if {[regexp {^(S_AXI_FPD|S_AXI_GP2|S_AXI_LPD|S_ACP_FPD|S_ACE_FPD|PL_AXI_LPD|PL_AXI_FPD*|PL_ACP_APU|CPM)} $cpu]} {
+		ipi_pl_interrupt_update $drv_handle $node
+	}
 
 	# Generate all the available IPI child nodes and return the target ipi count
 	set target_count [generate_ipi_child_nodes $ipi_list $node $drv_handle $src_buffer_base $src_buffer_index $dts_file $proctype]
@@ -235,10 +241,10 @@ proc extract_ipi_number {ipi_name} {
 }
 
 # Configure memory mapping for IPI based on CPU type
-proc ipi_cpu_mapping {drv_handle node base} {
+proc ipi_cpu_mapping {cpu drv_handle node base} {
 	set cpu [hsi get_property CONFIG.C_CPU_NAME [hsi::get_cells -hier $drv_handle]]
 	set node_label [string trimleft $node "&"]
-	set memmap_key [get_cpu_memmap_key $cpu]
+	set memmap_key [get_cpu_memmap_key $cpu $drv_handle]
 
 	if {[llength $node] > 1} {
 		set node_label [lindex [split $node_label ":"] 0]
@@ -252,7 +258,7 @@ proc ipi_cpu_mapping {drv_handle node base} {
 }
 
 # Map CPU name to memory map identifier
-proc get_cpu_memmap_key {cpu} {
+proc get_cpu_memmap_key {cpu drv_handle} {
 	set r5_procs [hsi::get_cells -hier -filter {IP_NAME==psv_cortexr5 || IP_NAME==psu_cortexr5 || IP_NAME==psx_cortexr52 || IP_NAME==cortexr52}]
 	set memmap_key ""
 	switch -glob $cpu {
@@ -301,6 +307,77 @@ proc get_cpu_memmap_key {cpu} {
 		"ASU" {
 			set memmap_key "asu"
 		}
+		"S_AXI_FPD" - "S_AXI_GP2" - "S_AXI_LPD" - "S_ACP_FPD" - "S_ACE_FPD" - \
+		"PL_AXI_LPD" - "PL_AXI_FPD*" - "PL_ACP_APU" - "CPM" {
+			set memmap_key [memmap_pl_ipi $cpu $drv_handle]
+		}
 	}
 	return $memmap_key
+}
+
+# Mem-Map for PL-IPI
+proc memmap_pl_ipi {cpu drv_handle} {
+	foreach processor [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR] {
+		# Get the memory ranges for the current processor
+		set mem_ranges [hsi::get_mem_ranges -of_objects $processor]
+
+		# Check if the drv_handle is in the memory ranges
+		if {[lsearch $mem_ranges $drv_handle] >= 0} {
+			foreach mem_range [hsi::get_mem_ranges [hsi::get_cells -hier $drv_handle]] {
+				if {[string match -nocase [hsi get_property SLAVE_INTERFACE $mem_range] $cpu]} {
+					return $processor
+				}
+			}
+		}
+	}
+	return ""
+}
+
+# Update IPI PL Interrupt Properties for Versal and Versal-Gen2 platforms
+proc ipi_pl_interrupt_update {drv_handle node} {
+	global is_versal_net_platform
+	global is_versal_2ve_2vm_platform
+
+	# Check if the hardware family is Versal
+	set proctype [get_hw_family]
+	if {[string match -nocase $proctype "versal"]} {
+		# Skip if it's a Versal-NET and not Versal-Gen2
+		if { $is_versal_net_platform && !$is_versal_2ve_2vm_platform } {
+			return
+		}
+	} else {
+		# unsupported platforms
+		return
+	}
+
+	set periph_val [lindex [split [hsi get_property HIER_NAME [hsi get_cells -hier $drv_handle]] "/"] 1]
+	if {[string length $periph_val] == 0} {
+		return
+	}
+
+	set expected_pin [get_expected_ipi_ps_pl_irq_pin $drv_handle $periph_val]
+	set intc [get_interrupt_parent $periph_val $expected_pin]
+	if {[string_is_empty $intc]} {
+		return
+	}
+
+	set intr_info [get_intr_id $periph_val $expected_pin]
+	if {[string match -nocase $intr_info "-1"]} {
+		return
+	}
+
+	# Update interrupt properties in the device tree source file
+	set dts_file [set_drv_def_dts $drv_handle]
+	add_prop $node "interrupts" $intr_info intlist $dts_file
+	add_prop $node "interrupt-parent" $intc reference $dts_file
+}
+
+# Extract expected PS_PL_IRQ PIN
+proc get_expected_ipi_ps_pl_irq_pin {drv_handle periph_val} {
+	set drv_intr_pin [hsi::get_pins -of_objects $drv_handle -filter "TYPE==INTERRUPT&&NAME=~*pl_irq*"]
+	if {[llength $drv_intr_pin] == 1} {
+		set last_part [lindex [split $drv_intr_pin "_"] end]
+		return [hsi::get_pins -of_objects [hsi::get_cells -hier $periph_val] -filter "TYPE==INTERRUPT&&NAME=~*ps_pl_irq*$last_part"]
+	}
+	return ""
 }
