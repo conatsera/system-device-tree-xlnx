@@ -64,13 +64,19 @@ proc emacps_process_pcspma_phy {drv_handle node dts_file connected_ip zynq_perip
         set sink_periph [hsi::get_cells -of_objects $pin]
         if {[llength $sink_periph]} {
             set val [hsi get_property CONFIG.CONST_VAL $sink_periph]
-            set inhex [format %x $val]
-            set_drv_prop $drv_handle phy-handle "phy$inhex" $node reference
-            set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
-            add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
-            set phy_type [hsi get_property CONFIG.Standard $connected_ip]
-            set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
-            emacps_configure_phy_props $pcspma_phy_node $node $dts_file $phy_type $is_sgmii
+            if {[llength $val]} {
+                set inhex [format %x $val]
+                set_drv_prop $drv_handle phy-handle "phy$inhex" $node reference
+                set pcspma_phy_node [create_node -l phy$inhex -n phy -u $inhex -p $node -d $dts_file]
+                add_prop "${pcspma_phy_node}" "reg" $val int $dts_file
+                set phy_type [hsi get_property CONFIG.Standard $connected_ip]
+                set is_sgmii [hsi get_property CONFIG.c_is_sgmii $connected_ip]
+                emacps_configure_phy_props $pcspma_phy_node $node $dts_file $phy_type $is_sgmii
+            } else {
+                dtg_warning "Cannot auto-detect PCS/PMA PHY address configuration. \
+                Skipping PHY node creation. Please verify hardware configuration \
+                or add PHY details manually to device tree if needed."
+            }
         }
     }
 }
