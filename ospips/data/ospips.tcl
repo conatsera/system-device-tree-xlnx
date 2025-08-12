@@ -1,6 +1,6 @@
 #
 # (C) Copyright 2019-2022 Xilinx, Inc.
-# (C) Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -26,6 +26,11 @@
         set dtsi_name [set_drv_def_dts $drv_handle]
         add_prop $node "is-dual" $is_dual int $dtsi_name
         add_prop $node "is-stacked" $is_stacked int $dtsi_name
+
+        set pmcbridge [hsi::get_cells -hier -filter IP_NAME==pmcbridge]
+        if {![string_is_empty $pmcbridge]} {
+                [return_tree_obj $drv_handle] append $node compatible "\ \, \"xlnx,pmc-ospi\""
+        }
     }
 
 
