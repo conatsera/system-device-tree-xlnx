@@ -299,12 +299,12 @@ proc create_vcp_node {sub_node default_dts isp_id bus_name} {
 }
 
 proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
-	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	set ports_node [create_node -l "ports${tile}${isp_id}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 
 	set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
-	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp}" -n "ports" -p $vcp_node -d $default_dts]
+	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp_id}" -n "ports" -p $vcp_node -d $default_dts]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
 
@@ -355,12 +355,12 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 			} elseif {$port_idx % 5 == 1 || $port_idx % 5 == 2} {
 				# MP or SP output port creation
 				set type [expr {$port_idx % 5 == 1 ? "mp" : "sp"}]
-				set visp_label "visp_isp${isp_id}_port${tile}${isp}${iba_mod}_${type}"
+				set visp_label "visp_isp${isp_id}_port${isp_id}${iba_mod}_${type}"
 				set video_label "visp_video_${isp_id}_${iba_mod}_[expr {$type eq "mp" ? 0 : 1}]"
-				set vport_label "vport${tile}${isp}${port_idx}"
+				set vport_label "vport${isp_id}${port_idx}"
 
 				# VISP side
-				set port [create_node -l "port${tile}${isp}${port_idx}" -n "port@${port_num}" -p $ports_node -d $default_dts]
+				set port [create_node -l "port${isp_id}${port_idx}" -n "port@${port_num}" -p $ports_node -d $default_dts]
 				add_prop "$port" "reg" $port_num int $default_dts
 				set endpoint_node [create_node -n "endpoint" -l $visp_label -p $port -d $default_dts]
 				add_prop "$endpoint_node" "remote-endpoint" $video_label reference $default_dts
@@ -379,7 +379,7 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 }
 # IO_MODE==1 (LILO)
 proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
-	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	set ports_node [create_node -l "ports${tile}${isp_id}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 	set port0 [create_node -l "port${tile}${isp}" -n "port${tile}${isp}" -p $ports_node -d $default_dts]
