@@ -434,9 +434,19 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 	global broad_port1_remo_mappings
 	global port2_broad_end_mappings
 	global broad_port2_remo_mappings
+	global port3_broad_end_mappings
+	global broad_port3_remo_mappings
+	global port4_broad_end_mappings
+	global broad_port4_remo_mappings
+	global port5_broad_end_mappings
+	global broad_port5_remo_mappings
+	global port6_broad_end_mappings
+	global broad_port6_remo_mappings
+	global port7_broad_end_mappings
+	global broad_port7_remo_mappings
+	global port_broad_end_mappings
 
-	set port_node [create_node -n "port@$port_addr_counter" -l visp_ss_ports$sub$drv_handle -p $node -d $default_dts]
-	#add_prop "$port_node" "reg" 0 int $default_dts 1
+	set port_node [create_node -n "port@$port_addr_counter" -l $sub$drv_handle -p $node -d $default_dts]
 	add_prop "$port_node" "reg" $port_addr_counter int $default_dts 1
 	set len [llength $visp_inip]
 
@@ -456,60 +466,40 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 			if {![llength $ip_mem_handles]} {
 				set broad_ip [get_broad_in_ip $inip]
 				if {[llength $broad_ip]} {
-					if {[string match -nocase [hsi::get_property IP_NAME $broad_ip] "axis_broadcaster"]} {
-						set master_intf [hsi::get_intf_pins -of_objects [hsi get_cells -hier $broad_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+					if {[string match -nocase [hsi::get_property IP_NAME $inip] "axis_broadcaster"]} {
+						set master_intf [hsi::get_intf_pins -of_objects [hsi get_cells -hier $inip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 						set intlen [llength $master_intf]
 						set mipi_in_end ""
 						set mipi_remo_in_end ""
-						switch $intlen {
-							"1" {
-								if {[info exists port1_broad_end_mappings] && [dict exists $port1_broad_end_mappings $broad_ip]} {
-									set mipi_in_end [dict get $port1_broad_end_mappings $broad_ip]
-								}
-								if {[info exists broad_port1_remo_mappings] && [dict exists $broad_port1_remo_mappings $broad_ip]} {
-									set mipi_remo_in_end [dict get $broad_port1_remo_mappings $broad_ip]
-								}
-								if {[info exists sca_remo_in_end] && [regexp -nocase $drv_handle "$sca_remo_in_end" match]} {
-									if {[llength $mipi_remo_in_end]} {
-										set mipi_node [create_node -n "endpoint" -l $mipi_remo_in_end -p $port_node -d $default_dts]
-									}
-									if {[llength $mipi_in_end]} {
-										add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
-						}
-								}
+						set max_ports [expr {$intlen}]
+
+						for {set i 1} {$i <= $max_ports} {incr i} {
+							# Construct variable names dynamically
+							set port_var "port${i}_broad_end_mappings"
+							set remo_var "broad_port${i}_remo_mappings"
+
+							# Get local and remote endpoint using $inip
+							if {[info exists $port_var] && [dict exists [set $port_var] $inip]} {
+								set mipi_in_end [dict get [set $port_var] $inip]
+							} else {
+								continue
 							}
-							"2" {
-								if {[info exists port1_broad_end_mappings] && [dict exists $port1_broad_end_mappings $broad_ip]} {
-									set mipi_in_end [dict get $port1_broad_end_mappings $broad_ip]
+							if {[info exists $remo_var] && [dict exists [set $remo_var] $inip]} {
+								set mipi_remo_in_end [dict get [set $remo_var] $inip]
+							} else {
+								continue
+							}
+
+							# Only if remote endpoint matches sub
+							if {[info exists mipi_remo_in_end] && [regexp -nocase $sub "$mipi_remo_in_end" match]} {
+								if {[llength $mipi_remo_in_end]} {
+									set mipi_node [create_node -n "endpoint" -l $mipi_remo_in_end -p $port_node -d $default_dts]
 								}
-								if {[info exists broad_port1_remo_mappings] && [dict exists $broad_port1_remo_mappings $broad_ip]} {
-									set mipi_remo_in_end [dict get $broad_port1_remo_mappings $broad_ip]
-								}
-								if {[info exists port2_broad_end_mappings] && [dict exists $port2_broad_end_mappings $broad_ip]} {
-									set mipi_in1_end [dict get $port2_broad_end_mappings $broad_ip]
-								}
-								if {[info exists broad_port2_remo_mappings] && [dict exists $broad_port2_remo_mappings $broad_ip]} {
-									set mipi_remo_in1_end [dict get $broad_port2_remo_mappings $broad_ip]
-								}
-								if {[info exists mipi_remo_in_end] && [regexp -nocase $drv_handle "$mipi_remo_in_end" match]} {
-									if {[llength $mipi_remo_in_end]} {
-										set mipi_node [create_node -n "endpoint" -l $mipi_remo_in_end -p $port_node -d $default_dts]
-									}
-									if {[llength $mipi_in_end]} {
-										add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
-									}
-								}
-								if {[info exists mipi_remo_in1_end] && [regexp -nocase $drv_handle "$mipi_remo_in1_end" match]} {
-									if {[llength $mipi_remo_in1_end]} {
-										set mipi_node [create_node -n "endpoint" -l $mipi_remo_in1_end -p $port_node -d $default_dts]
-									}
-									if {[llength $mipi_in1_end]} {
-										add_prop "$mipi_node" "remote-endpoint" $mipi_in1_end reference $default_dts
-									}
+								if {[llength $mipi_in_end]} {
+									add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
 								}
 							}
 						}
-							return
 					}
 				}
 			}
@@ -555,7 +545,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 					}
 					set drv [split $visp_remo_in_end "-"]
 					set handle [lindex $drv 0]
-					if {[info exists visp_remo_in_end] && [regexp -nocase $drv_handle "$visp_remo_in_end" match]} {
+					if {[info exists visp_remo_in_end] && [regexp -nocase $sub "$visp_remo_in_end" match]} {
 						if {[llength $visp_remo_in_end]} {
 							set visp_ss_node [create_node -n "endpoint" -l $visp_remo_in_end -p $port_node -d $default_dts]
 						}
@@ -564,7 +554,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						}
 					}
 
-					if {[info exists visp_remo_in1_end] && [regexp -nocase $drv_handle "$visp_remo_in1_end" match]} {
+					if {[info exists visp_remo_in1_end] && [regexp -nocase $sub "$visp_remo_in1_end" match]} {
 						if {[llength $visp_remo_in1_end]} {
 							set visp_ss_node1 [create_node -n "endpoint" -l $visp_remo_in1_end -p $port_node -d $default_dts]
 						}
@@ -573,7 +563,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						}
 					}
 
-					if {[info exists visp_remo_in2_end] && [regexp -nocase $drv_handle "$visp_remo_in2_end" match]} {
+					if {[info exists visp_remo_in2_end] && [regexp -nocase $sub "$visp_remo_in2_end" match]} {
 						if {[llength $visp_remo_in2_end]} {
 							set visp_ss_node2 [create_node -n "endpoint" -l $visp_remo_in2_end -p $port_node -d $default_dts]
 						}
@@ -582,7 +572,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						}
 					}
 
-					if {[info exists visp_remo_in3_end] && [regexp -nocase $drv_handle "$visp_remo_in3_end" match]} {
+					if {[info exists visp_remo_in3_end] && [regexp -nocase $sub "$visp_remo_in3_end" match]} {
 						if {[llength $visp_remo_in3_end]} {
 							set visp_ss_node3 [create_node -n "endpoint" -l $visp_remo_in3_end -p $port_node -d $default_dts]
 						}
@@ -755,7 +745,7 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 
 proc find_valid_visp_inip {drv_handle visp_ip_name} {
     set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
-    set valid_patterns "^(axis_broadcaster|axis_switch|.*mipi_.*)\$"
+    set valid_patterns {.*(broadcaster|switch|mipi).*}
 
     # Check if any IP matches the valid patterns
     set visp_list [split $visp_inip " "]
