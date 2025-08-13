@@ -119,8 +119,6 @@ proc visp_ss_generate {drv_handle} {
 	}
 	set default_dts [set_drv_def_dts $drv_handle]
 	set bus_name [detect_bus_name $drv_handle]
-	set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
-	set sub_region_size 0x10000  ;# 64 KB
 	# Try to get interrupts, if not present, skip processing
 	set intr_val ""
 	set intr_mapping {}
@@ -159,7 +157,6 @@ proc visp_ss_generate {drv_handle} {
 	set reg_mapping {}
 	set rpu_ids {}
 	set rpu_info_list {}
-	pldt delete $node
 	for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
 		if {!$tile_enabled} {
@@ -167,7 +164,9 @@ proc visp_ss_generate {drv_handle} {
 		}
 		for {set isp 0} {$isp < 2} {incr isp} {
 			set isp_id [expr {$tile * 2 + $isp}]
-			set sub_node_label "visp_ss_${isp_id}"
+			set sub_node_label "visp_ss_${tile}${isp_id}"
+			set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
+			set sub_region_size 0x800  ;#2KB
 			set sub_baseaddr [format %08x [expr 0x$baseaddr + $isp_id * $sub_region_size]]
 			set sub_baseaddr1 [expr 0x$baseaddr + $isp_id * $sub_region_size]
 			set sub_node [create_node -l ${sub_node_label} -n "visp_ss" -u $sub_baseaddr -p $bus_name -d $default_dts]
@@ -261,6 +260,7 @@ proc visp_ss_generate {drv_handle} {
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
+	pldt delete $node
 	#generate_reserved_memory $rpu_ids $default_dts $bus_name
 	#generate_remoteproc_node $rpu_ids $default_dts $bus_name
 	#generate_tcm_nodes $rpu_ids $default_dts $bus_name
