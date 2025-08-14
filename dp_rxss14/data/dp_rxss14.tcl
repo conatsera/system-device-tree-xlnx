@@ -62,10 +62,13 @@ proc dp_rxss14_generate {drv_handle} {
 	pldt append $node compatible "\ \, \"xlnx,v-dp-rxss-3.0\" "
 
         set dts_file [set_drv_def_dts $drv_handle]
-        set audio_channels [hsi get_property CONFIG.AUDIO_CHANNELS [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,audio-channels" $audio_channels int $dts_file
-        set audio_enable [hsi get_property CONFIG.AUDIO_ENABLE [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,audio-enable" $audio_enable int $dts_file
+	set audio_enable [hsi get_property CONFIG.AUDIO_ENABLE [hsi::get_cells -hier $drv_handle]]
+
+	if {$audio_enable == 1} {
+		add_prop "${node}" "xlnx,audio-enable" $audio_enable int $dts_file
+		set audio_channels [hsi get_property CONFIG.AUDIO_CHANNELS [hsi::get_cells -hier $drv_handle]]
+		add_prop "${node}" "xlnx,audio-channels" $audio_channels int $dts_file
+	}
         set bits_per_color [hsi get_property CONFIG.BITS_PER_COLOR [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,bits-per-color" $bits_per_color int $dts_file
         set hdcp22_enable [hsi get_property CONFIG.HDCP22_ENABLE [hsi::get_cells -hier $drv_handle]]
