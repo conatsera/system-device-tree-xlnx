@@ -114,7 +114,7 @@ proc dp_rxss14_generate {drv_handle} {
         add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dts_file
         set video_interface [hsi get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,video-interface" $video_interface int $dts_file
-	set vid_phy_ctlr [hsi::get_cells -hier -filter IP_NAME==vid_phy_controller]
+	set vid_phy_ctlr [find_best_match $node [hsi get_cells -hier -filter IP_NAME==vid_phy_controller]]
 	if {[llength $vid_phy_ctlr]} {
 		add_prop "${node}" "xlnx,vidphy" $vid_phy_ctlr reference $dts_file
 	}
