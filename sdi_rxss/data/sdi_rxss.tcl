@@ -12,6 +12,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+
+source [file join [file dirname [info script]] "../../device_tree/data/video_utils.tcl"]
+
 proc sdi_rxss_generate {drv_handle} {
 	set node [get_node $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
@@ -23,6 +26,11 @@ proc sdi_rxss_generate {drv_handle} {
         set dtsi_file [set_drv_def_dts $drv_handle]
         set compatible [get_comp_str $drv_handle]
         pldt append $node compatible "\ \, \"xlnx,v-smpte-uhdsdi-rx-ss\""
+	set dbpc [hsi get_property CONFIG.C_DYNAMIC_BPP_CHANGE [hsi get_cells -hier $drv_handle]]
+	set dbpc [expr {$dbpc == "true" ? 1 : 0}]
+	if {$dbpc == 1} {
+		add_prop "${node}" "xlnx,dyn-bpc" $dbpc int $dts_file 1
+	}
 	set sdiline_rate [hsi get_property CONFIG.C_LINE_RATE [hsi get_cells -hier $drv_handle]]
 	switch $sdiline_rate {
 		"3G_SDI" {
@@ -142,6 +150,7 @@ proc sdi_rx_add_hier_instances {drv_handle} {
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
 			add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
+			update_subcore_absolute_addr $drv_handle $ip_handle $dts_file
 		} else {
 			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
