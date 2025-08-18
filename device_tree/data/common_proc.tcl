@@ -57,6 +57,7 @@ dict with driver_param alias {
 	lappend items psv_pmc_ospi spi
 	lappend items psx_pmc_ospi spi
 	lappend items pmc_ospi spi
+	lappend items pmcl_ospi spi
 	lappend items ps7_qspi spi
 	lappend items psu_qspi spi
 	lappend items psv_pmc_qspi spi
