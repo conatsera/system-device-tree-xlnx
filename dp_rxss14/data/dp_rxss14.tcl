@@ -12,6 +12,38 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+
+# If there are multiple dp_rx nodes, the bindings to the corresponding
+# sub nodes (edid, vidphy, ..) can be specified by putting them
+# into the same hierarchical subblock.
+# This way their names will have common prefixes.
+# 'find_best_match' is used to return the sub node whose name matches
+# best the name of the dp_rx node
+
+proc common_prefix {a b} {
+	set res {}
+	foreach i [split $a {}] j [split $b {}] {
+		if {$i eq $j} {append res $i} else break
+	}
+	set res
+}
+
+proc find_best_match {dp cells} {
+	set idx 0
+	set max_len 0
+	set nr 0
+	foreach cell $cells {
+		set sub [common_prefix $cell $dp]
+		set len [string length $sub]
+		if {$len > $max_len} {
+			set max_len $len
+			set idx $nr
+		}
+	        incr nr
+	}
+	set res [lindex $cells $idx]
+}
+
 proc dp_rxss14_generate {drv_handle} {
 	set node [get_node $drv_handle]
 	if {$node == 0} {
@@ -82,14 +114,14 @@ proc dp_rxss14_generate {drv_handle} {
         add_prop "${node}" "xlnx,sim-mode" $sim_mode string $dts_file
         set video_interface [hsi get_property CONFIG.VIDEO_INTERFACE [hsi::get_cells -hier $drv_handle]]
         add_prop "${node}" "xlnx,video-interface" $video_interface int $dts_file
-	set vid_phy_ctlr [hsi::get_cells -hier -filter IP_NAME==vid_phy_controller]
+	set vid_phy_ctlr [find_best_match $node [hsi get_cells -hier -filter IP_NAME==vid_phy_controller]]
 	if {[llength $vid_phy_ctlr]} {
 		add_prop "${node}" "xlnx,vidphy" $vid_phy_ctlr reference $dts_file
 	}
 	set freq [get_clk_pin_freq  $drv_handle "S_AXI_ACLK"]
 	add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dts_file
 
-	set edid_ip [hsi get_cells -hier -filter IP_NAME==vid_edid]
+	set edid_ip [find_best_match $node [hsi get_cells -hier -filter IP_NAME==vid_edid]]
 	if {[llength $edid_ip]} {
 		set baseaddr_dp_rx [hsi get_property CONFIG.C_BASEADDR [hsi get_cells -hier $drv_handle]]
 		set highaddr_dp_rx [hsi get_property CONFIG.C_HIGHADDR [hsi get_cells -hier $drv_handle]]

@@ -334,7 +334,10 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 	set rp_cell [hsi::get_property RP_INST_NAME [hsi::current_hw_design]]
 	set proctype [get_hw_family]
 	if {[is_zynqmp_platform $proctype]} {
-		set rm_firmware_name [hsi::get_hw_files -filter {TYPE == partial_bit}]
+		set rm_firmware_name [hsi::get_hw_files -filter {TYPE == partial_bin}]
+		if {$rm_firmware_name eq ""} {
+			set rm_firmware_name [hsi::get_hw_files -filter {TYPE == partial_bit}]
+		}
 	} else {
 		set rm_firmware_name [hsi::get_hw_files -filter {TYPE == partial_pdi}]
 	}
@@ -393,7 +396,11 @@ proc generate_rm_sdt {static_xsa rm_xsa dir} {
 				set amba_pl_node [create_node -n "amba_pl" -l "amba_pl" -d ${dts} -p root]
 				set pr_node [create_node -n "fpga_PR$fpga_inst" -d ${dts} -p root]
 				if {[is_zynqmp_platform $proctype]} {
-					add_prop $pr_node "firmware-name" "$firmware_name.bin" string ${dts} 1
+					if {[file extension $firmware_name] eq ".bin"} {
+						add_prop $pr_node "firmware-name" $firmware_name string ${dts} 1
+					} else {
+						add_prop $pr_node "firmware-name" "${firmware_name}.bin" string ${dts} 1
+					}
 				} else {
 					add_prop $pr_node "firmware-name" $firmware_name string ${dts} 1
 				}
