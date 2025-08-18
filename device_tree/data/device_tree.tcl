@@ -1038,8 +1038,16 @@ proc gen_board_info {} {
 	if {$family in {"microblaze" "microblaze_riscv"}} {
 		set mb_cpu_handle [lindex [hsi get_cells -hier -filter IP_NAME==$family] 0]
 		set variant [get_ip_property $mb_cpu_handle CONFIG.C_FAMILY]
-		if {$device in {"xcsu200p"}} {
-			set variant spartanuplusaes1
+		switch $device {
+			"xcsu200p" - "xcsu150p" {
+				set variant spartanuplusaes1
+			}
+			"xcsu50p" {
+				set variant spartanuplusb
+			}
+			"xcsu60p" {
+				set variant spartanuplusf
+			}
 		}
 		if {[regexp "spartanuplus.*" "$variant" match] && ($variant != "spartanuplus")} {
 			set variant "spartanuplus $variant"
