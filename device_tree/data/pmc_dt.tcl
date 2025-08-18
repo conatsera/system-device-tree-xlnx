@@ -337,7 +337,10 @@ proc update_domain_stdout {default_uart_handle} {
 	set alias_node [systemdt insert root end "aliases"]
 	set uart_node_label [get_label $default_uart_handle]
 	regsub -all {^&} $uart_node_label {} uart_node_label
-	add_prop $chosen_node "stdout-path" "serial0:115200n8" string "system-top.dts"
+	# If stdout-path is already not set via any of the uart driver tcls, set it here
+	if {[catch {set val [systemdt get $chosen_node "stdout-path"]} msg]} {
+		add_prop $chosen_node "stdout-path" "serial0:115200n8" string "system-top.dts"
+	}
 	add_prop $alias_node "serial0" &${uart_node_label} aliasref "system-top.dts"
 }
 
