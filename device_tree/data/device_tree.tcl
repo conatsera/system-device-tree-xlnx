@@ -203,6 +203,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "psx_pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "pmc_ospi" "ospips"
+	dict set ::sdtgen::namespacelist "pmcl_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "ps7_pl310" "pl310ps"
 	dict set ::sdtgen::namespacelist "psu_pmu" "pmups"
 	dict set ::sdtgen::namespacelist "psv_pmc" "pmups"
