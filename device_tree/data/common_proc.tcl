@@ -2030,30 +2030,21 @@ proc gen_fixed_factor_clk_node {misc_clk_node clk_freq dts_file} {
 	set mult ""
 	if {[string match -nocase $pl0_clk_val "true"]} {
 		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL0_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
-		set parent_freq [expr $parent_freq * 1000000]
 		set clock_name "zynqmp_clk 71"
 	} elseif {[string match -nocase $pl1_clk_val "true"]} {
 		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL1_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
-		set parent_freq [expr $parent_freq * 1000000]
 		set clock_name "zynqmp_clk 72"
 	} elseif {[string match -nocase $pl2_clk_val "true"]} {
 		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL2_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
-		set parent_freq [expr $parent_freq * 1000000]
 		set clock_name "zynqmp_clk 73"
 	} elseif {[string match -nocase $pl3_clk_val "true"]} {
 		set parent_freq [hsi get_property CONFIG.PSU__CRL_APB__PL3_REF_CTRL__ACT_FREQMHZ [hsi get_cells -hier $zynq_periph]]
-		set parent_freq [expr $parent_freq * 1000000]
 		set clock_name "zynqmp_clk 74"
 	}
 
 	if {![string equal $parent_freq ""]} {
-		if {$parent_freq >= $clk_freq} {
-			set div [expr round($parent_freq / $clk_freq)]
-			set mult 1
-		} elseif {$parent_freq < $clk_freq} {
-			set mult [expr round($clk_freq / $parent_freq)]
-			set div 1
-		}
+		set div [expr int($parent_freq * 1000000)]
+		set mult [expr int($clk_freq)]
 	}
 	if {![string equal $div ""] && ![string equal $mult ""]} {
 		add_prop "${misc_clk_node}" "compatible" "fixed-factor-clock" stringlist $dts_file 1
