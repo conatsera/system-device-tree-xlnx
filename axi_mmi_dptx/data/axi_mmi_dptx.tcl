@@ -35,13 +35,16 @@
 
         set num_lanes [hsi get_property CONFIG.C_DP_LANES [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
         if {[string match -nocase $num_lanes "x1"]} {
-            add_prop $node "xlnx,dp-lanes" 1 int $dts_file
+            append lanes "/bits/ 8 <0x1>"
+            add_prop $node "xlnx,dp-lanes" $lanes noformating $dts_file
         }
         if {[string match -nocase $num_lanes "x2"]} {
-            add_prop $node "xlnx,dp-lanes" 2 int $dts_file
+            append lanes "/bits/ 8 <0x2>"
+            add_prop $node "xlnx,dp-lanes" $lanes noformating $dts_file
         }
         if {[string match -nocase $num_lanes "x4"]} {
-            add_prop $node "xlnx,dp-lanes" 4 int $dts_file
+            append lanes "/bits/ 8 <0x4>"
+            add_prop $node "xlnx,dp-lanes" $lanes noformating $dts_file
         }
 
         set mst_mode [hsi get_property CONFIG.C_MST_MODE_EN [hsi::get_cells -hier -filter IP_NAME==mmi_dc]]
