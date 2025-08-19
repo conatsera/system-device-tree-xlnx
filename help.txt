@@ -1,0 +1,51 @@
+Usage:  a) sdtgen [OPTION]...
+        b) sdtgen [TCL FILE]...
+
+Description:
+    Generate system device trees from Vivado-generated XSA files.
+    Source SDTGen and HSI TCL packages during invocation.
+    With -eval OPTION or TCL FILE, act purely as a TCL shell interpreter.
+    With no OPTION or TCL FILE, open the TCL interpreter in interactive mode,
+    suitable for debugging SDTGen and HSI related issues.
+
+Usage a) sdtgen [OPTION]...
+
+Required Arguments:
+    -xsa              Vivado hw design file
+    -dir              Directory where the dt files will be generated
+
+Optional Arguments:
+    -board_dts        board specific file
+    -user_dts         DTS file to be include into final device tree
+    -debug            enable SDTGen debug (enable/disable, default: disable)
+    -trace            enable SDTGen traces (enable/disable, default: disable)
+    -zocl             add zocl nodes for extended interrupts usecase
+                      (enable/disable, default: disable)
+    -rm_xsa           pass partial hw design files for dfx use cases
+                      (can take multiple .xsa files as input)
+    -domain           generate PMC domain specific device tree
+                      (only valid input: pmc)
+    -eval             run the commands over TCL interpreter and exit
+                      (similar to bash -c)
+    -h , --help       display this help and exit
+
+Examples:
+    sdtgen -xsa system.xsa -dir sdt_outdir
+    sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0
+    sdtgen -xsa system.xsa -dir sdt_outdir -domain pmc
+    sdtgen -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0 -user_dts ./user1.dtsi ./user2.dtsi -trace enable -debug enable
+    sdtgen -xsa full.xsa -dir dfx_dts -rm_xsa rp0_rm0.xsa -rm_xsa rp0_rm1.xsa
+    sdtgen -eval "set_dt_param -xsa system.xsa -dir sdt_outdir -board_dts zcu102-rev1.0; generate_sdt"
+    sdtgen -eval "hsi::open_hw_design system.xsa; puts [hsi::get_cells -hier -filter IP_TYPE==PROCESSOR]"
+
+Usage b) sdtgen [TCL FILE]...
+
+Examples:
+    sdtgen sdt.tcl system.xsa sdt_outdir
+
+    bash# cat sdt.tcl
+      set outdir [lindex $argv 1]
+      set xsa [lindex $argv 0]
+      exec rm -rf $outdir
+      set_dt_param -xsa $xsa -dir $outdir -board_dts zcu102-rev1.0 -user_dts /home/abc/xyz.dtsi
+      generate_sdt
