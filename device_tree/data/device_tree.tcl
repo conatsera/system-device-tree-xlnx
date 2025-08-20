@@ -203,6 +203,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "psv_pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "psx_pmc_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "pmc_ospi" "ospips"
+	dict set ::sdtgen::namespacelist "pmcl_ospi" "ospips"
 	dict set ::sdtgen::namespacelist "ps7_pl310" "pl310ps"
 	dict set ::sdtgen::namespacelist "psu_pmu" "pmups"
 	dict set ::sdtgen::namespacelist "psv_pmc" "pmups"
@@ -1038,8 +1039,16 @@ proc gen_board_info {} {
 	if {$family in {"microblaze" "microblaze_riscv"}} {
 		set mb_cpu_handle [lindex [hsi get_cells -hier -filter IP_NAME==$family] 0]
 		set variant [get_ip_property $mb_cpu_handle CONFIG.C_FAMILY]
-		if {$device in {"xcsu200p"}} {
-			set variant spartanuplusaes1
+		switch $device {
+			"xcsu200p" - "xcsu150p" {
+				set variant spartanuplusaes1
+			}
+			"xcsu50p" {
+				set variant spartanuplusb
+			}
+			"xcsu60p" {
+				set variant spartanuplusf
+			}
 		}
 		if {[regexp "spartanuplus.*" "$variant" match] && ($variant != "spartanuplus")} {
 			set variant "spartanuplus $variant"
@@ -1657,7 +1666,7 @@ Generates system device tree based on args given in:
 		}
 	}
 
-	set non_val_list "versal_cips psx_wizard psxl ps_wizard ps11 ps11xgui psxt pmcbridge dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series hbm noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice ilconcat ilconstant ilslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc pmcps psv_ocm_ram_0 ocm_ram psv_pmc_qspi_ospi psx_pmc_qspi_ospi pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux tsn_endpoint_ethernet_mac_block ${linear_spi_list}"
+	set non_val_list "versal_cips psx_wizard psxl ps_wizard ps11 ps11xgui psxt dmac_slv axi_noc axi_noc2 noc_mc_ddr4 noc_mc_ddr5 ddr3 ddr4 mig_7series hbm noc_nmu noc_nsu noc2_nmu noc2_nsu ila zynq_ultra_ps_e psu_iou_s smart_connect emb_mem_gen xlconcat xlconstant xlslice ilconcat ilconstant ilslice axis_tdest_editor util_reduced_logic noc_nsw noc2_nsw axis_ila pspmc pmcps psv_ocm_ram_0 ocm_ram psv_pmc_qspi_ospi psx_pmc_qspi_ospi pmc_qspi_ospi add_keep_128 c_counter_binary dbg_monmux tsn_endpoint_ethernet_mac_block ${linear_spi_list}"
 	set non_val_ip_types "MONITOR BUS PROCESSOR"
 	set non_val_list1 "psv_cortexa72 psu_cortexa53 ps7_cortexa9 versal_cips psx_wizard ps_wizard noc_nmu noc_nsu ila psu_iou_s noc_nsw pspmc pmcps"
 	set non_val_ip_types1 "MONITOR BUS"

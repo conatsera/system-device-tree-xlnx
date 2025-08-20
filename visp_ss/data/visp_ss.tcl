@@ -119,8 +119,6 @@ proc visp_ss_generate {drv_handle} {
 	}
 	set default_dts [set_drv_def_dts $drv_handle]
 	set bus_name [detect_bus_name $drv_handle]
-	set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
-	set sub_region_size 0x10000  ;# 64 KB
 	# Try to get interrupts, if not present, skip processing
 	set intr_val ""
 	set intr_mapping {}
@@ -159,7 +157,6 @@ proc visp_ss_generate {drv_handle} {
 	set reg_mapping {}
 	set rpu_ids {}
 	set rpu_info_list {}
-	pldt delete $node
 	for {set tile 0} {$tile < 3} {incr tile} {
 		set tile_enabled [get_ip_property $drv_handle "CONFIG.C_TILE${tile}_ENABLE"]
 		if {!$tile_enabled} {
@@ -167,7 +164,9 @@ proc visp_ss_generate {drv_handle} {
 		}
 		for {set isp 0} {$isp < 2} {incr isp} {
 			set isp_id [expr {$tile * 2 + $isp}]
-			set sub_node_label "visp_ss_${isp_id}"
+			set sub_node_label "visp_ss_${tile}${isp_id}"
+			set baseaddr [get_baseaddr [hsi get_cells -hier $drv_handle] no_prefix]
+			set sub_region_size 0x800  ;#2KB
 			set sub_baseaddr [format %08x [expr 0x$baseaddr + $isp_id * $sub_region_size]]
 			set sub_baseaddr1 [expr 0x$baseaddr + $isp_id * $sub_region_size]
 			set sub_node [create_node -l ${sub_node_label} -n "visp_ss" -u $sub_baseaddr -p $bus_name -d $default_dts]
@@ -261,6 +260,7 @@ proc visp_ss_generate {drv_handle} {
 			isp_handle_condition $drv_handle $tile $isp $io_mode $live_stream $isp_id $default_dts $sub_node $sub_node_label $bus_name
 		}
 	}
+	pldt delete $node
 	#generate_reserved_memory $rpu_ids $default_dts $bus_name
 	#generate_remoteproc_node $rpu_ids $default_dts $bus_name
 	#generate_tcm_nodes $rpu_ids $default_dts $bus_name
@@ -299,12 +299,12 @@ proc create_vcp_node {sub_node default_dts isp_id bus_name} {
 }
 
 proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_label live_stream bus_name io_mode} {
-	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	set ports_node [create_node -l "ports${tile}${isp_id}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 
 	set vcp_node [create_vcp_node $sub_node $default_dts $isp_id $bus_name]
-	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp}" -n "ports" -p $vcp_node -d $default_dts]
+	set vcap_ports_node [create_node -l "vcap_ports${tile}${isp_id}" -n "ports" -p $vcp_node -d $default_dts]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $default_dts
 
@@ -355,12 +355,12 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 			} elseif {$port_idx % 5 == 1 || $port_idx % 5 == 2} {
 				# MP or SP output port creation
 				set type [expr {$port_idx % 5 == 1 ? "mp" : "sp"}]
-				set visp_label "visp_isp${isp_id}_port${tile}${isp}${iba_mod}_${type}"
+				set visp_label "visp_isp${isp_id}_port${isp_id}${iba_mod}_${type}"
 				set video_label "visp_video_${isp_id}_${iba_mod}_[expr {$type eq "mp" ? 0 : 1}]"
-				set vport_label "vport${tile}${isp}${port_idx}"
+				set vport_label "vport${isp_id}${port_idx}"
 
 				# VISP side
-				set port [create_node -l "port${tile}${isp}${port_idx}" -n "port@${port_num}" -p $ports_node -d $default_dts]
+				set port [create_node -l "port${isp_id}${port_idx}" -n "port@${port_num}" -p $ports_node -d $default_dts]
 				add_prop "$port" "reg" $port_num int $default_dts
 				set endpoint_node [create_node -n "endpoint" -l $visp_label -p $port -d $default_dts]
 				add_prop "$endpoint_node" "remote-endpoint" $video_label reference $default_dts
@@ -379,7 +379,7 @@ proc handle_io_mode_2 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 }
 # IO_MODE==1 (LILO)
 proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_label bus_name} {
-	set ports_node [create_node -l "portss${tile}${isp}" -n "ports" -p $sub_node -d $default_dts]
+	set ports_node [create_node -l "ports${tile}${isp_id}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
 	set port0 [create_node -l "port${tile}${isp}" -n "port${tile}${isp}" -p $ports_node -d $default_dts]
@@ -434,9 +434,19 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 	global broad_port1_remo_mappings
 	global port2_broad_end_mappings
 	global broad_port2_remo_mappings
+	global port3_broad_end_mappings
+	global broad_port3_remo_mappings
+	global port4_broad_end_mappings
+	global broad_port4_remo_mappings
+	global port5_broad_end_mappings
+	global broad_port5_remo_mappings
+	global port6_broad_end_mappings
+	global broad_port6_remo_mappings
+	global port7_broad_end_mappings
+	global broad_port7_remo_mappings
+	global port_broad_end_mappings
 
-	set port_node [create_node -n "port@$port_addr_counter" -l visp_ss_ports$sub$drv_handle -p $node -d $default_dts]
-	#add_prop "$port_node" "reg" 0 int $default_dts 1
+	set port_node [create_node -n "port@$port_addr_counter" -l $sub$drv_handle -p $node -d $default_dts]
 	add_prop "$port_node" "reg" $port_addr_counter int $default_dts 1
 	set len [llength $visp_inip]
 
@@ -456,60 +466,40 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 			if {![llength $ip_mem_handles]} {
 				set broad_ip [get_broad_in_ip $inip]
 				if {[llength $broad_ip]} {
-					if {[string match -nocase [hsi::get_property IP_NAME $broad_ip] "axis_broadcaster"]} {
-						set master_intf [hsi::get_intf_pins -of_objects [hsi get_cells -hier $broad_ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+					if {[string match -nocase [hsi::get_property IP_NAME $inip] "axis_broadcaster"]} {
+						set master_intf [hsi::get_intf_pins -of_objects [hsi get_cells -hier $inip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
 						set intlen [llength $master_intf]
 						set mipi_in_end ""
 						set mipi_remo_in_end ""
-						switch $intlen {
-							"1" {
-								if {[info exists port1_broad_end_mappings] && [dict exists $port1_broad_end_mappings $broad_ip]} {
-									set mipi_in_end [dict get $port1_broad_end_mappings $broad_ip]
-								}
-								if {[info exists broad_port1_remo_mappings] && [dict exists $broad_port1_remo_mappings $broad_ip]} {
-									set mipi_remo_in_end [dict get $broad_port1_remo_mappings $broad_ip]
-								}
-								if {[info exists sca_remo_in_end] && [regexp -nocase $drv_handle "$sca_remo_in_end" match]} {
-									if {[llength $mipi_remo_in_end]} {
-										set mipi_node [create_node -n "endpoint" -l $mipi_remo_in_end -p $port_node -d $default_dts]
-									}
-									if {[llength $mipi_in_end]} {
-										add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
-						}
-								}
+						set max_ports [expr {$intlen}]
+
+						for {set i 1} {$i <= $max_ports} {incr i} {
+							# Construct variable names dynamically
+							set port_var "port${i}_broad_end_mappings"
+							set remo_var "broad_port${i}_remo_mappings"
+
+							# Get local and remote endpoint using $inip
+							if {[info exists $port_var] && [dict exists [set $port_var] $inip]} {
+								set mipi_in_end [dict get [set $port_var] $inip]
+							} else {
+								continue
 							}
-							"2" {
-								if {[info exists port1_broad_end_mappings] && [dict exists $port1_broad_end_mappings $broad_ip]} {
-									set mipi_in_end [dict get $port1_broad_end_mappings $broad_ip]
+							if {[info exists $remo_var] && [dict exists [set $remo_var] $inip]} {
+								set mipi_remo_in_end [dict get [set $remo_var] $inip]
+							} else {
+								continue
+							}
+
+							# Only if remote endpoint matches sub
+							if {[info exists mipi_remo_in_end] && [regexp -nocase $sub "$mipi_remo_in_end" match]} {
+								if {[llength $mipi_remo_in_end]} {
+									set mipi_node [create_node -n "endpoint" -l $mipi_remo_in_end -p $port_node -d $default_dts]
 								}
-								if {[info exists broad_port1_remo_mappings] && [dict exists $broad_port1_remo_mappings $broad_ip]} {
-									set mipi_remo_in_end [dict get $broad_port1_remo_mappings $broad_ip]
-								}
-								if {[info exists port2_broad_end_mappings] && [dict exists $port2_broad_end_mappings $broad_ip]} {
-									set mipi_in1_end [dict get $port2_broad_end_mappings $broad_ip]
-								}
-								if {[info exists broad_port2_remo_mappings] && [dict exists $broad_port2_remo_mappings $broad_ip]} {
-									set mipi_remo_in1_end [dict get $broad_port2_remo_mappings $broad_ip]
-								}
-								if {[info exists mipi_remo_in_end] && [regexp -nocase $drv_handle "$mipi_remo_in_end" match]} {
-									if {[llength $mipi_remo_in_end]} {
-										set mipi_node [create_node -n "endpoint" -l $mipi_remo_in_end -p $port_node -d $default_dts]
-									}
-									if {[llength $mipi_in_end]} {
-										add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
-									}
-								}
-								if {[info exists mipi_remo_in1_end] && [regexp -nocase $drv_handle "$mipi_remo_in1_end" match]} {
-									if {[llength $mipi_remo_in1_end]} {
-										set mipi_node [create_node -n "endpoint" -l $mipi_remo_in1_end -p $port_node -d $default_dts]
-									}
-									if {[llength $mipi_in1_end]} {
-										add_prop "$mipi_node" "remote-endpoint" $mipi_in1_end reference $default_dts
-									}
+								if {[llength $mipi_in_end]} {
+									add_prop "$mipi_node" "remote-endpoint" $mipi_in_end reference $default_dts
 								}
 							}
 						}
-							return
 					}
 				}
 			}
@@ -555,7 +545,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 					}
 					set drv [split $visp_remo_in_end "-"]
 					set handle [lindex $drv 0]
-					if {[info exists visp_remo_in_end] && [regexp -nocase $drv_handle "$visp_remo_in_end" match]} {
+					if {[info exists visp_remo_in_end] && [regexp -nocase $sub "$visp_remo_in_end" match]} {
 						if {[llength $visp_remo_in_end]} {
 							set visp_ss_node [create_node -n "endpoint" -l $visp_remo_in_end -p $port_node -d $default_dts]
 						}
@@ -564,7 +554,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						}
 					}
 
-					if {[info exists visp_remo_in1_end] && [regexp -nocase $drv_handle "$visp_remo_in1_end" match]} {
+					if {[info exists visp_remo_in1_end] && [regexp -nocase $sub "$visp_remo_in1_end" match]} {
 						if {[llength $visp_remo_in1_end]} {
 							set visp_ss_node1 [create_node -n "endpoint" -l $visp_remo_in1_end -p $port_node -d $default_dts]
 						}
@@ -573,7 +563,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						}
 					}
 
-					if {[info exists visp_remo_in2_end] && [regexp -nocase $drv_handle "$visp_remo_in2_end" match]} {
+					if {[info exists visp_remo_in2_end] && [regexp -nocase $sub "$visp_remo_in2_end" match]} {
 						if {[llength $visp_remo_in2_end]} {
 							set visp_ss_node2 [create_node -n "endpoint" -l $visp_remo_in2_end -p $port_node -d $default_dts]
 						}
@@ -582,7 +572,7 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 						}
 					}
 
-					if {[info exists visp_remo_in3_end] && [regexp -nocase $drv_handle "$visp_remo_in3_end" match]} {
+					if {[info exists visp_remo_in3_end] && [regexp -nocase $sub "$visp_remo_in3_end" match]} {
 						if {[llength $visp_remo_in3_end]} {
 							set visp_ss_node3 [create_node -n "endpoint" -l $visp_remo_in3_end -p $port_node -d $default_dts]
 						}
@@ -755,7 +745,7 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 
 proc find_valid_visp_inip {drv_handle visp_ip_name} {
     set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
-    set valid_patterns "^(axis_broadcaster|axis_switch|.*mipi_.*)\$"
+    set valid_patterns {.*(broadcaster|switch|mipi).*}
 
     # Check if any IP matches the valid patterns
     set visp_list [split $visp_inip " "]

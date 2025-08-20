@@ -57,6 +57,7 @@ dict with driver_param alias {
 	lappend items psv_pmc_ospi spi
 	lappend items psx_pmc_ospi spi
 	lappend items pmc_ospi spi
+	lappend items pmcl_ospi spi
 	lappend items ps7_qspi spi
 	lappend items psu_qspi spi
 	lappend items psv_pmc_qspi spi
@@ -7432,6 +7433,9 @@ proc get_psu_interrupt_id { ip_name port_name } {
 			set concat_block 1
 			set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
 			set sink_pins [get_sink_pins "$intr_pin"]
+			if {[llength $sink_pins] == 0 } {
+				continue
+			}
 	                set sink_periph [::hsi::get_cells -of_objects $sink_pins]
 	                set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
                         # When xlconcate connected via util_reduced_logic(OR) there is only one
@@ -7448,6 +7452,9 @@ proc get_psu_interrupt_id { ip_name port_name } {
 	                       set dout "dout"
 	                       set intr_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$dout"]
 	                       set sink_pins [get_sink_pins $intr_pin]
+			       if {[llength $sink_pins] == 0 } {
+					continue
+				}
 	                       set sink_periph [::hsi::get_cells -of_objects $sink_pins]
 			        set connected_ip [hsi get_property IP_NAME [hsi::get_cells -hier $sink_periph]]
 	               }
