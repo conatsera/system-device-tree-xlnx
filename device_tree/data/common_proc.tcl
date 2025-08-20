@@ -7857,7 +7857,7 @@ proc map_node_to_processor {node_label processor reg bit_format baseaddr size} {
 		"microblaze" - "microblaze_riscv" - "psu_cortexr5" - "psv_cortexr5" - "psx_cortexr52" - "cortexr52" {
 			set memmap_key $processor
 		}
-		"psv_cortexa72" - "psx_cortexa78" - "cortexa78" {
+		"psv_cortexa72" - "psx_cortexa78" - "cortexa78" - "ps7_cortexa9" {
 			set memmap_key "a53"
 		}
 		"psv_psm" - "psx_psm" - "psm" {
