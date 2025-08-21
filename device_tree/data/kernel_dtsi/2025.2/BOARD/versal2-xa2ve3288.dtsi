@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for AMD xa2ve3288 silicon
+ *
+ * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+/ {
+	compatible = "amd,versal2-xa2ve3288";
+	model = "AMD Versal xa2ve3288";
+
+	clk100: clk100 { /* model for SEIO clock */
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <100000000>;
+	};
+
+	clk200: clk200 {
+        compatible = "fixed-clock";
+        #clock-cells = <0>;
+        clock-frequency = <200000000>;
+    };
+
+};
+
+&serial0_seio {
+	clocks = <&clk100>, <&clk100>;
+};
+
+&serial1_seio {
+	clocks = <&clk100>, <&clk100>;
+};
+
+&serial2_seio {
+	clocks = <&clk100>, <&clk100>;
+};
+
+&spi0_seio {
+	clocks = <&clk200>, <&clk200>;
+};
+
+&spi1_seio {
+	clocks = <&clk200>, <&clk200>;
+};
+
+&spi2_seio {
+	clocks = <&clk200>, <&clk200>;
+};
+
+&spi3_seio {
+	clocks = <&clk200>, <&clk200>;
+};

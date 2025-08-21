@@ -10,43 +10,19 @@
 
 &amba {
 
-    seio_spi_0: spi@ed010000 {
-        compatible = "cdns,spi-r1p6";
+    gpio_seio: gpio@ed080000 {
+        compatible = "xlnx,seio-gpio-1.0";
         status = "disabled";
+        reg = <0 0xed080000 0 0x1000>;
         interrupt-parent = <&imux>;
-        interrupts = <0 181 4>;
-        reg = <0 0xed010000 0 0x1000>;
-        clock-names = "ref_clk", "pclk";
+        interrupts = <0 180 4>;
+        #gpio-cells = <2>;
+        gpio-controller;
+        #interrupt-cells = <2>;
+        interrupt-controller;
     };
 
-    seio_spi_1: spi@ed020000 {
-        compatible = "cdns,spi-r1p6";
-        status = "disabled";
-        interrupt-parent = <&imux>;
-        interrupts = <0 182 4>;
-        reg = <0 0xed020000 0 0x1000>;
-        clock-names = "ref_clk", "pclk";
-    };
-
-    seio_spi_2: spi@ed030000 {
-        compatible = "cdns,spi-r1p6";
-        status = "disabled";
-        interrupt-parent = <&imux>;
-        interrupts = <0 183 4>;
-        reg = <0 0xed030000 0 0x1000>;
-        clock-names = "ref_clk", "pclk";
-    };
-
-    seio_spi_3: spi@ed040000 {
-        compatible = "cdns,spi-r1p6";
-        status = "disabled";
-        interrupt-parent = <&imux>;
-        interrupts = <0 184 4>;
-        reg = <0 0xed040000 0 0x1000>;
-        clock-names = "ref_clk", "pclk";
-    };
-
-    seio_uart_0: serial@ed050000 {
+    serial0_seio: serial@ed050000 {
         bootph-all;
         compatible = "arm,pl011", "arm,primecell";
         status = "disabled";
@@ -57,7 +33,7 @@
         clock-names = "uartclk", "apb_pclk";
     };
 
-    seio_uart_1: serial@ed060000 {
+    serial1_seio: serial@ed060000 {
         bootph-all;
         compatible = "arm,pl011", "arm,primecell";
         status = "disabled";
@@ -68,7 +44,7 @@
         clock-names = "uartclk", "apb_pclk";
     };
 
-    seio_uart_2: serial@ed070000 {
+    serial2_seio: serial@ed070000 {
         bootph-all;
         compatible = "arm,pl011", "arm,primecell";
         status = "disabled";
@@ -79,16 +55,40 @@
         clock-names = "uartclk", "apb_pclk";
     };
 
-    seio_gpio: gpio@ed080000 {
-        compatible = "xlnx,versal-gpio-1.0";
+    spi0_seio: spi@ed010000 {
+        compatible = "cdns,spi-r1p6";
         status = "disabled";
-        reg = <0 0xed080000 0 0x1000>;
         interrupt-parent = <&imux>;
-        interrupts = <0 180 4>;
-        #gpio-cells = <2>;
-        gpio-controller;
-        #interrupt-cells = <2>;
-        interrupt-controller;
+        interrupts = <0 181 4>;
+        reg = <0 0xed010000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
+    };
+
+    spi1_seio: spi@ed020000 {
+        compatible = "cdns,spi-r1p6";
+        status = "disabled";
+        interrupt-parent = <&imux>;
+        interrupts = <0 182 4>;
+        reg = <0 0xed020000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
+    };
+
+    spi2_seio: spi@ed030000 {
+        compatible = "cdns,spi-r1p6";
+        status = "disabled";
+        interrupt-parent = <&imux>;
+        interrupts = <0 183 4>;
+        reg = <0 0xed030000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
+    };
+
+    spi3_seio: spi@ed040000 {
+        compatible = "cdns,spi-r1p6";
+        status = "disabled";
+        interrupt-parent = <&imux>;
+        interrupts = <0 184 4>;
+        reg = <0 0xed040000 0 0x1000>;
+        clock-names = "ref_clk", "pclk";
     };
 
 };
