@@ -3434,14 +3434,14 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ede00000 label mmi_dptx
 
 				if {$is_versal_2ve_2vm_seio_platform} {
-					dict set def_ps_mapping ed010000 label seio_spi_0
-					dict set def_ps_mapping ed020000 label seio_spi_1
-					dict set def_ps_mapping ed030000 label seio_spi_2
-					dict set def_ps_mapping ed040000 label seio_spi_3
-					dict set def_ps_mapping ed050000 label seio_uart_0
-					dict set def_ps_mapping ed060000 label seio_uart_1
-					dict set def_ps_mapping ed070000 label seio_uart_2
-					dict set def_ps_mapping ed080000 label seio_gpio
+					dict set def_ps_mapping ed010000 label spi0_seio
+					dict set def_ps_mapping ed020000 label spi1_seio
+					dict set def_ps_mapping ed030000 label spi2_seio
+					dict set def_ps_mapping ed040000 label spi3_seio
+					dict set def_ps_mapping ed050000 label serial0_seio
+					dict set def_ps_mapping ed060000 label serial1_seio
+					dict set def_ps_mapping ed070000 label serial2_seio
+					dict set def_ps_mapping ed080000 label gpio_seio
 				}
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
