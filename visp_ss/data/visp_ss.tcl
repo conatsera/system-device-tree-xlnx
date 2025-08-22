@@ -199,6 +199,10 @@ proc visp_ss_generate {drv_handle} {
 			set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
 			lappend rpu_ids $rpu
 			lappend rpu_info_list [list $rpu $io_type]
+			add_prop "$sub_node" "xlnx,name" "$sub_node_label" string $default_dts
+			set ip_name [pldt get $node xlnx,ip-name]
+			set ip_name [string trim $ip_name "\""]
+			add_prop "$sub_node" "xlnx,ip-name" $ip_name string $default_dts
 			add_prop "$sub_node" "xlnx,io_mode" "$io_mode_name" string $default_dts
 			add_prop "$sub_node" "xlnx,num_streams" $live_inputs int $default_dts
 			add_prop "$sub_node" "xlnx,mem_inputs" $mem_inputs int $default_dts
