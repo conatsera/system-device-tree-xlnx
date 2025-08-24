@@ -423,8 +423,21 @@ proc set_dt_param args {
                                 -dir {set env(dir) [Pop args 1]}
                                 -repo {set env(CUSTOM_SDT_REPO) [Pop args 1]}
                                 -zocl {set env(zocl) [Pop args 1]}
-                                -user_dts {set env(user_dts) [Pop args 1]}
-                                -include_dts {set env(user_dts) [Pop args 1]}
+                                -user_dts - \-include_dts {
+					# FIXME: Below line should not be needed. It is added to support
+					# -user_dts {a.dtsi b.dtsi} kind of input which Vitis uses. Otherwise
+					# files are not getting copied with the usage of lappend in defining user_dts.
+					set env(user_dts) [Pop args 1]
+					set user_dts_args [lrange $args 1 end]
+					foreach arg $user_dts_args {
+						if {![string match "-*" $arg]} {
+							lappend env(user_dts) $arg
+							Pop args 1
+						} else {
+							break
+						}
+					}
+                                }
                                 -debug {set env(debug) [Pop args 1]}
                                 -verbose {set env(verbose) [Pop args 1]}
                                 -trace {set env(trace) [Pop args 1]}
@@ -1574,8 +1587,11 @@ Generates system device tree based on args given in:
 		set env(zocl) "disable"
 	}
 	if {[catch {set xsa $env(xsa)} msg]} {
-		error "\[DTG++ ERROR]:	No xsa provided, please set the xsa \
-			\n\r		Ex: set_dt_param xsa <system.xsa>"
+		error "ERROR: No xsa provided, please set the xsa with -xsa option"
+		return
+	}
+	if {[catch {set dir $env(dir)} msg]} {
+		error "ERROR: SDT Output directory is not set, please set it with -dir option"
 		return
 	}
 	if {![catch {set rm_xsa $env(rm_xsa)} msg ]} {

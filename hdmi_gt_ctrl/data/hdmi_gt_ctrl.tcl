@@ -105,6 +105,12 @@
 	set speedgrade [hsi get_property CONFIG.C_SPEEDGRADE [hsi get_cells -hier $drv_handle]]
 	add_prop "${node}" "xlnx,speedgrade" $speedgrade stringlist $dts_file 1
 
+	# Add DT properties for clk primitive
+	foreach dir {rx tx} {
+		set clk_primitive [hsi get_property CONFIG.C_[string totitle $dir]_Clk_Primitive [hsi get_cells -hier $drv_handle]]
+		set clk_primitive_val [expr {$clk_primitive == 1 ? 2 : 0}]
+		add_prop "${node}" "xlnx,${dir}-clk-primitive" $clk_primitive_val hexint $dts_file 1
+	}
 	set linerate [hsi get_property CONFIG.Tx_Max_GT_Line_Rate [hsi get_cells -hier $drv_handle]]
 	scan $linerate %d tx_gt_linerate
 	add_prop "${node}" "xlnx,tx-max-gt-line-rate" $tx_gt_linerate hexint $dts_file 1

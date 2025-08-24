@@ -581,6 +581,7 @@
 			interrupts = <0 178 4>, <0 167 4>;
 			interrupt-names = "dptx", "hdcp";
 			interrupt-parent = <&imux>;
+			clock-names = "pixel_clk";
 
 			ports {
 				#address-cells = <1>;

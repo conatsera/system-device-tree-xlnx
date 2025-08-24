@@ -713,3 +713,7 @@
 	clocks = <&versal2_clk DC_PIXEL>;
 	resets = <&versal2_reset VERSAL_RST_DC>;
 };
+
+&mmi_dptx {
+	clocks = <&versal2_clk DC_PIXEL>;
+};
