@@ -199,6 +199,10 @@ proc visp_ss_generate {drv_handle} {
 			set rpu [get_ip_property $drv_handle CONFIG.C_TILE${tile}_ISP${isp}_RPU]
 			lappend rpu_ids $rpu
 			lappend rpu_info_list [list $rpu $io_type]
+			add_prop "$sub_node" "xlnx,name" "$sub_node_label" string $default_dts
+			set ip_name [pldt get $node xlnx,ip-name]
+			set ip_name [string trim $ip_name "\""]
+			add_prop "$sub_node" "xlnx,ip-name" $ip_name string $default_dts
 			add_prop "$sub_node" "xlnx,io_mode" "$io_mode_name" string $default_dts
 			add_prop "$sub_node" "xlnx,num_streams" $live_inputs int $default_dts
 			add_prop "$sub_node" "xlnx,mem_inputs" $mem_inputs int $default_dts
@@ -1050,6 +1054,62 @@ proc generate_mbox_nodes {rpu_info_list default_dts bus_name} {
         if {[info exists rpu_to_child($rpu_id)]} {
             set child_label $rpu_to_child($rpu_id)
             #add_prop "$mbox_node" "mboxes" "<&${child_label} 0>, <&${child_label} 1>" noformating $default_dts
+			if {$rpu_id == 6} {
+				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_3_nobuf]
+				if {[llength $ipi_cell] > 0} {
+					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
+					if {$cpu_name eq "R52_6"} {
+						add_prop "$mbox_node" "mboxes" "<&ipi_5_to_ipi_3_nobuf 0x0>, <&ipi_5_to_ipi_3_nobuf 0x1>" noformating $default_dts
+					} else {
+						puts "Warning: IPI for RPU6 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
+					}
+				} else {
+					puts "Warning: IPI for RPU6 not enabled in your design."
+				}
+			}
+
+			if {$rpu_id == 7} {
+				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_4_nobuf]
+				if {[llength $ipi_cell] > 0} {
+					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
+					if {$cpu_name eq "R52_7"} {
+						add_prop "$mbox_node" "mboxes" "<&ipi_5_to_ipi_4_nobuf 0x0>, <&ipi_5_to_ipi_4_nobuf 0x1>" noformating $default_dts
+					} else {
+						puts "Warning: IPI for RPU7 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
+					}
+				} else {
+					puts "Warning: IPI for RPU7 not enabled in your design."
+				}
+			}
+
+			if {$rpu_id == 8} {
+				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_5_nobuf]
+				if {[llength $ipi_cell] > 0} {
+					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
+					if {$cpu_name eq "R52_8"} {
+						add_prop "$mbox_node" "mboxes" "<&ipi_5_to_ipi_5_nobuf 0x0>, <&ipi_5_to_ipi_5_nobuf 0x1>" noformating $default_dts
+					} else {
+						puts "Warning: IPI for RPU8 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
+					}
+				} else {
+					puts "Warning: IPI for RPU8 not enabled in your design."
+				}
+			}
+
+			if {$rpu_id == 9} {
+				set ipi_cell [hsi get_cells -hier ps_wizard_0_ps11_0_ipi_6_nobuf]
+				if {[llength $ipi_cell] > 0} {
+					set cpu_name [hsi get_property CONFIG.C_CPU_NAME $ipi_cell]
+					if {$cpu_name eq "R52_9"} {
+						add_prop "$mbox_node" "mboxes" "<&ipi_5_to_ipi_6_nobuf 0x0>, <&ipi_5_to_ipi_6_nobuf 0x1>" noformating $default_dts
+					} else {
+						puts "Warning: IPI for RPU9 found but CPU name mismatch (got $cpu_name). IPI not enabled in your design."
+					}
+				} else {
+					puts "Warning: IPI for RPU9 not enabled in your design."
+				}
+			}
+
         } else {
             puts "Warning: No child label mapping found for rpu_id=$rpu_id. Skipping mboxes property."
         }
