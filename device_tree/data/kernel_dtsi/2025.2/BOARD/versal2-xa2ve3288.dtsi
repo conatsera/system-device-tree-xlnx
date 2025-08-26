@@ -18,10 +18,10 @@
 	};
 
 	clk200: clk200 {
-        compatible = "fixed-clock";
-        #clock-cells = <0>;
-        clock-frequency = <200000000>;
-    };
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <200000000>;
+	};
 
 };
 
