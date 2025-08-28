@@ -3433,6 +3433,7 @@ proc gen_ps_mapping {} {
 					dict set def_ps_mapping ed060000 label serial1_seio
 					dict set def_ps_mapping ed070000 label serial2_seio
 					dict set def_ps_mapping ed080000 label gpio_seio
+					dict set def_ps_mapping ed0c0000 label pcie_seio
 				}
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
