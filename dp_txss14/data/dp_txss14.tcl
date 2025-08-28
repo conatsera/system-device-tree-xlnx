@@ -64,14 +64,16 @@ proc dp_txss14_generate {drv_handle} {
 	add_prop "${node}" "xlnx,dp-retimer" "xfmc$drv_handle" reference $dtsi_file
 	set clknames "s_axi_aclk tx_vid_clk"
 	set reg_names "dp_base"
-	set hdcp_keymngmt [hsi get_cells -hier -filter {IP_NAME == "hdcp_keymngmt_blk"}]
-	if {[llength $hdcp_keymngmt]} {
-		add_prop "${node}" "xlnx,hdcp1x-keymgmt"  [lindex $hdcp_keymngmt 1] reference $dtsi_file
-	}
         set hdcp_enable [hsi get_property CONFIG.HDCP_ENABLE [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $hdcp_enable "1"]} {
                add_prop "${node}" "xlnx,hdcp-enable" $hdcp_enable boolean $dtsi_file 1
-        } else {
+		set hdcp_keymngmt [hsi get_cells -hier -filter {IP_NAME == "hdcp_keymngmt_blk"}]
+		if {[llength $hdcp_keymngmt]} {
+			set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] hdcp_key]
+			set target_intf [hsi::get_intf_nets -of_objects $intf]
+			add_prop "${node}" "xlnx,hdcp1x-keymgmt"  [hsi::get_cells -of_objects $target_intf -filter IP_NAME==hdcp_keymngmt_blk] reference $dtsi_file
+		}
+	} else {
 		pldt unset $node "xlnx,hdcp-enable"
 	}
         set hdcp22_enable [hsi get_property CONFIG.HDCP22_ENABLE [hsi::get_cells -hier $drv_handle]]
