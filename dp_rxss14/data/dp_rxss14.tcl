@@ -77,6 +77,12 @@ proc dp_rxss14_generate {drv_handle} {
         set hdcp_enable [hsi get_property CONFIG.HDCP_ENABLE [hsi::get_cells -hier $drv_handle]]
 	if {[string match -nocase $hdcp_enable "1"]} {
                add_prop "${node}" "xlnx,hdcp-enable" $hdcp_enable boolean $dts_file 1
+		set hdcp_keymngmt [hsi get_cells -hier -filter {IP_NAME == "hdcp_keymngmt_blk"}]
+		if {[llength $hdcp_keymngmt]} {
+			set intf [hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] hdcp_key]
+			set target_intf [hsi::get_intf_nets -of_objects $intf]
+			add_prop "${node}" "xlnx,hdcp1x-keymgmt"  [hsi::get_cells -of_objects $target_intf -filter IP_NAME==hdcp_keymngmt_blk] reference $dts_file
+		}
 	} else {
 		pldt unset $node "xlnx,hdcp-enable"
 	}
@@ -148,10 +154,6 @@ proc dp_rxss14_generate {drv_handle} {
 	}
 	add_prop "${node}" "phy-names" $phy_names stringlist $dts_file 1
 
-	set hdcp_keymngmt [hsi get_cells -hier -filter {IP_NAME == "hdcp_keymngmt_blk"}]
-	if {[llength $hdcp_keymngmt]} {
-		add_prop "${node}" "xlnx,hdcp1x_keymgmt"  [lindex $hdcp_keymngmt 0] reference $dts_file
-	}
 	set phy_names ""
 	set phys ""
 	if {[llength $freq] == 0} {
