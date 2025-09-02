@@ -6466,7 +6466,7 @@ proc gen_peripheral_nodes {drv_handle {node_only ""}} {
 			# Add them forcibly here.
 			if {$ip_type == "psv_rcpu_gic"} {
 				add_prop $node "xlnx,ip-name" $ip_type string $default_dts
-				# There is a P80 HAPS design in Vivado suite where all PS Wizard
+				# There are designs in Vivado suite where all PS Wizard
 				# IPs are having multiple entries, one starting with pmcps_0_<ip>
 				# and one with ps_wizard_0_pmcps_0. This leads to 2 RPU GICs in
 				# design with different names. Below call overwrites the NAME to
