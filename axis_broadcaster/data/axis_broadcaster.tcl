@@ -36,11 +36,11 @@ proc axis_broadcaster_update_endpoints {drv_handle} {
 			}
 			# add unit_addr and ip_type check when axis_broadcaster input ip is connected with other ips
 			if {$validate_ip} {
-				set unit_addr [get_baseaddr $broad_ip]
-				if { [string_is_empty $unit_addr] } {
+				set unit_addr [get_baseaddr ${ip} no_prefix]
+				if { ![string equal $unit_addr "-1"] } {
 					break
 				}
-				set ip_type [hsi::get_property IP_TYPE $broad_ip]
+				set ip_type [get_property IP_TYPE $ip]
 				if {[string match -nocase $ip_type "BUS"]} {
 					break
 				}
@@ -80,9 +80,6 @@ proc axis_broadcaster_update_endpoints {drv_handle} {
 									add_prop "$axisinnode" "remote-endpoint" $axis_broad_in_end reference $dts_file 1
 								}
 							}
-						} else {
-							puts "INFO: No input IP to axis_broadcaster : $inipname ... Please check"
-
 						}
 					}
 				}
