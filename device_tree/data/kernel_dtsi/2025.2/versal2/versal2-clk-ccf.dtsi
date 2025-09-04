@@ -717,3 +717,7 @@
 &mmi_dptx {
 	clocks = <&versal2_clk DC_PIXEL>;
 };
+
+&gpu_mali {
+	clocks = <&versal2_clk PS_AXI_DMA>;
+};
