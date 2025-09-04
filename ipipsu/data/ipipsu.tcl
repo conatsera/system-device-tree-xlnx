@@ -75,9 +75,7 @@ proc generate_ipi_child_nodes {ipi_list node drv_handle src_buffer_base src_buff
 		}
 
 		# Create child node for this IPI slave
-		set childname_baseaddr [format %lx [get_baseaddr $ipi_slave]]
-		set child_node_name "$child_node_label: child@$childname_baseaddr"
-		set slv_node [string trim [pcwdt insert $node end $child_node_name] "{}"]
+		set slv_node [create_node -n "child" -l "$child_node_label" -u $idx -d $dts_file -p $node]
 
 		# Get hardware properties for this slave
 		set buffer_index [hsi get_property CONFIG.C_BUFFER_INDEX [hsi get_cells -hier $ipi_slave]]
