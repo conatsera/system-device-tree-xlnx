@@ -68,6 +68,7 @@ proc generate_pmc_dt {xsa dir} {
 	global ps_uart_ip_names
 	global mdm_uart_ip_names
 	global pmc_ip_names
+	global processor_ip_list
 	set default_uart_handle ""
 	set addr_map_list [list]
 
@@ -91,6 +92,8 @@ proc generate_pmc_dt {xsa dir} {
 	# Validate the design, check whether the XSA is a Versal or Versal-like family design.
 	# When the valid handle is found, pick the 0th instance for the further processing.
 	set pmc_proc_handle [return_valid_ip_handle $pmc_ip_names]
+
+	set processor_ip_list [get_ip_property $pmc_proc_handle IP_NAME]
 
 	# Determine the Versal family (Versal, VersalNet, Versal_2VE_2VM)
 	set proclist [get_valid_proc_list]
