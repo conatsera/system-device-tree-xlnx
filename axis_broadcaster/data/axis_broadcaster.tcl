@@ -23,7 +23,6 @@ proc axis_broadcaster_update_endpoints {drv_handle} {
 	set ips [hsi::get_cells -hier -filter {IP_NAME == "axis_broadcaster"}]
 	foreach ip $ips {
 		if {[llength $ip]} {
-			set axis_broad_ip [hsi::get_property IP_NAME $ip]
 			# broad_ip means broadcaster input ip is connected to another ip
 			set broad_ip [get_broad_in_ip $ip]
 			set validate_ip 1
@@ -33,14 +32,17 @@ proc axis_broadcaster_update_endpoints {drv_handle} {
 				# connect to v_proc_ss or ISPPipeline_accel to skip the below checks
 					set validate_ip 0
 				}
+			} else {
+				puts "INFO: No input IP to $ip ... Please check"
+				break
 			}
 			# add unit_addr and ip_type check when axis_broadcaster input ip is connected with other ips
 			if {$validate_ip} {
-				set unit_addr [get_baseaddr ${ip} no_prefix]
-				if { ![string equal $unit_addr "-1"] } {
+				set unit_addr [get_baseaddr $broad_ip]
+				if { [string_is_empty $unit_addr] } {
 					break
 				}
-				set ip_type [get_property IP_TYPE $ip]
+				set ip_type [hsi get_property IP_TYPE $broad_ip]
 				if {[string match -nocase $ip_type "BUS"]} {
 					break
 				}
@@ -49,39 +51,38 @@ proc axis_broadcaster_update_endpoints {drv_handle} {
 			set bus_node [detect_bus_name $ip]
 			set dts_file [set_drv_def_dts $ip]
 			set rt_node [create_node -n "axis_broadcaster$ip" -l ${label} -u 0 -d ${dts_file} -p $bus_node]
-			if {[llength $axis_broad_ip]} {
-				set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
-				set inip [get_in_connect_ip $ip $intf]
-				if {[llength $broad_ip]} {
+			set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
+			set inip [get_in_connect_ip $ip $intf]
+			if {[llength $inip]} {
+				set inipname [hsi get_property IP_NAME $inip]
+				set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange ISPPipeline_accel"
+				if {[lsearch  -nocase $valid_mmip_list $inipname] >= 0} {
+					set ports_node [create_node -n "ports" -l axis_broadcaster_ports$ip -p $rt_node -d $dts_file]
+					add_prop "$ports_node" "#address-cells" 1 int $dts_file
+					add_prop "$ports_node" "#size-cells" 0 int $dts_file
+					set port_node [create_node -n "port" -l axis_broad_port0$ip -u 0 -p $ports_node -d $dts_file]
+					add_prop "$port_node" "reg" 0 int $dts_file
 					if {[llength $inip]} {
-						set inipname [hsi get_property IP_NAME $inip]
-						set valid_mmip_list "mipi_csi2_rx_subsystem v_tpg v_hdmi_rx_ss v_smpte_uhdsdi_rx_ss v_smpte_uhdsdi_tx_ss v_demosaic v_gamma_lut v_proc_ss v_frmbuf_rd v_frmbuf_wr v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio audio_formatter i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem v_mix v_multi_scaler v_scenechange ISPPipeline_accel"
-						if {[lsearch  -nocase $valid_mmip_list $inipname] >= 0} {
-							set ports_node [create_node -n "ports" -l axis_broadcaster_ports$ip -p $rt_node -d $dts_file]
-							add_prop "$ports_node" "#address-cells" 1 int $dts_file
-							add_prop "$ports_node" "#size-cells" 0 int $dts_file
-							set port_node [create_node -n "port" -l axis_broad_port0$ip -u 0 -p $ports_node -d $dts_file]
-							add_prop "$port_node" "reg" 0 int $dts_file
-							if {[llength $inip]} {
-								set axis_broad_in_end ""
-								set axis_broad_remo_in_end ""
-								if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
-									set axis_broad_in_end [dict get $end_mappings $inip]
-									dtg_verbose "drv:$ip inend:$axis_broad_in_end"
-								}
-								if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
-									set axis_broad_remo_in_end [dict get $remo_mappings $inip]
-									dtg_verbose "drv:$ip inremoend:$axis_broad_remo_in_end"
-								}
-								if {[llength $axis_broad_remo_in_end]} {
-									set axisinnode [create_node -n "endpoint" -l $axis_broad_remo_in_end -p $port_node -d $dts_file]
-								}
-								if {[llength $axis_broad_in_end]} {
-									add_prop "$axisinnode" "remote-endpoint" $axis_broad_in_end reference $dts_file 1
-								}
-							}
+						set axis_broad_in_end ""
+						set axis_broad_remo_in_end ""
+						if {[info exists end_mappings] && [dict exists $end_mappings $inip]} {
+							set axis_broad_in_end [dict get $end_mappings $inip]
+							dtg_verbose "drv:$ip inend:$axis_broad_in_end"
+						}
+						if {[info exists remo_mappings] && [dict exists $remo_mappings $inip]} {
+							set axis_broad_remo_in_end [dict get $remo_mappings $inip]
+							dtg_verbose "drv:$ip inremoend:$axis_broad_remo_in_end"
+						}
+						if {[llength $axis_broad_remo_in_end]} {
+							set axisinnode [create_node -n "endpoint" -l $axis_broad_remo_in_end -p $port_node -d $dts_file]
+						}
+						if {[llength $axis_broad_in_end]} {
+							add_prop "$axisinnode" "remote-endpoint" $axis_broad_in_end reference $dts_file 1
 						}
 					}
+				} else {
+					puts "INFO: Input IP to axis_broadcaster is not a valid multimedia IP : $inipname ... Please check"
+
 				}
 			}
 		}
