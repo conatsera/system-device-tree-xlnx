@@ -164,19 +164,86 @@
         set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $drv_handle] $dma_pin]
             if {[llength $intf]} {
                         set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
+                        # MRMAC 100G
+                        if {![llength $connected_ip]} {
+                            set dpath_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $drv_handle] "m_axis_mm2s_tdata"]]
+			    if {[llength $dpath_pin]} {
+                                 set dpath_ip [hsi::get_cells -of_objects $dpath_pin]
+				 set dpath_name [hsi get_property IP_NAME $dpath_ip]
+                                 if {[string match -nocase [hsi get_property IP_NAME $dpath_ip] "axis_data_fifo"]} {
+					 set dwidth_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $dpath_ip] "m_axis_tdata"]]
+					 set dwidth_ip [hsi::get_cells -of_objects $dwidth_pin]
+					 set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $dwidth_ip] "m_axis_tdata"]]
+					 set fifo_ip [hsi::get_cells -of_objects $fifo_pin]
+					 set mrmac_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fifo_ip] "m_axis_tvalid"]]
+			                 if {[llength $mrmac_pin]} {
+                                             set mrmac_per [hsi::get_cells -of_objects $mrmac_pin]
+                                             if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
+                                                   return 1
+                                             }
+                                         }
+                                 }
+                            }
+                        }
+                        # Ethernet Offload
                         if {[llength $connected_ip]} {
-                       if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_data_fifo"]} {
+                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "ethernet_offload"]} {
+				     set connected_ip [get_connected_stream_ip [hsi::get_cells -hier $connected_ip] "tx_axis"]
+				     set ipname [hsi get_property IP_NAME $connected_ip]
+                             }
+                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_clock_converter"]} {
+                                  set mux_ip [get_connected_stream_ip [hsi::get_cells -hier $connected_ip] "M_AXIS"]
+                                  if {[llength $mux_ip]} {
+                                      if {[string match -nocase [hsi get_property IP_NAME $mux_ip] "mrmac_10g_mux"]} {
+                                            set data_fifo_per [get_connected_stream_ip [hsi::get_cells -hier $mux_ip] "tx_m_axis"]
+                                            if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
+                                                  set fifo_ip [get_connected_stream_ip [hsi::get_cells -hier $data_fifo_per] "M_AXIS"]
+                                                  set ipname [get_ip_property $fifo_ip IP_NAME]
+                                                  if {[llength $fifo_ip]} {
+                                                     if {[string match -nocase [hsi get_property IP_NAME $fifo_ip] "axis_register_slice"]} {							                      set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $fifo_ip] "m_axis_tdata"]]
+                                                     }
+                                                     if {[llength $fifo_pin]} {
+                                                           set mrmac_per [hsi::get_cells -of_objects $fifo_pin]
+				                           if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
+                                                                 return 1
+                                                           }
+                                                     }
+                                                  }
+                                            }
+                                      }
+                                  }
+                             }
+
+                             # MRMAC Rhino
+                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_data_fifo"]} {
+                                set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $connected_ip] "m_axis_tdata"]]
+                                if {[llength $fifo_pin]} {
+                                      set mrmac_per [::hsi::get_cells -of_objects $fifo_pin]
+                                }
+                                if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
+                                      return 1
+                                }
+                             }
+
+                             # MRMAC TRD
+                             if {[string match -nocase [hsi get_property IP_NAME $connected_ip] "axis_data_fifo"]} {
                                set mux_ip [get_connected_stream_ip [hsi::get_cells -hier $connected_ip] "M_AXIS"]
                                         if {[llength $mux_ip]} {
                                                 if {[string match -nocase [hsi get_property IP_NAME $mux_ip] "mrmac_10g_mux"]} {
                                                         set data_fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mux_ip] "tx_m_axis_tdata"]]
-                                                set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
-                                                if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
-                                                       set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $data_fifo_per] "m_axis_tdata"]]
-                                                       set mrmac_per [hsi::get_cells -of_objects $fifo_pin]
-                                                       if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
-                                                               return 1
-                                                                }
+                                                        set data_fifo_per [hsi::get_cells -of_objects $data_fifo_pin]
+                                                        if {[string match -nocase [hsi get_property IP_NAME $data_fifo_per] "axis_data_fifo"]} {
+                                                            set fifo_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $data_fifo_per] "m_axis_tdata"]]
+                                                            set mrmac_per [hsi::get_cells -of_objects $fifo_pin]
+						            if {[llength $mrmac_per]} {
+						                 if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac_ptp_one_step_pkt_edit"]} {
+							              set ptp_pin [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_per] "m_tdata"]]
+							              set mrmac_per [hsi::get_cells -of_objects $ptp_pin]
+						                 }
+						                 if {[string match -nocase [hsi get_property IP_NAME $mrmac_per] "mrmac"]} {
+                                                                      return 1
+                                                                 }
+	                                                    }
                                                         }
                                                 }
                                         }
