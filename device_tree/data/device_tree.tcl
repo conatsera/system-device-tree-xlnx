@@ -242,7 +242,6 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ps7_spi" "spips"
 	dict set ::sdtgen::namespacelist "psu_spi" "spips"
 	dict set ::sdtgen::namespacelist "psv_spi" "spips"
-	dict set ::sdtgen::namespacelist "seio_spi" "spips"
 	dict set ::sdtgen::namespacelist "spi" "spips"
 	dict set ::sdtgen::namespacelist "sync_ip" "sync_ip"
 	dict set ::sdtgen::namespacelist "psv_pmc_sysmon" "sysmonpsv"
@@ -300,7 +299,6 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ethernet" "emacps"
 	dict set ::sdtgen::namespacelist "psx_gpio" "gpiops"
 	dict set ::sdtgen::namespacelist "gpio" "gpiops"
-	dict set ::sdtgen::namespacelist "seio_gpio" "gpiops"
 	dict set ::sdtgen::namespacelist "psx_i3c" "i3cpsx"
 	dict set ::sdtgen::namespacelist "i3c" "i3cpsx"
 	dict set ::sdtgen::namespacelist "psx_acpu_gic" "scugic"
@@ -313,7 +311,6 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ttc" "ttcps"
 	dict set ::sdtgen::namespacelist "psx_sbsauart" "uartps"
 	dict set ::sdtgen::namespacelist "sbsauart" "uartps"
-	dict set ::sdtgen::namespacelist "seio_uart" "uartps"
 	dict set ::sdtgen::namespacelist "axi_noc2" "ddrpsv"
 	dict set ::sdtgen::namespacelist "noc_mc_ddr5" "ddrpsv"
 	dict set ::sdtgen::namespacelist "psx_ocm_ram" "psu_ocm"
@@ -335,6 +332,8 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "mmi_dc" "axi_mmi_dc"
 	dict set ::sdtgen::namespacelist "mmi_udh_dp" "axi_mmi_dptx"
 	dict set ::sdtgen::namespacelist "mmi_usb_cfg" "mmi_usb"
+
+	part_specific_init_proclist
 }
 
 proc Pop {varname {nth 0}} {
@@ -1607,22 +1606,13 @@ Generates system device tree based on args given in:
 	source [file join $path "device_tree" "data" "xillib_internal.tcl"]
 	source [file join $path "device_tree" "data" "xillib_sw.tcl"]
 	source [file join $path "device_tree" "data" "partial_proc.tcl"]
+	source [file join $path "device_tree" "data" "parts_spec.tcl"]
 	source [file join $path "device_tree" "data" "pmc_dt.tcl"]
-
-	if { $::sdtgen::namespacelist == "" } {
-		init_proclist
-	}
 
 	set common_file "$path/device_tree/data/config.yaml"
 	set dir [get_user_config $common_file -dir]
 	if [catch { set retstr [file mkdir $dir] } errmsg] {
 		error "cannot create directory"
-	}
-
-	if {[catch {set dt_domain $env(dt_domain)} msg]} {
-	} elseif {$dt_domain == "pmc"} {
-		generate_pmc_dt $xsa $dir
-		return
 	}
 
 	set cur_hw_design [hsi::get_hw_designs]
@@ -1643,6 +1633,16 @@ Generates system device tree based on args given in:
 			}
 		}
 		file delete -force "$xsa_path"
+	}
+
+	if { $::sdtgen::namespacelist == "" } {
+		init_proclist
+	}
+
+	if {[catch {set dt_domain $env(dt_domain)} msg]} {
+	} elseif {$dt_domain == "pmc"} {
+		generate_pmc_dt $xsa $dir
+		return
 	}
 
 	dict set node_dict $cur_hw_design {}
@@ -1813,6 +1813,7 @@ Generates system device tree based on args given in:
 	namespace forget ::
 
 	gen_board_info
+	gen_part_specific_misc
 	gen_afi_node
     	gen_include_headers
         include_custom_dts
@@ -1855,14 +1856,14 @@ Generates system device tree based on args given in:
 	global dtsi_fname
 	if {[string match -nocase $family "versal"] || [string match -nocase $family "zynq"] || [is_zynqmp_platform $family]} {
 		set mainline_dtsi [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${dtsi_fname}"]
+		global include_list
+		set include_dts_list [split $include_list ","]
 		foreach file [glob [file normalize [file dirname ${mainline_dtsi}]/*]] {
 			set filename [file tail $file]
-			global is_versal_2ve_2vm_seio_platform
-			if {$filename == "versal2-seio.dtsi" && !($is_versal_2ve_2vm_seio_platform)} {
-				continue
+			if {$filename in $include_dts_list} {
+				# NOTE: ./ works only if we did not change our directory
+				file copy -force $file $dir
 			}
-			# NOTE: ./ works only if we did not change our directory
-			file copy -force $file $dir
 		}
 		delete_tree systemdt root
 		delete_tree pldt root

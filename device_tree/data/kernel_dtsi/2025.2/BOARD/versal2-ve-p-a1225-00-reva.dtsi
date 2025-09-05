@@ -7,8 +7,6 @@
  * Michal Simek <michal.simek@amd.com>
  */
 
-#include "versal2-xa2ve3288.dtsi"
-
 #include "include/dt-bindings/gpio/gpio.h"
 #include "include/dt-bindings/net/ti-dp83867.h"
 
