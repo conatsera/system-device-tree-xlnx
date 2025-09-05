@@ -269,7 +269,6 @@ proc dp_rx_add_hier_instances {drv_handle} {
 
 	set ip_subcores [dict create]
 	dict set ip_subcores "axi_iic" "iic"
-	dict set ip_subcores "clk_wizard" "clkWiz"
 	dict set ip_subcores "displayport" "dp14"
 	dict set ip_subcores "hdcp" "hdcp14"
 	dict set ip_subcores "hdcp22_rx_dp" "hdcp22"
@@ -283,6 +282,20 @@ proc dp_rx_add_hier_instances {drv_handle} {
 		} else {
 			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
+	}
+
+	dict set ip_subcores "clk_wizard" "clkWiz"
+	dict set ip_subcores "clkx5_wiz" "clkWiz"
+
+	set clk_ip_handle [hsi::get_cells -filter "IP_NAME==clkx5_wiz"]
+	if {[string_is_empty $clk_ip_handle]} {
+		set clk_ip_handle [hsi::get_cells -filter "IP_NAME==clk_wizard"]
+	}
+	if {![string_is_empty $clk_ip_handle]} {
+		add_prop "$node" "clkWiz-present" 1 int $dts_file
+		add_prop "$node" "clkWiz-connected" $clk_ip_handle reference $dts_file
+	} else {
+		add_prop "$node" "clkWiz-present" 0 int $dts_file
 	}
 
 	set timers [hsi::get_cells -hier -filter {IP_NAME==axi_timer}]
