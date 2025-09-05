@@ -147,20 +147,25 @@ proc mipi_csi2_rx_ss_generate {drv_handle} {
 	}
 
 	set outip [get_connected_stream_ip [hsi get_cells -hier $drv_handle] "VIDEO_OUT"]
-	if {[llength $outip]} {
-		if {[string match -nocase [hsi get_property IP_NAME $outip] "axis_broadcaster"]} {
-			set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
-			gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
-			add_prop "$mipi_node" "remote-endpoint" $outip$drv_handle reference $dts_file 1
-			gen_remoteendpoint $drv_handle "$outip$drv_handle"
-		}
-		if {[string match -nocase [hsi get_property IP_NAME $outip] "axis_switch"]} {
-			set ip_mem_handles [hsi get_mem_ranges $outip]
-			if {[llength $ip_mem_handles]} {
+	foreach ip_type $outip {
+		if {[llength $ip_type]} {
+			if {[string match -nocase [hsi get_property IP_NAME $ip_type] "axis_ila"]} {
+				continue
+			}
+			if {[string match -nocase [hsi get_property IP_NAME $ip_type] "axis_broadcaster"]} {
 				set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
-				gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
-				add_prop "$mipi_node" "remote-endpoint" $outip$drv_handle reference $dts_file 1
-				gen_axis_switch_in_remo_endpoint $drv_handle "$outip$drv_handle"
+				gen_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+				add_prop "$mipi_node" "remote-endpoint" $ip_type$drv_handle reference $dts_file 1
+				gen_remoteendpoint $drv_handle "$ip_type$drv_handle"
+			}
+			if {[string match -nocase [hsi get_property IP_NAME $ip_type] "axis_switch"]} {
+				set ip_mem_handles [hsi get_mem_ranges $ip_type]
+				if {[llength $ip_mem_handles]} {
+					set mipi_node [create_node -n "endpoint" -l mipi_csirx_out$drv_handle -p $port_node -d $dts_file]
+					gen_axis_switch_in_endpoint $drv_handle "mipi_csirx_out$drv_handle"
+					add_prop "$mipi_node" "remote-endpoint" $ip_type$drv_handle reference $dts_file 1
+					gen_axis_switch_in_remo_endpoint $drv_handle "$ip_type$drv_handle"
+				}
 			}
 		}
 	}
