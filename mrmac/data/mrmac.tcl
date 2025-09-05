@@ -895,7 +895,7 @@
         set values [pldt getall $ipnode]
         set intr_parent ""
         set intr_val ""
-        set intrnames ""
+        set int_names ""
         if {[regexp "interrupt*" $values match]} {
                 set intr_val [pldt get $ipnode interrupts]
                 set intr_val [string trimright $intr_val " >"]
@@ -924,7 +924,7 @@
         if {[llength $intr_parent]} {
                 add_prop "${node}" "interrupt-parent" $intr_parent reference $dts_file
         }
-        if {[llength $intrnames]} {
+        if {[llength $int_names]} {
                 add_prop "${node}" "interrupt-names" $int_names noformating $dts_file
         }
     }
