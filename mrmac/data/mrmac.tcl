@@ -24,9 +24,12 @@
         if {[string match -nocase [hsi get_property IP_NAME [hsi get_cells -hier $drv_handle]] "mrmac"]} {
               set compatible [append compatible " " "xlnx,mrmac-ethernet-1.0"]
         }
-        add_prop "$node" "compatible" "$compatible" stringlist $dts_file 1
+
         set mrmac_ip [hsi::get_cells -hier $drv_handle]
         mrmac_gen_mrmac_clk_property $drv_handle
+        set connected_ip [get_connected_stream_ip $mrmac_ip "tx_axis_tdata0"]
+
+
         global env
         set path $env(CUSTOM_SDT_REPO)
         set common_file "$path/device_tree/data/config.yaml"
@@ -41,248 +44,15 @@
                    set slave_intf [hsi get_property SLAVE_INTERFACE $mem_range]
                dtg_verbose "slave_intf:$slave_intf"
                    set ptp_comp "xlnx,timer-syncer-1588-1.0"
-                   if {[string match -nocase $slave_intf "ptp_0_s_axi"]} {
-                           set ptp_0_node [create_node -n "ptp_timer" -l "$slave_intf" -u $base -d $dts_file -p $bus_node]
-                           add_prop "$ptp_0_node" "compatible" "$ptp_comp" stringlist $dts_file
-                           mrmac_generate_reg_property $ptp_0_node $base_addr $high_addr
-                   }
-                   if {[string match -nocase $slave_intf "ptp_1_s_axi"]} {
-                           set ptp_1_node [create_node -n "ptp_timer" -l "$slave_intf" -u $base -d $dts_file -p $bus_node]
-                           add_prop "$ptp_1_node" "compatible" "$ptp_comp" stringlist $dts_file
-                           mrmac_generate_reg_property $ptp_1_node $base_addr $high_addr
-                   }
-                   if {[string match -nocase $slave_intf "ptp_2_s_axi"]} {
-                           set ptp_2_node [create_node -n "ptp_timer" -l "$slave_intf" -u $base -d $dts_file -p $bus_node]
-                           add_prop "$ptp_2_node" "compatible" "$ptp_comp" stringlist $dts_file
-                           mrmac_generate_reg_property $ptp_2_node $base_addr $high_addr
-                   }
-                   if {[string match -nocase $slave_intf "ptp_3_s_axi"]} {
-                           set ptp_3_node [create_node -n "ptp_timer" -l "$slave_intf" -u $base -d $dts_file -p $bus_node]
-                           add_prop "$ptp_3_node" "compatible" "$ptp_comp" stringlist $dts_file
-                           mrmac_generate_reg_property $ptp_3_node $base_addr $high_addr
+                   # Handle PTP timer interfaces using a for loop
+                   for {set ptp_idx 0} {$ptp_idx < 4} {incr ptp_idx} {
+                           if {[string match -nocase $slave_intf "ptp_${ptp_idx}_s_axi"]} {
+                                   set ptp_node [create_node -n "ptp_timer" -l "$slave_intf" -u $base -d $dts_file -p $bus_node]
+                                   add_prop "$ptp_node" "compatible" "$ptp_comp" stringlist $dts_file
+                                   mrmac_generate_reg_property $ptp_node $base_addr $high_addr
+                           }
                    }
             }
-
-        if {[string match -nocase $slave_intf "s_axi"]} {
-                        set mrmac0_highaddr_hex [format 0x%llx [expr $base_addr + 0xFFF]]
-                        mrmac_generate_reg_property $node $base_addr $mrmac0_highaddr_hex
-        }
-            set connected_ip [get_connected_stream_ip $mrmac_ip "tx_axis_tdata0"]
-        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        set gt_mode [split $gt_mode " "]
-        set gt_mode [lindex $gt_mode 0]
-        add_prop "${node}" "xlnx,gt-mode" $gt_mode string $dts_file
-
-        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT0_C0  [hsi::get_cells -hier $drv_handle]]
-        set port0_dpath [split $port0_dpath " "]
-        set port0_dwidth [lindex $port0_dpath 1]
-        set port0_dwidth [string trimright $port0_dwidth "b"]
-        add_prop "${node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
-
-        set FEC_SLICE0_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE0_CFG_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-slice0-cfg-c0" $FEC_SLICE0_CFG_C0 string $dts_file
-        set FEC_SLICE0_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE0_CFG_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-slice0-cfg-c1" $FEC_SLICE0_CFG_C1 string $dts_file
-        set FLEX_PORT0_DATA_RATE_C0 [hsi get_property CONFIG.C_FLEX_PORT0_DATA_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-port0-data-rate-c0" $FLEX_PORT0_DATA_RATE_C0 string $dts_file
-        set FLEX_PORT0_DATA_RATE_C1 [hsi get_property CONFIG.C_FLEX_PORT0_DATA_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-port0-data-rate-c1" $FLEX_PORT0_DATA_RATE_C1 string $dts_file
-        set FLEX_PORT0_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.C_FLEX_PORT0_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-port0-enable-time-stamping-c0" $FLEX_PORT0_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set FLEX_PORT0_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.C_FLEX_PORT0_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-port0-enable-time-stamping-c1" $FLEX_PORT0_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set FLEX_PORT0_MODE_C0 [hsi get_property CONFIG.C_FLEX_PORT0_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-port0-mode-c0" $FLEX_PORT0_MODE_C0 string $dts_file
-        set FLEX_PORT0_MODE_C1 [hsi get_property CONFIG.C_FLEX_PORT0_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,flex-port0-mode-c1" $FLEX_PORT0_MODE_C1 string $dts_file
-        set PORT0_1588v2_Clocking_C0 [hsi get_property CONFIG.PORT0_1588v2_Clocking_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,port0-1588v2-clocking-c0" $PORT0_1588v2_Clocking_C0 noformating $dts_file
-        set PORT0_1588v2_Clocking_C1 [hsi get_property CONFIG.PORT0_1588v2_Clocking_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,port0-1588v2-clocking-c1" $PORT0_1588v2_Clocking_C1 noformating $dts_file
-        set PORT0_1588v2_Operation_MODE_C0 [hsi get_property CONFIG.PORT0_1588v2_Operation_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,port0-1588v2-operation-mode-c0" $PORT0_1588v2_Operation_MODE_C0 noformating $dts_file
-        set PORT0_1588v2_Operation_MODE_C1 [hsi get_property CONFIG.PORT0_1588v2_Operation_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,port0-1588v2-operation-mode-c1" $PORT0_1588v2_Operation_MODE_C1 noformating $dts_file
-        set MAC_PORT0_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.MAC_PORT0_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-enable-time-stamping-c0" $MAC_PORT0_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set MAC_PORT0_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.MAC_PORT0_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-enable-time-stamping-c1" $MAC_PORT0_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set MAC_PORT0_RATE_C0 [hsi get_property CONFIG.MAC_PORT0_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $MAC_PORT0_RATE_C0 "10GE"]} {
-                   set number 10000
-                add_prop "${node}" "max-speed" $number int $dts_file
-        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
-                set number 25000
-                add_prop "${node}" "max-speed" $number int $dts_file
-        }
-        add_prop "${node}" "xlnx,mac-port0-rate-c0" $MAC_PORT0_RATE_C0 string $dts_file
-        set MAC_PORT0_RATE_C1 [hsi get_property CONFIG.MAC_PORT0_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rate-c1" $MAC_PORT0_RATE_C1 string $dts_file
-        set MAC_PORT0_RX_ETYPE_GCP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-gcp-c0" $MAC_PORT0_RX_ETYPE_GCP_C0 int $dts_file
-        set MAC_PORT0_RX_ETYPE_GCP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-gcp-c1" $MAC_PORT0_RX_ETYPE_GCP_C1 int $dts_file
-        set MAC_PORT0_RX_ETYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-gpp-c0" $MAC_PORT0_RX_ETYPE_GPP_C0 int $dts_file
-        set MAC_PORT0_RX_ETYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-gpp-c1" $MAC_PORT0_RX_ETYPE_GPP_C1 int $dts_file
-        set MAC_PORT0_RX_ETYPE_PCP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-pcp-c0" $MAC_PORT0_RX_ETYPE_PCP_C0 int $dts_file
-        set MAC_PORT0_RX_ETYPE_PCP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-pcp-c1" $MAC_PORT0_RX_ETYPE_PCP_C1 int $dts_file
-        set MAC_PORT0_RX_ETYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-ppp-c0" $MAC_PORT0_RX_ETYPE_PPP_C0 int $dts_file
-        set MAC_PORT0_RX_ETYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_ETYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-etype-ppp-c1" $MAC_PORT0_RX_ETYPE_PPP_C1 int $dts_file
-        set MAC_PORT0_RX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT0_RX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-flow-c0" $MAC_PORT0_RX_FLOW_C0 int $dts_file
-        set MAC_PORT0_RX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT0_RX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-flow-c1" $MAC_PORT0_RX_FLOW_C1 int $dts_file
-        set MAC_PORT0_RX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-gpp-c0" $MAC_PORT0_RX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT0_RX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-gpp-c1" $MAC_PORT0_RX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT0_RX_OPCODE_MAX_GCP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MAX_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-max-gcp-c0" $MAC_PORT0_RX_OPCODE_MAX_GCP_C0 int $dts_file
-        set MAC_PORT0_RX_OPCODE_MAX_GCP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MAX_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-max-gcp-c1" $MAC_PORT0_RX_OPCODE_MAX_GCP_C1 int $dts_file
-        set MAC_PORT0_RX_OPCODE_MAX_PCP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MAX_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-max-pcp-c0" $MAC_PORT0_RX_OPCODE_MAX_PCP_C0 int $dts_file
-
-        set MAC_PORT0_RX_OPCODE_MAX_PCP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MAX_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-max-pcp-c1" $MAC_PORT0_RX_OPCODE_MAX_PCP_C1 int $dts_file
-        set MAC_PORT0_RX_OPCODE_MIN_GCP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MIN_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-min-gcp-c0" $MAC_PORT0_RX_OPCODE_MIN_GCP_C0 int $dts_file
-        set MAC_PORT0_RX_OPCODE_MIN_GCP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MIN_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-min-gcp-c1" $MAC_PORT0_RX_OPCODE_MIN_GCP_C1 int $dts_file
-        set MAC_PORT0_RX_OPCODE_MIN_PCP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MIN_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-min-pcp-c0" $MAC_PORT0_RX_OPCODE_MIN_PCP_C0 int $dts_file
-        set MAC_PORT0_RX_OPCODE_MIN_PCP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_MIN_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-min-pcp-c1" $MAC_PORT0_RX_OPCODE_MIN_PCP_C1 int $dts_file
-        set MAC_PORT0_RX_OPCODE_PPP_C0 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-ppp-c0" $MAC_PORT0_RX_OPCODE_PPP_C0 int $dts_file
-        set MAC_PORT0_RX_OPCODE_PPP_C1 [hsi get_property CONFIG.MAC_PORT0_RX_OPCODE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-rx-opcode-ppp-c1" $MAC_PORT0_RX_OPCODE_PPP_C1 int $dts_file
-        set MAC_PORT0_RX_PAUSE_DA_MCAST_C0 [hsi get_property CONFIG.MAC_PORT0_RX_PAUSE_DA_MCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_RX_PAUSE_DA_MCAST_C0 [mrmac_check_size $MAC_PORT0_RX_PAUSE_DA_MCAST_C0 $node]
-        add_prop "${node}" "xlnx,mac-port0-rx-pause-da-mcast-c0" $MAC_PORT0_RX_PAUSE_DA_MCAST_C0 noformating $dts_file
-        set MAC_PORT0_RX_PAUSE_DA_MCAST_C1 [hsi get_property CONFIG.MAC_PORT0_RX_PAUSE_DA_MCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_RX_PAUSE_DA_MCAST_C1 [mrmac_check_size $MAC_PORT0_RX_PAUSE_DA_MCAST_C1 $node]
-        add_prop "${node}" "xlnx,mac-port0-rx-pause-da-mcast-c1" $MAC_PORT0_RX_PAUSE_DA_MCAST_C1 noformating $dts_file
-        set MAC_PORT0_RX_PAUSE_DA_UCAST_C0 [hsi get_property CONFIG.MAC_PORT0_RX_PAUSE_DA_UCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_RX_PAUSE_DA_UCAST_C0 [mrmac_check_size $MAC_PORT0_RX_PAUSE_DA_UCAST_C0 $node]
-        add_prop "${node}" "xlnx,mac-port0-rx-pause-da-ucast-c0" $MAC_PORT0_RX_PAUSE_DA_UCAST_C0 noformating $dts_file
-        set MAC_PORT0_RX_PAUSE_DA_UCAST_C1 [hsi get_property CONFIG.MAC_PORT0_RX_PAUSE_DA_UCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_RX_PAUSE_DA_UCAST_C1 [mrmac_check_size $MAC_PORT0_RX_PAUSE_DA_UCAST_C1 $node]
-        add_prop "${node}" "xlnx,mac-port0-rx-pause-da-ucast-c1" $MAC_PORT0_RX_PAUSE_DA_UCAST_C1 noformating $dts_file
-        set MAC_PORT0_RX_PAUSE_SA_C0 [hsi get_property CONFIG.MAC_PORT0_RX_PAUSE_SA_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_RX_PAUSE_SA_C0 [mrmac_check_size $MAC_PORT0_RX_PAUSE_SA_C0 $node]
-        add_prop "${node}" "xlnx,mac-port0-rx-pause-sa-c0" $MAC_PORT0_RX_PAUSE_SA_C0 noformating $dts_file
-        set MAC_PORT0_RX_PAUSE_SA_C1 [hsi get_property CONFIG.MAC_PORT0_RX_PAUSE_SA_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_RX_PAUSE_SA_C1 [mrmac_check_size $MAC_PORT0_RX_PAUSE_SA_C1 $node]
-        add_prop "${node}" "xlnx,mac-port0-rx-pause-sa-c1" $MAC_PORT0_RX_PAUSE_SA_C1 noformating $dts_file
-        set MAC_PORT0_TX_DA_GPP_C0 [hsi get_property CONFIG.MAC_PORT0_TX_DA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_DA_GPP_C0 [mrmac_check_size $MAC_PORT0_TX_DA_GPP_C0 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-da-gpp-c0" $MAC_PORT0_TX_DA_GPP_C0 noformating $dts_file
-        set MAC_PORT0_TX_DA_GPP_C1 [hsi get_property CONFIG.MAC_PORT0_TX_DA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_DA_GPP_C1 [mrmac_check_size $MAC_PORT0_TX_DA_GPP_C1 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-da-gpp-c1" $MAC_PORT0_TX_DA_GPP_C1 noformating $dts_file
-        set MAC_PORT0_TX_DA_PPP_C0 [hsi get_property CONFIG.MAC_PORT0_TX_DA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_DA_PPP_C0 [mrmac_check_size $MAC_PORT0_TX_DA_PPP_C0 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-da-ppp-c0" $MAC_PORT0_TX_DA_PPP_C0 noformating $dts_file
-        set MAC_PORT0_TX_DA_PPP_C1 [hsi get_property CONFIG.MAC_PORT0_TX_DA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_DA_PPP_C1 [mrmac_check_size $MAC_PORT0_TX_DA_PPP_C1 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-da-ppp-c1" $MAC_PORT0_TX_DA_PPP_C1 noformating $dts_file
-        set MAC_PORT0_TX_ETHERTYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT0_TX_ETHERTYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-ethertype-gpp-c0" $MAC_PORT0_TX_ETHERTYPE_GPP_C0 int $dts_file
-        set MAC_PORT0_TX_ETHERTYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT0_TX_ETHERTYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-ethertype-gpp-c1" $MAC_PORT0_TX_ETHERTYPE_GPP_C1 int $dts_file
-        set MAC_PORT0_TX_ETHERTYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT0_TX_ETHERTYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-ethertype-ppp-c0" $MAC_PORT0_TX_ETHERTYPE_PPP_C0 int $dts_file
-        set MAC_PORT0_TX_ETHERTYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT0_TX_ETHERTYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-ethertype-ppp-c1" $MAC_PORT0_TX_ETHERTYPE_PPP_C1 int $dts_file
-        set MAC_PORT0_TX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT0_TX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-flow-c0" $MAC_PORT0_TX_FLOW_C0 int $dts_file
-        set MAC_PORT0_TX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT0_TX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-flow-c1" $MAC_PORT0_TX_FLOW_C1 int $dts_file
-        set MAC_PORT0_TX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT0_TX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-opcode-gpp-c0" $MAC_PORT0_TX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT0_TX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT0_TX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,mac-port0-tx-opcode-gpp-c1" $MAC_PORT0_TX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT0_TX_SA_GPP_C0 [hsi get_property CONFIG.MAC_PORT0_TX_SA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_SA_GPP_C0 [mrmac_check_size $MAC_PORT0_TX_SA_GPP_C0 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-sa-gpp-c0" $MAC_PORT0_TX_SA_GPP_C0 noformating $dts_file
-        set MAC_PORT0_TX_SA_GPP_C1 [hsi get_property CONFIG.MAC_PORT0_TX_SA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_SA_GPP_C1 [mrmac_check_size $MAC_PORT0_TX_SA_GPP_C1 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-sa-gpp-c1" $MAC_PORT0_TX_SA_GPP_C1 noformating $dts_file
-        set MAC_PORT0_TX_SA_PPP_C0 [hsi get_property CONFIG.MAC_PORT0_TX_SA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_SA_PPP_C0 [mrmac_check_size $MAC_PORT0_TX_SA_PPP_C0 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-sa-ppp-c0" $MAC_PORT0_TX_SA_PPP_C0 noformating $dts_file
-        set MAC_PORT0_TX_SA_PPP_C1 [hsi get_property CONFIG.MAC_PORT0_TX_SA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT0_TX_SA_PPP_C1 [mrmac_check_size $MAC_PORT0_TX_SA_PPP_C1 $node]
-        add_prop "${node}" "xlnx,mac-port0-tx-sa-ppp-c1" $MAC_PORT0_TX_SA_PPP_C1 noformating $dts_file
-        set GT_CH0_RXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH0_RXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rxprogdiv-freq-enable-c0" $GT_CH0_RXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-
-        set GT_CH0_RXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH0_RXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rxprogdiv-freq-enable-c1" $GT_CH0_RXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-        set GT_CH0_RXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH0_RXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rxprogdiv-freq-source-c0" $GT_CH0_RXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH0_RXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH0_RXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rxprogdiv-freq-source-c1" $GT_CH0_RXPROGDIV_FREQ_SOURCE_C1 string $dts_file
-        set GT_CH0_RXPROGDIV_FREQ_VAL_C0 [hsi get_property CONFIG.GT_CH0_RXPROGDIV_FREQ_VAL_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rxprogdiv-freq-val-c0" $GT_CH0_RXPROGDIV_FREQ_VAL_C0 noformating $dts_file
-        set GT_CH0_RXPROGDIV_FREQ_VAL_C1 [hsi get_property CONFIG.GT_CH0_RXPROGDIV_FREQ_VAL_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rxprogdiv-freq-val-c1" $GT_CH0_RXPROGDIV_FREQ_VAL_C1 noformating $dts_file
-        set GT_CH0_RX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH0_RX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-buffer-mode-c0" $GT_CH0_RX_BUFFER_MODE_C0 int $dts_file
-        set GT_CH0_RX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH0_RX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-buffer-mode-c1" $GT_CH0_RX_BUFFER_MODE_C1 int $dts_file
-        set GT_CH0_RX_DATA_DECODING_C0 [hsi get_property CONFIG.GT_CH0_RX_DATA_DECODING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-data-decoding-c0" $GT_CH0_RX_DATA_DECODING_C0 string $dts_file
-        set GT_CH0_RX_DATA_DECODING_C1 [hsi get_property CONFIG.GT_CH0_RX_DATA_DECODING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-data-decoding-c1" $GT_CH0_RX_DATA_DECODING_C1 string $dts_file
-
-
-        set GT_CH0_RX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH0_RX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-int-data-width-c0" $GT_CH0_RX_INT_DATA_WIDTH_C0 int $dts_file
-        set GT_CH0_RX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH0_RX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-int-data-width-c1" $GT_CH0_RX_INT_DATA_WIDTH_C1 int $dts_file
-
-
-        set GT_CH0_RX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH0_RX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-line-rate-c0" $GT_CH0_RX_LINE_RATE_C0 noformating $dts_file
-        set GT_CH0_RX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH0_RX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-line-rate-c1" $GT_CH0_RX_LINE_RATE_C1 noformating $dts_file
-
-
-        set GT_CH0_RX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH0_RX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-outclk-source-c0" $GT_CH0_RX_OUTCLK_SOURCE_C0 string $dts_file
-        set GT_CH0_RX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH0_RX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-outclk-source-c1" $GT_CH0_RX_OUTCLK_SOURCE_C1 string $dts_file
-
-
-        set GT_CH0_RX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH0_RX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-refclk-frequency-c0" $GT_CH0_RX_REFCLK_FREQUENCY_C0 noformating $dts_file
-        set GT_CH0_RX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH0_RX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-refclk-frequency-c1" $GT_CH0_RX_REFCLK_FREQUENCY_C1 noformating $dts_file
-
-
-        set GT_CH0_RX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH0_RX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-user-data-width-c0" $GT_CH0_RX_USER_DATA_WIDTH_C0 int $dts_file
-        set GT_CH0_RX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH0_RX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-rx-user-data-width-c1" $GT_CH0_RX_USER_DATA_WIDTH_C1 int $dts_file
-
-        set GT_CH0_TXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH0_TXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-txprogdiv-freq-enable-c0" $GT_CH0_TXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-        set GT_CH0_TXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH0_TXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-txprogdiv-freq-enable-c1" $GT_CH0_TXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-
-
-        set GT_CH0_TXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH0_TXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-txprogdiv-freq-source-c0" $GT_CH0_TXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH0_TXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH0_TXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${node}" "xlnx,gt-ch0-txprogdiv-freq-source-c1" $GT_CH0_TXPROGDIV_FREQ_SOURCE_C1 string $dts_file
 
         set mrmac_clk_names [pldt get $node zclock-names1]
 
@@ -298,278 +68,67 @@
         set refs ""
         set_drv_prop $drv_handle "zclocks1" "$refs" $node stringlist
 
+
+        # Initialize variables
         set i 0
+        set clk_types {rx_axi_clk rx_flexif_clk rx_ts_clk tx_axi_clk tx_flexif_clk tx_ts_clk}
         set s_axi_aclk ""
         set s_axi_aclk_index0 ""
-        set rx_axi_clk0 ""
-        set rx_axi_clk_index0 ""
-        set rx_axi_clk1 ""
-        set rx_axi_clk_index1 ""
-        set rx_axi_clk2 ""
-        set rx_axi_clk_index2 ""
-        set rx_axi_clk3 ""
-        set rx_axi_clk_index3 ""
-        set rx_flexif_clk0 ""
-        set rx_flexif_clk_index0 ""
-        set rx_flexif_clk1 ""
-        set rx_flexif_clk_index1 ""
-        set rx_flexif_clk2 ""
-        set rx_flexif_clk_index2 ""
-        set rx_flexif_clk3 ""
-        set rx_flexif_clk_index3 ""
-        set rx_ts_clk0 ""
-        set rx_ts_clk0_index0 ""
-        set rx_ts_clk1 ""
-        set rx_ts_clk1_index1 ""
-        set rx_ts_clk2 ""
-        set rx_ts_clk2_index2 ""
-        set rx_ts_clk3 ""
-        set rx_ts_clk3_index3 ""
 
-        set tx_axi_clk0 ""
-        set tx_axi_clk_index0 ""
-        set tx_axi_clk1 ""
-        set tx_axi_clk_index1 ""
-        set tx_axi_clk2 ""
-        set tx_axi_clk_index2 ""
-        set tx_axi_clk3 ""
-        set tx_axi_clk_index3 ""
-        set tx_flexif_clk0 ""
-        set tx_flexif_clk_index0 ""
-        set tx_flexif_clk1 ""
-        set tx_flexif_clk_index1 ""
-        set tx_flexif_clk2 ""
-        set tx_flexif_clk_index2 ""
-        set tx_flexif_clk3 ""
-        set tx_flexif_clk_index3 ""
-        set tx_ts_clk0 ""
-        set tx_ts_clk_index0 ""
-        set tx_ts_clk1 ""
-        set tx_ts_clk_index1 ""
-        set tx_ts_clk2 ""
-        set tx_ts_clk_index2 ""
-        set tx_ts_clk3 ""
-        set tx_ts_clk_index3 ""
+        # Use arrays for storing indexed clock names and indices
+        array set clk_name {}
+        array set clk_index {}
 
-        foreach {clkname} $mrmac_clk_names {
-                if {[string match -nocase $clkname "s_axi_aclk"]} {
-                        set s_axi_aclk "s_axi_aclk"
-                        set s_axi_aclk_index0 $i
-                }
-                if {[string match -nocase $clkname "rx_axi_clk0"]} {
-                        set rx_axi_clk0 "rx_axi_clk"
-                        set rx_axi_clk_index0 $i
-                }
-                if {[string match -nocase $clkname "rx_axi_clk1"]} {
-                        set rx_axi_clk1 "rx_axi_clk"
-                        set rx_axi_clk_index1 $i
-                }
-                if {[string match -nocase $clkname "rx_axi_clk2"]} {
-                        set rx_axi_clk2 "rx_axi_clk"
-                        set rx_axi_clk_index2 $i
-                }
-                if {[string match -nocase $clkname "rx_axi_clk3"]} {
-                        set rx_axi_clk3 "rx_axi_clk"
-                        set rx_axi_clk_index3 $i
-                }
-                if {[string match -nocase $clkname "rx_flexif_clk0"]} {
-                        set rx_flexif_clk0 "rx_flexif_clk"
-                        set rx_flexif_clk_index0 $i
-                }
-                if {[string match -nocase $clkname "rx_flexif_clk1"]} {
-                        set rx_flexif_clk1 "rx_flexif_clk"
-                        set rx_flexif_clk_index1 $i
-                }
-                if {[string match -nocase $clkname "rx_flexif_clk2"]} {
-                        set rx_flexif_clk2 "rx_flexif_clk"
-                        set rx_flexif_clk_index2 $i
-                }
-                if {[string match -nocase $clkname "rx_flexif_clk3"]} {
-                        set rx_flexif_clk3 "rx_flexif_clk"
-                        set rx_flexif_clk_index3 $i
-                }
-                if {[string match -nocase $clkname "rx_ts_clk0"]} {
-                        set rx_ts_clk0 "rx_ts_clk"
-                        set rx_ts_clk0_index0 $i
-                }
-                if {[string match -nocase $clkname "rx_ts_clk1"]} {
-                        set rx_ts_clk1 "rx_ts_clk"
-                        set rx_ts_clk1_index1 $i
-                }
-                if {[string match -nocase $clkname "rx_ts_clk2"]} {
-                        set rx_ts_clk2 "rx_ts_clk"
-                        set rx_ts_clk2_index2 $i
-                }
-                if {[string match -nocase $clkname "rx_ts_clk3"]} {
-                        set rx_ts_clk3 "rx_ts_clk"
-                        set rx_ts_clk3_index3 $i
-                }
-                if {[string match -nocase $clkname "tx_axi_clk0"]} {
-                        set tx_axi_clk0 "tx_axi_clk"
-                        set tx_axi_clk_index0 $i
-                }
-                if {[string match -nocase $clkname "tx_axi_clk1"]} {
-                        set tx_axi_clk1 "tx_axi_clk"
-                        set tx_axi_clk_index1 $i
-                }
-                if {[string match -nocase $clkname "tx_axi_clk2"]} {
-                        set tx_axi_clk2 "tx_axi_clk"
-                        set tx_axi_clk_index2 $i
-                }
-                if {[string match -nocase $clkname "tx_axi_clk3"]} {
-                        set tx_axi_clk3 "tx_axi_clk"
-                        set tx_axi_clk_index3 $i
-                }
-                if {[string match -nocase $clkname "tx_flexif_clk0"]} {
-                        set tx_flexif_clk0 "tx_flexif_clk"
-                        set tx_flexif_clk_index0 $i
-                }
-                if {[string match -nocase $clkname "tx_flexif_clk1"]} {
-                        set tx_flexif_clk1 "tx_flexif_clk"
-                        set tx_flexif_clk_index1 $i
-                }
-                if {[string match -nocase $clkname "tx_flexif_clk2"]} {
-                        set tx_flexif_clk2 "tx_flexif_clk"
-                        set tx_flexif_clk_index2 $i
-                }
-                if {[string match -nocase $clkname "tx_flexif_clk3"]} {
-                        set tx_flexif_clk3 "tx_flexif_clk"
-                        set tx_flexif_clk_index3 $i
-                }
-                if {[string match -nocase $clkname "tx_ts_clk0"]} {
-                        set tx_ts_clk0 "tx_ts_clk"
-                        set tx_ts_clk_index0 $i
-                }
-                if {[string match -nocase $clkname "tx_ts_clk1"]} {
-                        set tx_ts_clk1 "tx_ts_clk"
-                        set tx_ts_clk_index1 $i
-                }
-                if {[string match -nocase $clkname "tx_ts_clk2"]} {
-                        set tx_ts_clk2 "tx_ts_clk"
-                        set tx_ts_clk_index2 $i
-                }
-                if {[string match -nocase $clkname "tx_ts_clk3"]} {
-                        set tx_ts_clk3 "tx_ts_clk"
-                        set tx_ts_clk_index3 $i
-                }
-                if {$clkname != ","} {
-                incr i
-                }
+        # Process each clkname in the list
+        foreach clkname $mrmac_clk_names {
+            set lc_clkname [string tolower $clkname]
+
+            if {$lc_clkname eq "s_axi_aclk"} {
+                 set s_axi_aclk "s_axi_aclk"
+                 set s_axi_aclk_index0 $i
+            } else {
+                 foreach type $clk_types {
+                       for {set idx 0} {$idx < 4} {incr idx} {
+                            if {$lc_clkname eq "${type}${idx}"} {
+                                set clk_name(${type}${idx}) $type
+                                set clk_index(${type}${idx}) $i
+                            }
+                       }
+                  }
+            }
+
+            if {$clkname ne ","} {
+               incr i
+            }
         }
 
-        lappend clknames "$s_axi_aclk" "$rx_axi_clk0" "$rx_flexif_clk0" "$rx_ts_clk0" "$tx_axi_clk0" "$tx_flexif_clk0" "$tx_ts_clk0"
-        set index0 [lindex $clk_list $s_axi_aclk_index0]
-        set txindex0 [lindex $clk_list $tx_ts_clk_index0]
-        regsub -all "\," $txindex0 {} txindex0
-        append clkvals0  "$index0 [lindex $clk_list $rx_axi_clk_index0] [lindex $clk_list $rx_flexif_clk_index0] [lindex $clk_list $rx_ts_clk0_index0] [lindex $clk_list $tx_axi_clk_index0] [lindex $clk_list $tx_flexif_clk_index0] $txindex0"
-        add_prop "${node}" "clocks" $clkvals0 noformating $dts_file
-        add_prop "${node}" "clock-names" $clknames stringlist $dts_file
 
-        set port0_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata0"]]
-        dtg_verbose "port0_pins:$port0_pins"
-        foreach pin $port0_pins {
-                set sink_periph [hsi::get_cells -of_objects $pin]
-                set mux_ip ""
-                set fifo_ip ""
-                if {[llength $sink_periph]} {
-				      mrmac_connect_axistream $drv_handle $node $sink_periph $dts_file
-                }
-        }
-
-           set port0_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_0"]]
-           dtg_verbose "port0_pins:$port0_pins"
-
-        if {[llength $port0_pins]} {
-           set sink_periph [hsi::get_cells -of_objects $port0_pins]
-           if {[llength $sink_periph]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $sink_periph] "mrmac_ptp_timestamp_if"]} {
-                                   set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $sink_periph] "tx_timestamp_tod"]]
-                                   set sink_periph [::hsi::get_cells -of_objects $port_pins]
-                           }
-
-           if {[get_ip_property $sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
-                   set intf "dout"
-                   set intr1_pin [hsi::get_pins -of_objects $sink_periph -filter "NAME==$intf"]
-                   set sink_pins [get_sink_pins $intr1_pin]
-                   set xl_per [hsi::get_cells -of_objects $sink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $xl_per] "axis_dwidth_converter"]} {
-                           set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $xl_per] "m_axis_tdata"]]
-                           set axis_per [hsi::get_cells -of_objects $port_pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $axis_per] "axis_clock_converter"]} {
-                                   set tx_ip [get_connected_stream_ip [hsi::get_cells -hier $axis_per] "M_AXIS"]
-                                   if {[llength $tx_ip]} {
-                                           add_prop "$node" "axififo-connected" $tx_ip reference $dts_file
-                                   }
-                                }
-                        }
-                }
-                }
-        } else {
-        dtg_warning "tx_timestamp_tod_0 connected pins are NULL...please check the design..."
-           }
-           set rxtod_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "rx_ptp_tstamp_out_0"]]
-           dtg_verbose "rxtod_pins:$rxtod_pins"
-        if {[llength $rxtod_pins]} {
-           set rx_periph [hsi::get_cells -of_objects $rxtod_pins]
-                   if {[llength $rx_periph]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $rx_periph] "mrmac_ptp_timestamp_if"]} {
-                                   set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $rx_periph] "rx_timestamp_tod"]]
-                                   set rx_periph [::hsi::get_cells -of_objects $port_pins]
-                           }
-
-           if {[get_ip_property $rx_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
-                   set intf "dout"
-                   set in1_pin [hsi::get_pins -of_objects $rx_periph -filter "NAME==$intf"]
-                   set sink_pins [get_sink_pins $in1_pin]
-                   set rxxl_per [hsi::get_cells -of_objects $sink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $rxxl_per] "axis_dwidth_converter"]} {
-                           set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rxxl_per] "m_axis_tdata"]]
-                           set rx_axis_per [hsi::get_cells -of_objects $port_pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $rx_axis_per] "axis_clock_converter"]} {
-                                   set rx_ip [get_connected_stream_ip [hsi::get_cells -hier $rx_axis_per] "M_AXIS"]
-                                   if {[llength $rx_ip]} {
-                                           add_prop "$node" "xlnx,rxtsfifo" $rx_ip reference $dts_file
-                                }
+        set handle ""
+        set mask_handle ""
+        set ips [hsi::get_cells -hier -filter {IP_NAME == "axi_gpio"}]
+        foreach ip $ips {
+                set mem_ranges [hsi::get_mem_ranges [hsi::get_cells -hier $ip]]
+                foreach mem_range $mem_ranges {
+                        set base [string tolower [hsi get_property BASE_VALUE $mem_range]]
+                        if {[string match -nocase $base "0xa4010000"]} {
+                               set handle $ip
+                               break
                         }
                 }
         }
+
+        # Workaround: For gtpll we might need to add the below code for v0.1 version.
+        # We can remove this workaround for later versions.
+        foreach ip $ips {
+                set mem_ranges [hsi::get_mem_ranges [hsi::get_cells -hier $ip]]
+                foreach mem_range $mem_ranges {
+                        set base [string tolower [hsi get_property BASE_VALUE $mem_range]]
+                        if {[string match -nocase $base "0xa4000000"]} {
+                                set mask_handle $ip
+                                break
+                        }
                 }
-        } else {
-                dtg_warning "rx_timestamp_tod_0 connected pins are NULL...please check the design..."
         }
-           set handle ""
-           set mask_handle ""
-           set ips [hsi::get_cells -hier -filter {IP_NAME == "axi_gpio"}]
-           foreach ip $ips {
-                   set mem_ranges [hsi::get_mem_ranges [hsi::get_cells -hier $ip]]
-                   foreach mem_range $mem_ranges {
-                           set base [string tolower [hsi get_property BASE_VALUE $mem_range]]
-                           if {[string match -nocase $base "0xa4010000"]} {
-                                   set handle $ip
-                                   break
-                           }
-                   }
-           }
-           if {[llength $handle]} {
-                   add_prop "$node" "xlnx,gtctrl" $handle reference $dts_file
-           }
-           # Workaround: For gtpll we might need to add the below code for v0.1 version.
-           # We can remove this workaround for later versions.
-           foreach ip $ips {
-                   set mem_ranges [hsi::get_mem_ranges [hsi::get_cells -hier $ip]]
-                   foreach mem_range $mem_ranges {
-                           set base [string tolower [hsi get_property BASE_VALUE $mem_range]]
-                           if {[string match -nocase $base "0xa4000000"]} {
-                                   set mask_handle $ip
-                                   break
-                           }
-                   }
-           }
-           if {[llength $mask_handle]} {
-                   add_prop "$node" "xlnx,gtpll" $mask_handle reference $dts_file
-           }
-                   add_prop "$node" "xlnx,phcindex" 0 int $dts_file
-                   add_prop "$node" "xlnx,gtlane" 0 int $dts_file
 
         set gt_reset_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "gt_reset_all_in"]]
         dtg_verbose "gt_reset_pins:$gt_reset_pins"
@@ -626,1077 +185,182 @@
                 }
         }
 
-        global env
-        set path $env(CUSTOM_SDT_REPO)
-        set common_file "$path/device_tree/data/config.yaml"
-        set bus_node "amba_pl: amba_pl"
-        set dts_file [set_drv_def_dts $drv_handle]
-        set mrmac1_base [format 0x%llx [expr $base_addr + 0x1000]]
-        set mrmac1_base_hex [format %llx $mrmac1_base]
-        set mrmac1_highaddr_hex [format 0x%llx [expr $mrmac1_base + 0xFFF]]
-        set port1 1
-        append new_label $drv_handle "_" $port1
-        set mrmac1_node [create_node -n "mrmac" -l "$new_label" -u $mrmac1_base_hex -d $dts_file -p $bus_node]
-        add_prop "$mrmac1_node" "compatible" "$compatible" stringlist $dts_file 1
-        mrmac_generate_reg_property $mrmac1_node $mrmac1_base $mrmac1_highaddr_hex
-        lappend clknames1 "$s_axi_aclk" "$rx_axi_clk1" "$rx_flexif_clk1" "$rx_ts_clk1" "$tx_axi_clk1" "$tx_flexif_clk1" "$tx_ts_clk1"
-        set index1 [lindex $clk_list $s_axi_aclk_index0]
-        set txindex1 [lindex $clk_list $tx_ts_clk_index1]
-        regsub -all "\," $txindex1 {} txindex1
-        append clkvals  "$index1 [lindex $clk_list $rx_axi_clk_index1] [lindex $clk_list $rx_flexif_clk_index1] [lindex $clk_list $rx_ts_clk1_index1] [lindex $clk_list $tx_axi_clk_index1] [lindex $clk_list $tx_flexif_clk_index1] $txindex1"
-        add_prop "${mrmac1_node}" "clocks" $clkvals noformating $dts_file
-        add_prop "${mrmac1_node}" "clock-names" $clknames1 stringlist $dts_file
-        set port1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata2"]]
-        dtg_verbose "port1_pins:$port1_pins"
-        foreach pin $port1_pins {
-                set sink_periph [hsi::get_cells -of_objects $pin]
-                set mux_ip ""
-                set fifo_ip ""
-                if {[llength $sink_periph]} {
-			   mrmac_connect_axistream $drv_handle $mrmac1_node $sink_periph $dts_file
-                }
-        }
+        # Add properties for all 4 MRMAC ports using a clean dynamic for loop
+        # This completely replaces all the duplicated property assignments and node creation
 
-           set txtodport1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_1"]]
-           dtg_verbose "txtodport1_pins:$txtodport1_pins"
-        if {[llength $txtodport1_pins]} {
-              set tod1_sink_periph [hsi::get_cells -of_objects $txtodport1_pins]
-                  if {[llength $tod1_sink_periph]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $tod1_sink_periph] "mrmac_ptp_timestamp_if"]} {
-                                   set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $tod1_sink_periph] "tx_timestamp_tod"]]
-                                   set tod1_sink_periph [::hsi::get_cells -of_objects $port_pins]
+        set MAC_PORT_RATE_C0 [hsi get_property CONFIG.MAC_PORT0_RATE_C0 [hsi::get_cells -hier $drv_handle]]
+        if {[string match -nocase $MAC_PORT_RATE_C0 "100GE"]} {
+             set num_channels 1
+        } else {
+             set num_channels [hsi get_property CONFIG.C_NUM_GT_CHANNELS [hsi::get_cells -hier $drv_handle]]
+        }
+        for {set port_index 0} {$port_index < $num_channels} {incr port_index} {
+            if {$port_index == 0} {
+                # PORT0 uses the main node
+                set current_port_node $node
+                set phc_index 0
+                set gt_lane 0
+            } else {
+                set bus_node "amba_pl: amba_pl"
+                set port_label "$drv_handle"
+                append port_label "_" $port_index
+                set port_base [format 0x%llx [expr $base_addr + ($port_index * 0x1000)]]
+                set port_base_hex [format %llx $port_base]
+                set port_highaddr_hex [format 0x%llx [expr $port_base + 0xFFF]]
+                set current_port_node [create_node -n "mrmac" -l "$port_label" -u $port_base_hex -d $dts_file -p $bus_node]
+                set phc_index $port_index
+                set gt_lane $port_index
+            }
+
+            add_prop "$current_port_node" "compatible" "$compatible" stringlist $dts_file 1
+            # Create nodes dynamically for PORT1, PORT2, PORT3
+            set port_base [format 0x%llx [expr $base_addr + ($port_index * 0x1000)]]
+            set port_base_hex [format %llx $port_base]
+            set port_highaddr_hex [format 0x%llx [expr $port_base + 0xFFF]]
+            add_prop "$current_port_node" "compatible" "$compatible" stringlist $dts_file 1
+            if {[string match -nocase $slave_intf "s_axi"] && ($port_index == 0)} {
+                    mrmac_generate_reg_property $current_port_node $port_base $port_highaddr_hex
+            } else {
+                    mrmac_generate_reg_property $current_port_node $port_base $port_highaddr_hex
+            }
+
+            set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+            set gt_mode [split $gt_mode " "]
+            set gt_mode [lindex $gt_mode 0]
+            add_prop "${current_port_node}" "xlnx,gt-mode" $gt_mode string $dts_file
+
+            set port_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT${port_index}_C0  [hsi::get_cells -hier $drv_handle]]
+            set port_dpath [split $port_dpath " "]
+            set port_dwidth [lindex $port_dpath 1]
+            set port_dwidth [string trimright $port_dwidth "b"]
+            add_prop "${current_port_node}" "xlnx,axistream-dwidth" $port_dwidth int $dts_file
+
+            # Call the helper function to add all MRMAC properties
+            mrmac_add_port_properties $drv_handle $current_port_node $port_index $dts_file
+
+
+            set clknames [list $s_axi_aclk]
+            set clkvals []
+
+            # Clean and append s_axi_aclk
+            set s_axi_val [lindex $clk_list $s_axi_aclk_index0]
+            regsub -all "," $s_axi_val "" s_axi_val
+            lappend clkvals $s_axi_val
+
+            # Loop for other clock types
+            foreach type $clk_types {
+                set clk_key "${type}${port_index}"
+                if {
+                   [info exists clk_name($clk_key)] &&
+                   [info exists clk_index($clk_key)]
+                } then {
+                   lappend clknames $clk_name($clk_key)
+
+                   set clkval [lindex $clk_list $clk_index($clk_key)]
+                   regsub -all "," $clkval "" clkval
+                   lappend clkvals $clkval
+                }
+            }
+
+            # Build comma-separated string from cleaned list
+            set clkvals_str [join $clkvals ", "]
+
+            add_prop "${current_port_node}" "clocks" $clkvals_str noformating $dts_file
+            add_prop "${current_port_node}" "clock-names" $clknames stringlist $dts_file
+
+            set rx_index [expr {$port_index * 2}]
+            set rx_axis_tdata "rx_axis_tdata$rx_index"
+            set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] $rx_axis_tdata]]
+            dtg_verbose "port_pins:$port_pins"
+            foreach pin $port_pins {
+                    set sink_periph [hsi::get_cells -of_objects $pin]
+                    set mux_ip ""
+                    set fifo_ip ""
+                    if {[llength $sink_periph]} {
+                            mrmac_connect_axistream $drv_handle $current_port_node $sink_periph $dts_file
+                    }
+            }
+
+            set tx_ptp_tstamp_tag_out "tx_ptp_tstamp_tag_out_${port_index}"
+            set txtodport_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] $tx_ptp_tstamp_tag_out]]
+            dtg_verbose "txtodport_pins:$txtodport_pins"
+            if {[llength $txtodport_pins]} {
+              set tod_sink_periph [hsi::get_cells -of_objects $txtodport_pins]
+                  if {[llength $tod_sink_periph]} {
+                           if {[string match -nocase [hsi get_property IP_NAME $tod_sink_periph] "mrmac_ptp_timestamp_if"]} {
+                                   set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $tod_sink_periph] "tx_timestamp_tod"]]
+                                   set tod_sink_periph [::hsi::get_cells -of_objects $port_pins]
                            }
 
-           if {[get_ip_property $tod1_sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
-                   set intf "dout"
-                   set in1_pin [hsi::get_pins -of_objects $tod1_sink_periph -filter "NAME==$intf"]
-                   set in1sink_pins [get_sink_pins $in1_pin]
-                   set xl_per1 [hsi::get_cells -of_objects $in1sink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $xl_per1] "axis_dwidth_converter"]} {
-                           set port1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $xl_per1] "m_axis_tdata"]]
-                           set axis_per1 [hsi::get_cells -of_objects $port1_pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $axis_per1] "axis_clock_converter"]} {
-                                   set tx1_ip [get_connected_stream_ip [hsi::get_cells -hier $axis_per1] "M_AXIS"]
-                                   if {[llength $tx1_ip]} {
-                                           add_prop "$mrmac1_node" "axififo-connected" $tx1_ip reference $dtds_file
-                                   }
-                        }
-                        }
-           }
-                }
-        } else {
-                dtg_warning "tx_timestamp_tod_1 connected pins are NULL...please check the design..."
-        }
-           set rxtod1_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_ptp_tstamp_out_1"]]
-           dtg_verbose "rxtod1_pins:$rxtod1_pins"
-           if {[llength $rxtod1_pins]} {
-                set rx_periph1 [hsi::get_cells -of_objects $rxtod1_pins]
-               if {[llength $rx_periph1]} {
-                           if {[string match -nocase [hsi get_property IP_NAME $rx_periph1] "mrmac_ptp_timestamp_if"]} {
-                                   set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_periph1] "rx_timestamp_tod"]]
-                                   set rx_periph1 [::hsi::get_cells -of_objects $port_pins]
+                           if {[get_ip_property $tod_sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
+                               set intf "dout"
+                               set in_pin [hsi::get_pins -of_objects $tod_sink_periph -filter "NAME==$intf"]
+                               set insink_pins [get_sink_pins $in_pin]
+                               set xl_per [hsi::get_cells -of_objects $insink_pins]
+                               if {[string match -nocase [hsi get_property IP_NAME $xl_per] "axis_dwidth_converter"]} {
+                                     set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $xl_per] "m_axis_tdata"]]
+                                     set axis_per [hsi::get_cells -of_objects $port_pins]
+                                     if {[string match -nocase [hsi get_property IP_NAME $axis_per] "axis_clock_converter"]} {
+                                            set tx_ip [get_connected_stream_ip [hsi::get_cells -hier $axis_per] "M_AXIS"]
+                                            if {[llength $tx_ip]} {
+                                            add_prop "$current_port_node" "axififo-connected" $tx_ip reference $dts_file
+                                            }
+                                     }
+                               }
                            }
-
-           if {[get_ip_property $rx_periph1 IP_NAME] in {"xlconcat" "ilconcat"}} {
-                   set intf "dout"
-                   set inrx1_pin [hsi::get_pins -of_objects $rx_periph1 -filter "NAME==$intf"]
-                   set rxtodsink_pins [get_sink_pins $inrx1_pin]
-                   set rx_per [hsi::get_cells -of_objects $rxtodsink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $rx_per] "axis_dwidth_converter"]} {
-                           set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_per] "m_axis_tdata"]]
-                           set rx_axis_per [hsi::get_cells -of_objects $port_pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $rx_axis_per] "axis_clock_converter"]} {
-                                   set rx_ip [get_connected_stream_ip [hsi::get_cells -hier $rx_axis_per] "M_AXIS"]
-                                   if {[llength $rx_ip]} {
-                                           add_prop "$mrmac1_node" "xlnx,rxtsfifo" $rx_ip reference $dts_file
-                                }
-                        }
-                }
-        }
-                }
-        } else {
-                dtg_warning "rx_timestamp_tod_1 connected pins are NULL...please check the design..."
-        }
-           if {[llength $handle]} {
-                   add_prop "$mrmac1_node" "xlnx,gtctrl" $handle reference $dts_file
+                  }
+           } else {
+                dtg_warning "tx_timestamp_tod_${port_index} connected pins are NULL...please check the design..."
            }
-           if {[llength $mask_handle]} {
-                   add_prop "$mrmac1_node" "xlnx,gtpll" $mask_handle reference $dts_file
-           }
-           if {[llength $gt_reset_per]} {
-                   add_prop "$mrmac1_node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
-           }
-           if {[llength $gt_pll_per]} {
-                   add_prop "$mrmac1_node" "xlnx,gtpll" $gt_pll_per reference $dts_file
-           }
-
-           add_prop "$mrmac1_node" "xlnx,phcindex" 1 int $dts_file
-           add_prop "$mrmac1_node" "xlnx,gtlane" 1 int $dts_file
-
-        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        set gt_mode [split $gt_mode " "]
-        set gt_mode [lindex $gt_mode 0]
-        add_prop "${mrmac1_node}" "xlnx,gt-mode" $gt_mode string $dts_file
-
-        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT1_C0  [hsi::get_cells -hier $drv_handle]]
-        set port0_dpath [split $port0_dpath " "]
-        set port0_dwidth [lindex $port0_dpath 1]
-        set port0_dwidth [string trimright $port0_dwidth "b"]
-        add_prop "${mrmac1_node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
-
-        set FEC_SLICE1_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE1_CFG_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-slice1-cfg-c0" $FEC_SLICE1_CFG_C0 string $dts_file
-        set FEC_SLICE1_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE1_CFG_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-slice1-cfg-c1" $FEC_SLICE1_CFG_C1 string $dts_file
-        set FLEX_PORT1_DATA_RATE_C0 [hsi get_property CONFIG.C_FLEX_PORT1_DATA_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-port1-data-rate-c0" $FLEX_PORT1_DATA_RATE_C0 string $dts_file
-        set FLEX_PORT1_DATA_RATE_C1 [hsi get_property CONFIG.C_FLEX_PORT1_DATA_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-port1-data-rate-c1" $FLEX_PORT1_DATA_RATE_C1 string $dts_file
-        set FLEX_PORT1_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.C_FLEX_PORT1_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-port1-enable-time-stamping-c0" $FLEX_PORT1_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set FLEX_PORT1_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.C_FLEX_PORT1_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-port1-enable-time-stamping-c1" $FLEX_PORT1_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set FLEX_PORT1_MODE_C0 [hsi get_property CONFIG.C_FLEX_PORT1_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-port1-mode-c0" $FLEX_PORT1_MODE_C0 string $dts_file
-        set FLEX_PORT1_MODE_C1 [hsi get_property CONFIG.C_FLEX_PORT1_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,flex-port1-mode-c1" $FLEX_PORT1_MODE_C1 string $dts_file
-        set PORT1_1588v2_Clocking_C0 [hsi get_property CONFIG.PORT1_1588v2_Clocking_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,port1-1588v2-clocking-c0" $PORT1_1588v2_Clocking_C0 string $dts_file
-        set PORT1_1588v2_Clocking_C1 [hsi get_property CONFIG.PORT1_1588v2_Clocking_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,port1-1588v2-clocking-c1" $PORT1_1588v2_Clocking_C1 string $dts_file
-        set PORT1_1588v2_Operation_MODE_C0 [hsi get_property CONFIG.PORT1_1588v2_Operation_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,port1-1588v2-operation-mode-c0" $PORT1_1588v2_Operation_MODE_C0 string $dts_file
-        set PORT1_1588v2_Operation_MODE_C1 [hsi get_property CONFIG.PORT1_1588v2_Operation_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,port1-1588v2-operation-mode-c1" $PORT1_1588v2_Operation_MODE_C1 string $dts_file
-        set MAC_PORT1_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.MAC_PORT1_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-enable-time-stamping-c0" $MAC_PORT1_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set MAC_PORT1_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.MAC_PORT1_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-enable-time-stamping-c1" $MAC_PORT1_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set MAC_PORT1_RATE_C0 [hsi get_property CONFIG.MAC_PORT1_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $MAC_PORT1_RATE_C0 "10GE"]} {
-                   set number 10000
-                add_prop "${mrmac1_node}" "max-speed" $number int $dts_file
-        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
-                set number 25000
-                add_prop "${mrmac1_node}" "max-speed" $number int $dts_file
-        }
-        set MAC_PORT1_RATE_C1 [hsi get_property CONFIG.MAC_PORT1_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rate-c1" $MAC_PORT1_RATE_C1 string $dts_file
-        set MAC_PORT1_RX_ETYPE_GCP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-gcp-c0" $MAC_PORT1_RX_ETYPE_GCP_C0 int $dts_file
-        set MAC_PORT1_RX_ETYPE_GCP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-gcp-c1" $MAC_PORT1_RX_ETYPE_GCP_C1 int $dts_file
-        set MAC_PORT1_RX_ETYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-gpp-c0" $MAC_PORT1_RX_ETYPE_GPP_C0 int $dts_file
-        set MAC_PORT1_RX_ETYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-gpp-c1" $MAC_PORT1_RX_ETYPE_GPP_C1 int $dts_file
-        set MAC_PORT1_RX_ETYPE_PCP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-pcp-c0" $MAC_PORT1_RX_ETYPE_PCP_C0 int $dts_file
-        set MAC_PORT1_RX_ETYPE_PCP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-pcp-c1" $MAC_PORT1_RX_ETYPE_PCP_C1 int $dts_file
-        set MAC_PORT1_RX_ETYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-ppp-c0" $MAC_PORT1_RX_ETYPE_PPP_C0 int $dts_file
-        set MAC_PORT1_RX_ETYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_ETYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-etype-ppp-c1" $MAC_PORT1_RX_ETYPE_PPP_C1 int $dts_file
-        set MAC_PORT1_RX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT1_RX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-flow-c0" $MAC_PORT1_RX_FLOW_C0 int $dts_file
-        set MAC_PORT1_RX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT1_RX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-flow-c1" $MAC_PORT1_RX_FLOW_C1 int $dts_file
-        set MAC_PORT1_RX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-gpp-c0" $MAC_PORT1_RX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT1_RX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-gpp-c1" $MAC_PORT1_RX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MAX_GCP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MAX_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-max-gcp-c0" $MAC_PORT1_RX_OPCODE_MAX_GCP_C0 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MAX_GCP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MAX_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-max-gcp-c1" $MAC_PORT1_RX_OPCODE_MAX_GCP_C1 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MAX_PCP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MAX_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-max-pcp-c0" $MAC_PORT1_RX_OPCODE_MAX_PCP_C0 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MAX_PCP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MAX_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-max-pcp-c1" $MAC_PORT1_RX_OPCODE_MAX_PCP_C1 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MIN_GCP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MIN_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-min-gcp-c0" $MAC_PORT1_RX_OPCODE_MIN_GCP_C0 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MIN_GCP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MIN_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-min-gcp-c1" $MAC_PORT1_RX_OPCODE_MIN_GCP_C1 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MIN_PCP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MIN_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-min-pcp-c0" $MAC_PORT1_RX_OPCODE_MIN_PCP_C0 int $dts_file
-        set MAC_PORT1_RX_OPCODE_MIN_PCP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_MIN_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-min-pcp-c1" $MAC_PORT1_RX_OPCODE_MIN_PCP_C1 int $dts_file
-        set MAC_PORT1_RX_OPCODE_PPP_C0 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-ppp-c0" $MAC_PORT1_RX_OPCODE_PPP_C0 int $dts_file
-        set MAC_PORT1_RX_OPCODE_PPP_C1 [hsi get_property CONFIG.MAC_PORT1_RX_OPCODE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-opcode-ppp-c1" $MAC_PORT1_RX_OPCODE_PPP_C1 int $dts_file
-        set MAC_PORT1_RX_PAUSE_DA_MCAST_C0 [hsi get_property CONFIG.MAC_PORT1_RX_PAUSE_DA_MCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_RX_PAUSE_DA_MCAST_C0 [mrmac_check_size $MAC_PORT1_RX_PAUSE_DA_MCAST_C0 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-pause-da-mcast-c0" $MAC_PORT1_RX_PAUSE_DA_MCAST_C0 int $dts_file
-        set MAC_PORT1_RX_PAUSE_DA_MCAST_C1 [hsi get_property CONFIG.MAC_PORT1_RX_PAUSE_DA_MCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_RX_PAUSE_DA_MCAST_C1 [mrmac_check_size $MAC_PORT1_RX_PAUSE_DA_MCAST_C1 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-pause-da-mcast-c1" $MAC_PORT1_RX_PAUSE_DA_MCAST_C1 int $dts_file
-        set MAC_PORT1_RX_PAUSE_DA_UCAST_C0 [hsi get_property CONFIG.MAC_PORT1_RX_PAUSE_DA_UCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_RX_PAUSE_DA_UCAST_C0 [mrmac_check_size $MAC_PORT1_RX_PAUSE_DA_UCAST_C0 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-pause-da-ucast-c0" $MAC_PORT1_RX_PAUSE_DA_UCAST_C0 int $dts_file
-        set MAC_PORT1_RX_PAUSE_DA_UCAST_C1 [hsi get_property CONFIG.MAC_PORT1_RX_PAUSE_DA_UCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_RX_PAUSE_DA_UCAST_C1 [mrmac_check_size $MAC_PORT1_RX_PAUSE_DA_UCAST_C1 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-pause-da-ucast-c1" $MAC_PORT1_RX_PAUSE_DA_UCAST_C1 int $dts_file
-        set MAC_PORT1_RX_PAUSE_SA_C0 [hsi get_property CONFIG.MAC_PORT1_RX_PAUSE_SA_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_RX_PAUSE_SA_C0 [mrmac_check_size $MAC_PORT1_RX_PAUSE_SA_C0 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-pause-sa-c0" $MAC_PORT1_RX_PAUSE_SA_C0 int $dts_file
-        set MAC_PORT1_RX_PAUSE_SA_C1 [hsi get_property CONFIG.MAC_PORT1_RX_PAUSE_SA_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_RX_PAUSE_SA_C1 [mrmac_check_size $MAC_PORT1_RX_PAUSE_SA_C1 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-rx-pause-sa-c1" $MAC_PORT1_RX_PAUSE_SA_C1 int $dts_file
-        set MAC_PORT1_TX_DA_GPP_C0 [hsi get_property CONFIG.MAC_PORT1_TX_DA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_DA_GPP_C0 [mrmac_check_size $MAC_PORT1_TX_DA_GPP_C0 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-da-gpp-c0" $MAC_PORT1_TX_DA_GPP_C0 int $dts_file
-        set MAC_PORT1_TX_DA_GPP_C1 [hsi get_property CONFIG.MAC_PORT1_TX_DA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_DA_GPP_C1 [mrmac_check_size $MAC_PORT1_TX_DA_GPP_C1 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-da-gpp-c1" $MAC_PORT1_TX_DA_GPP_C1 int $dts_file
-        set MAC_PORT1_TX_DA_PPP_C0 [hsi get_property CONFIG.MAC_PORT1_TX_DA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_DA_PPP_C0 [mrmac_check_size $MAC_PORT1_TX_DA_PPP_C0 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-da-ppp-c0" $MAC_PORT1_TX_DA_PPP_C0 int $dts_file
-        set MAC_PORT1_TX_DA_PPP_C1 [hsi get_property CONFIG.MAC_PORT1_TX_DA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_DA_PPP_C1 [mrmac_check_size $MAC_PORT1_TX_DA_PPP_C1 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-da-ppp-c1" $MAC_PORT1_TX_DA_PPP_C1 int $dts_file
-        set MAC_PORT1_TX_ETHERTYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT1_TX_ETHERTYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-ethertype-gpp-c0" $MAC_PORT1_TX_ETHERTYPE_GPP_C0 int $dts_file
-        set MAC_PORT1_TX_ETHERTYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT1_TX_ETHERTYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-ethertype-gpp-c1" $MAC_PORT1_TX_ETHERTYPE_GPP_C1 int $dts_file
-        set MAC_PORT1_TX_ETHERTYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT1_TX_ETHERTYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-ethertype-ppp-c0" $MAC_PORT1_TX_ETHERTYPE_PPP_C0 int $dts_file
-        set MAC_PORT1_TX_ETHERTYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT1_TX_ETHERTYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-ethertype-ppp-c1" $MAC_PORT1_TX_ETHERTYPE_PPP_C1 int $dts_file
-        set MAC_PORT1_TX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT1_TX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-flow-c0" $MAC_PORT1_TX_FLOW_C0 int $dts_file
-        set MAC_PORT1_TX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT1_TX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-flow-c1" $MAC_PORT1_TX_FLOW_C1 int $dts_file
-        set MAC_PORT1_TX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT1_TX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-opcode-gpp-c0" $MAC_PORT1_TX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT1_TX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT1_TX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-opcode-gpp-c1" $MAC_PORT1_TX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT1_TX_SA_GPP_C0 [hsi get_property CONFIG.MAC_PORT1_TX_SA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_SA_GPP_C0 [mrmac_check_size $MAC_PORT1_TX_SA_GPP_C0 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-sa-gpp-c0" $MAC_PORT1_TX_SA_GPP_C0 int $dts_file
-        set MAC_PORT1_TX_SA_GPP_C1 [hsi get_property CONFIG.MAC_PORT1_TX_SA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_SA_GPP_C1 [mrmac_check_size $MAC_PORT1_TX_SA_GPP_C1 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-sa-gpp-c1" $MAC_PORT1_TX_SA_GPP_C1 int $dts_file
-        set MAC_PORT1_TX_SA_PPP_C0 [hsi get_property CONFIG.MAC_PORT1_TX_SA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_SA_PPP_C0 [mrmac_check_size $MAC_PORT1_TX_SA_PPP_C0 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-sa-ppp-c0" $MAC_PORT1_TX_SA_PPP_C0 int $dts_file
-        set MAC_PORT1_TX_SA_PPP_C1 [hsi get_property CONFIG.MAC_PORT1_TX_SA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT1_TX_SA_PPP_C1 [mrmac_check_size $MAC_PORT1_TX_SA_PPP_C1 $mrmac1_node]
-        add_prop "${mrmac1_node}" "xlnx,mac-port1-tx-sa-ppp-c1" $MAC_PORT1_TX_SA_PPP_C1 int $dts_file
-        set GT_CH1_RXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH1_RXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rxprogdiv-freq-enable-c0" $GT_CH1_RXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-        set GT_CH1_RXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH1_RXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rxprogdiv-freq-enable-c1" $GT_CH1_RXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-        set GT_CH1_RXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH1_RXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rxprogdiv-freq-source-c0" $GT_CH1_RXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH1_RXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH1_RXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rxprogdiv-freq-source-c1" $GT_CH1_RXPROGDIV_FREQ_SOURCE_C1 string $dts_file
-        set GT_CH1_RXPROGDIV_FREQ_VAL_C0 [hsi get_property CONFIG.GT_CH1_RXPROGDIV_FREQ_VAL_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rxprogdiv-freq-val-c0" $GT_CH1_RXPROGDIV_FREQ_VAL_C0 string $dts_file
-        set GT_CH1_RXPROGDIV_FREQ_VAL_C1 [hsi get_property CONFIG.GT_CH1_RXPROGDIV_FREQ_VAL_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rxprogdiv-freq-val-c1" $GT_CH1_RXPROGDIV_FREQ_VAL_C1 string $dts_file
-        set GT_CH1_RX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH1_RX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-buffer-mode-c0" $GT_CH1_RX_BUFFER_MODE_C0 int $dts_file
-        set GT_CH1_RX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH1_RX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-buffer-mode-c1" $GT_CH1_RX_BUFFER_MODE_C1 int $dts_file
-        set GT_CH1_RX_DATA_DECODING_C0 [hsi get_property CONFIG.GT_CH1_RX_DATA_DECODING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-data-decoding-c0" $GT_CH1_RX_DATA_DECODING_C0 string $dts_file
-        set GT_CH1_RX_DATA_DECODING_C1 [hsi get_property CONFIG.GT_CH1_RX_DATA_DECODING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-data-decoding-c1" $GT_CH1_RX_DATA_DECODING_C1 string $dts_file
-
-
-        set GT_CH1_RX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH1_RX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-int-data-width-c0" $GT_CH1_RX_INT_DATA_WIDTH_C0 int $dts_file
-        set GT_CH1_RX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH1_RX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-int-data-width-c1" $GT_CH1_RX_INT_DATA_WIDTH_C1 int $dts_file
-
-
-        set GT_CH1_RX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH1_RX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-line-rate-c0" $GT_CH1_RX_LINE_RATE_C0 string $dts_file
-        set GT_CH1_RX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH1_RX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-line-rate-c1" $GT_CH1_RX_LINE_RATE_C1 string $dts_file
-
-
-        set GT_CH1_RX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH1_RX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-outclk-source-c0" $GT_CH1_RX_OUTCLK_SOURCE_C0 string $dts_file
-        set GT_CH1_RX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH1_RX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-outclk-source-c1" $GT_CH1_RX_OUTCLK_SOURCE_C1 string $dts_file
-
-
-        set GT_CH1_RX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH1_RX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-refclk-frequency-c0" $GT_CH1_RX_REFCLK_FREQUENCY_C0 string $dts_file
-        set GT_CH1_RX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH1_RX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-refclk-frequency-c1" $GT_CH1_RX_REFCLK_FREQUENCY_C1 string $dts_file
-
-
-        set GT_CH1_RX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH1_RX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-user-data-width-c0" $GT_CH1_RX_USER_DATA_WIDTH_C0 string $dts_file
-        set GT_CH1_RX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH1_RX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-rx-user-data-width-c1" $GT_CH1_RX_USER_DATA_WIDTH_C1 string $dts_file
-
-        set GT_CH1_TXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH1_TXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-txprogdiv-freq-enable-c0" $GT_CH1_TXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-        set GT_CH1_TXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH1_TXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-txprogdiv-freq-enable-c1" $GT_CH1_TXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-
-
-        set GT_CH1_TXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH1_TXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-txprogdiv-freq-source-c0" $GT_CH1_TXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH1_TXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH1_TXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-txprogdiv-freq-source-c1" $GT_CH1_TXPROGDIV_FREQ_SOURCE_C1 string $dts_file
-
-
-        set GT_CH1_TXPROGDIV_FREQ_VAL_C0 [hsi get_property CONFIG.GT_CH1_TXPROGDIV_FREQ_VAL_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-txprogdiv-freq-val-c0" $GT_CH1_TXPROGDIV_FREQ_VAL_C0 string $dts_file
-        set GT_CH1_TXPROGDIV_FREQ_VAL_C1 [hsi get_property CONFIG.GT_CH1_TXPROGDIV_FREQ_VAL_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-txprogdiv-freq-val-c1" $GT_CH1_TXPROGDIV_FREQ_VAL_C1 string $dts_file
-
-
-        set GT_CH1_TX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH1_TX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-buffer-mode-c0" $GT_CH1_TX_BUFFER_MODE_C0 int $dts_file
-        set GT_CH1_TX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH1_TX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-buffer-mode-c1" $GT_CH1_TX_BUFFER_MODE_C1 int $dts_file
-
-
-        set GT_CH1_TX_DATA_ENCODING_C0 [hsi get_property CONFIG.GT_CH1_TX_DATA_ENCODING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-data-encoding-c0" $GT_CH1_TX_DATA_ENCODING_C0 string $dts_file
-        set GT_CH1_TX_DATA_ENCODING_C1 [hsi get_property CONFIG.GT_CH1_TX_DATA_ENCODING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-data-encoding-c1" $GT_CH1_TX_DATA_ENCODING_C1 string $dts_file
-
-        set GT_CH1_TX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH1_TX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-int-data-width-c0" $GT_CH1_TX_INT_DATA_WIDTH_C0 int $dts_file
-        set GT_CH1_TX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH1_TX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-int-data-width-c1" $GT_CH1_TX_INT_DATA_WIDTH_C1 int $dts_file
-
-        set GT_CH1_TX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH1_TX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-line-rate-c0" $GT_CH1_TX_LINE_RATE_C0 string $dts_file
-        set GT_CH1_TX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH1_TX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-line-rate-c1" $GT_CH1_TX_LINE_RATE_C1 string $dts_file
-
-
-        set GT_CH1_TX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH1_TX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-outclk-source-c0" $GT_CH1_TX_OUTCLK_SOURCE_C0 string $dts_file
-        set GT_CH1_TX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH1_TX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-outclk-source-c1" $GT_CH1_TX_OUTCLK_SOURCE_C1 string $dts_file
-
-
-        set GT_CH1_TX_PLL_TYPE_C0 [hsi get_property CONFIG.GT_CH1_TX_PLL_TYPE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-pll-type-c0" $GT_CH1_TX_PLL_TYPE_C0 string $dts_file
-        set GT_CH1_TX_PLL_TYPE_C1 [hsi get_property CONFIG.GT_CH1_TX_PLL_TYPE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-pll-type-c1" $GT_CH1_TX_PLL_TYPE_C1 string $dts_file
-
-
-        set GT_CH1_TX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH1_TX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-refclk-frequency-c0" $GT_CH1_TX_REFCLK_FREQUENCY_C0 string $dts_file
-        set GT_CH1_TX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH1_TX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-refclk-frequency-c1" $GT_CH1_TX_REFCLK_FREQUENCY_C1 string $dts_file
-
-
-        set GT_CH1_TX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH1_TX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-user-data-width-c0" $GT_CH1_TX_USER_DATA_WIDTH_C0 int $dts_file
-        set GT_CH1_TX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH1_TX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch1-tx-user-data-width-c1" $GT_CH1_TX_USER_DATA_WIDTH_C1 int $dts_file
-
-        set mrmac2_base [format 0x%llx [expr $base_addr + 0x2000]]
-        set mrmac2_base_hex [format %llx $mrmac2_base]
-        set mrmac2_highaddr_hex [format 0x%llx [expr $mrmac2_base + 0xFFF]]
-        set port2 2
-        append label2 $drv_handle "_" $port2
-        set mrmac2_node [create_node -n "mrmac" -l "$label2" -u $mrmac2_base_hex -d $dts_file -p $bus_node]
-        add_prop "$mrmac2_node" "compatible" "$compatible" stringlist $dts_file 1
-        mrmac_generate_reg_property $mrmac2_node $mrmac2_base $mrmac2_highaddr_hex
-
-        lappend clknames2 "$s_axi_aclk" "$rx_axi_clk2" "$rx_flexif_clk2" "$rx_ts_clk2" "$tx_axi_clk2" "$tx_flexif_clk2" "$tx_ts_clk2"
-        set index2 [lindex $clk_list $s_axi_aclk_index0]
-        set txindex2 [lindex $clk_list $tx_ts_clk_index2]
-        regsub -all "\," $txindex2 {} txindex2
-        append clkvals2  "$index2 [lindex $clk_list $rx_axi_clk_index2] [lindex $clk_list $rx_flexif_clk_index2] [lindex $clk_list $rx_ts_clk2_index2] [lindex $clk_list $tx_axi_clk_index2] [lindex $clk_list $tx_flexif_clk_index2] $txindex2"
-        add_prop "${mrmac2_node}" "clocks" $clkvals2 noformating $dts_file
-        add_prop "${mrmac2_node}" "clock-names" $clknames2 stringlist $dts_file
-        set port2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata4"]]
-        foreach pin $port2_pins {
-                set sink_periph [hsi::get_cells -of_objects $pin]
-                set mux_ip ""
-                set fifo_ip ""
-                if {[llength $sink_periph]} {
-			   mrmac_connect_axistream $drv_handle $mrmac2_node $sink_periph $dts_file
-                   }
-        }
-
-           set txtodport2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_2"]]
-        if {[llength $txtodport2_pins]} {
-                       set tod2_sink_periph [hsi::get_cells -of_objects $txtodport2_pins]
-                       if {[llength $tod2_sink_periph]} {
-                   if {[string match -nocase [hsi get_property IP_NAME $tod2_sink_periph] "mrmac_ptp_timestamp_if"]} {
-                           set port_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $tod2_sink_periph] "tx_timestamp_tod"]]
-                           set tod2_sink_periph [::hsi::get_cells -of_objects $port_pins]
-                   }
-           if {[get_ip_property $tod2_sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
-                   set intf "dout"
-                   set in2_pin [hsi::get_pins -of_objects $tod2_sink_periph -filter "NAME==$intf"]
-                   set in2sink_pins [get_sink_pins $in2_pin]
-                   set xl_per2 [::hsi::get_cells -of_objects $in2sink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $xl_per2] "axis_dwidth_converter"]} {
-                           set port2pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $xl_per2] "m_axis_tdata"]]
-                           set axis_per2 [hsi::get_cells -of_objects $port2pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $axis_per2] "axis_clock_converter"]} {
-                                   set tx2_ip [get_connected_stream_ip [hsi::get_cells -hier $axis_per2] "M_AXIS"]
-                                   if {[llength $tx2_ip]} {
-                                           add_prop "$mrmac2_node" "axififo-connected" $tx2_ip reference $dts_file
-                                   }
-                        }
-                   }
-           }
-        }
-        } else {
-                dtg_warning "tx_timestamp_tod_2 connected pins are NULL...please check the design..."
-        }
-           set rxtod2_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_ptp_tstamp_out_2"]]
-        if {[llength $rxtod2_pins]} {
-                set rx_periph2 [hsi::get_cells -of_objects $rxtod2_pins]
-                if {[llength $rx_periph2]} {
-                if {[string match -nocase [hsi get_property IP_NAME $rx_periph2] "mrmac_ptp_timestamp_if"]} {
-                           set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_periph2] "rx_timestamp_tod"]]
-                           set rx_periph2 [::hsi::get_cells -of_objects $port_pins]
-                }
-           if {[get_ip_property $rx_periph2 IP_NAME] in {"xlconcat" "ilconcat"}}  {
-                   set intf "dout"
-                   set inrx2_pin [hsi::get_pins -of_objects $rx_periph2 -filter "NAME==$intf"]
-                   set rxtodsink_pins [get_sink_pins $inrx2_pin]
-                   set rx_per2 [hsi::get_cells -of_objects $rxtodsink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $rx_per2] "axis_dwidth_converter"]} {
-                           set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_per2] "m_axis_tdata"]]
-                           set rx_axis_per2 [hsi::get_cells -of_objects $port_pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $rx_axis_per2] "axis_clock_converter"]} {
-                                   set rx_ip2 [get_connected_stream_ip [hsi::get_cells -hier $rx_axis_per2] "M_AXIS"]
-                                   if {[llength $rx_ip2]} {
-                                           add_prop "$mrmac2_node" "xlnx,rxtsfifo" $rx_ip2 reference $dts_file
-                                }
-
-                        }
-                }
-        }
-        }
-        } else {
-                dtg_warning "rx_timestamp_tod_2 connected pins are NULL...please check the design..."
-        }
-           if {[llength $handle]} {
-                   add_prop "$mrmac2_node" "xlnx,gtctrl" $handle reference $dts_file
-           }
-           if {[llength $mask_handle]} {
-                   add_prop "$mrmac2_node" "xlnx,gtpll" $mask_handle reference $dts_file
-           }
-           if {[llength $gt_reset_per]} {
-                   add_prop "$mrmac2_node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
-           }
-           if {[llength $gt_pll_per]} {
-                   add_prop "$mrmac2_node" "xlnx,gtpll" $gt_pll_per reference $dts_file
-           }
-           add_prop "$mrmac2_node" "xlnx,phcindex" 2 int $dts_file
-           add_prop "$mrmac2_node" "xlnx,gtlane" 2 int $dts_file
-        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        set gt_mode [split $gt_mode " "]
-        set gt_mode [lindex $gt_mode 0]
-        add_prop "${mrmac2_node}" "xlnx,gt-mode" $gt_mode string $dts_file
-
-        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT2_C0  [hsi::get_cells -hier $drv_handle]]
-        set port0_dpath [split $port0_dpath " "]
-        set port0_dwidth [lindex $port0_dpath 1]
-        set port0_dwidth [string trimright $port0_dwidth "b"]
-        add_prop "${mrmac2_node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
-
-        set FEC_SLICE2_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE2_CFG_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-slice2-cfg-c0" $FEC_SLICE2_CFG_C0 string $dts_file
-        set FEC_SLICE2_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE2_CFG_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-slice2-cfg-c1" $FEC_SLICE2_CFG_C1 string $dts_file
-        set FLEX_PORT2_DATA_RATE_C0 [hsi get_property CONFIG.C_FLEX_PORT2_DATA_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-port2-data-rate-c0" $FLEX_PORT2_DATA_RATE_C0 string $dts_file
-        set FLEX_PORT2_DATA_RATE_C1 [hsi get_property CONFIG.C_FLEX_PORT2_DATA_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-port2-data-rate-c1" $FLEX_PORT2_DATA_RATE_C1 string $dts_file
-        set FLEX_PORT2_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.C_FLEX_PORT2_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-port2-enable-time-stamping-c0" $FLEX_PORT2_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set FLEX_PORT2_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.C_FLEX_PORT2_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-port2-enable-time-stamping-c1" $FLEX_PORT2_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set FLEX_PORT2_MODE_C0 [hsi get_property CONFIG.C_FLEX_PORT2_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-port2-mode-c0" $FLEX_PORT2_MODE_C0 string $dts_file
-        set FLEX_PORT2_MODE_C1 [hsi get_property CONFIG.C_FLEX_PORT2_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,flex-port2-mode-c1" $FLEX_PORT2_MODE_C1 string $dts_file
-        set PORT2_1588v2_Clocking_C0 [hsi get_property CONFIG.PORT2_1588v2_Clocking_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,port2-1588v2-clocking-c0" $PORT2_1588v2_Clocking_C0 string $dts_file
-        set PORT2_1588v2_Clocking_C1 [hsi get_property CONFIG.PORT2_1588v2_Clocking_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,port2-1588v2-clocking-c1" $PORT2_1588v2_Clocking_C1 string $dts_file
-        set PORT2_1588v2_Operation_MODE_C0 [hsi get_property CONFIG.PORT2_1588v2_Operation_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,port2-1588v2-operation-mode-c0" $PORT2_1588v2_Operation_MODE_C0 string $dts_file
-        set PORT2_1588v2_Operation_MODE_C1 [hsi get_property CONFIG.PORT2_1588v2_Operation_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,port2-1588v2-operation-mode-c1" $PORT2_1588v2_Operation_MODE_C1 string $dts_file
-        set MAC_PORT2_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.MAC_PORT2_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-enable-time-stamping-c0" $MAC_PORT2_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set MAC_PORT2_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.MAC_PORT2_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-enable-time-stamping-c1" $MAC_PORT2_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set MAC_PORT2_RATE_C0 [hsi get_property CONFIG.MAC_PORT2_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $MAC_PORT2_RATE_C0 "10GE"]} {
-                   set number 10000
-                add_prop "${mrmac2_node}" "max-speed" $number int $dts_file
-        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
-                set number 25000
-                add_prop "${mrmac2_node}" "max-speed" $number int $dts_file
-        }
-        set MAC_PORT2_RATE_C1 [hsi get_property CONFIG.MAC_PORT2_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rate-c1" $MAC_PORT2_RATE_C1 string $dts_file
-        set MAC_PORT2_RX_ETYPE_GCP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-gcp-c0" $MAC_PORT2_RX_ETYPE_GCP_C0 int $dts_file
-        set MAC_PORT2_RX_ETYPE_GCP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-gcp-c1" $MAC_PORT2_RX_ETYPE_GCP_C1 int $dts_file
-        set MAC_PORT2_RX_ETYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-gpp-c0" $MAC_PORT1_RX_ETYPE_GPP_C0 int $dts_file
-        set MAC_PORT2_RX_ETYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-gpp-c1" $MAC_PORT2_RX_ETYPE_GPP_C1 int $dts_file
-        set MAC_PORT2_RX_ETYPE_PCP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-pcp-c0" $MAC_PORT2_RX_ETYPE_PCP_C0 int $dts_file
-        set MAC_PORT2_RX_ETYPE_PCP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-pcp-c1" $MAC_PORT2_RX_ETYPE_PCP_C1 int $dts_file
-        set MAC_PORT2_RX_ETYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-ppp-c0" $MAC_PORT2_RX_ETYPE_PPP_C0 int $dts_file
-        set MAC_PORT2_RX_ETYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_ETYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-etype-ppp-c1" $MAC_PORT2_RX_ETYPE_PPP_C1 int $dts_file
-        set MAC_PORT2_RX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT2_RX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-flow-c0" $MAC_PORT2_RX_FLOW_C0 int $dts_file
-        set MAC_PORT2_RX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT2_RX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-flow-c1" $MAC_PORT2_RX_FLOW_C1 int $dts_file
-        set MAC_PORT2_RX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-gpp-c0" $MAC_PORT2_RX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT2_RX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-gpp-c1" $MAC_PORT2_RX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MAX_GCP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MAX_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-max-gcp-c0" $MAC_PORT2_RX_OPCODE_MAX_GCP_C0 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MAX_GCP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MAX_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-max-gcp-c1" $MAC_PORT2_RX_OPCODE_MAX_GCP_C1 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MAX_PCP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MAX_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-max-pcp-c0" $MAC_PORT2_RX_OPCODE_MAX_PCP_C0 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MAX_PCP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MAX_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-max-pcp-c1" $MAC_PORT2_RX_OPCODE_MAX_PCP_C1 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MIN_GCP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MIN_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-min-gcp-c0" $MAC_PORT2_RX_OPCODE_MIN_GCP_C0 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MIN_GCP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MIN_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-min-gcp-c1" $MAC_PORT2_RX_OPCODE_MIN_GCP_C1 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MIN_PCP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MIN_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-min-pcp-c0" $MAC_PORT2_RX_OPCODE_MIN_PCP_C0 int $dts_file
-        set MAC_PORT2_RX_OPCODE_MIN_PCP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_MIN_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-min-pcp-c1" $MAC_PORT2_RX_OPCODE_MIN_PCP_C1 int $dts_file
-        set MAC_PORT2_RX_OPCODE_PPP_C0 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-ppp-c0" $MAC_PORT2_RX_OPCODE_PPP_C0 int $dts_file
-        set MAC_PORT2_RX_OPCODE_PPP_C1 [hsi get_property CONFIG.MAC_PORT2_RX_OPCODE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-opcode-ppp-c1" $MAC_PORT2_RX_OPCODE_PPP_C1 int $dts_file
-        set MAC_PORT2_RX_PAUSE_DA_MCAST_C0 [hsi get_property CONFIG.MAC_PORT2_RX_PAUSE_DA_MCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_RX_PAUSE_DA_MCAST_C0 [mrmac_check_size $MAC_PORT2_RX_PAUSE_DA_MCAST_C0 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-pause-da-mcast-c0" $MAC_PORT2_RX_PAUSE_DA_MCAST_C0 int $dts_file
-        set MAC_PORT2_RX_PAUSE_DA_MCAST_C1 [hsi get_property CONFIG.MAC_PORT2_RX_PAUSE_DA_MCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_RX_PAUSE_DA_MCAST_C1 [mrmac_check_size $MAC_PORT2_RX_PAUSE_DA_MCAST_C1 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-pause-da-mcast-c1" $MAC_PORT2_RX_PAUSE_DA_MCAST_C1 int $dts_file
-        set MAC_PORT2_RX_PAUSE_DA_UCAST_C0 [hsi get_property CONFIG.MAC_PORT2_RX_PAUSE_DA_UCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_RX_PAUSE_DA_UCAST_C0 [mrmac_check_size $MAC_PORT2_RX_PAUSE_DA_UCAST_C0 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-pause-da-ucast-c0" $MAC_PORT2_RX_PAUSE_DA_UCAST_C0 int $dts_file
-        set MAC_PORT2_RX_PAUSE_DA_UCAST_C1 [hsi get_property CONFIG.MAC_PORT2_RX_PAUSE_DA_UCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_RX_PAUSE_DA_UCAST_C1 [mrmac_check_size $MAC_PORT2_RX_PAUSE_DA_UCAST_C1 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-pause-da-ucast-c1" $MAC_PORT2_RX_PAUSE_DA_UCAST_C1 int $dts_file
-        set MAC_PORT2_RX_PAUSE_SA_C0 [hsi get_property CONFIG.MAC_PORT2_RX_PAUSE_SA_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_RX_PAUSE_SA_C0 [mrmac_check_size $MAC_PORT2_RX_PAUSE_SA_C0 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-pause-sa-c0" $MAC_PORT2_RX_PAUSE_SA_C0 int $dts_file
-        set MAC_PORT2_RX_PAUSE_SA_C1 [hsi get_property CONFIG.MAC_PORT2_RX_PAUSE_SA_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_RX_PAUSE_SA_C1 [mrmac_check_size $MAC_PORT2_RX_PAUSE_SA_C1 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-rx-pause-sa-c1" $MAC_PORT2_RX_PAUSE_SA_C1 int $dts_file
-        set MAC_PORT2_TX_DA_GPP_C0 [hsi get_property CONFIG.MAC_PORT2_TX_DA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_DA_GPP_C0 [mrmac_check_size $MAC_PORT2_TX_DA_GPP_C0 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-da-gpp-c0" $MAC_PORT2_TX_DA_GPP_C0 int $dts_file
-        set MAC_PORT2_TX_DA_GPP_C1 [hsi get_property CONFIG.MAC_PORT2_TX_DA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_DA_GPP_C1 [mrmac_check_size $MAC_PORT2_TX_DA_GPP_C1 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-da-gpp-c1" $MAC_PORT2_TX_DA_GPP_C1 int $dts_file
-        set MAC_PORT2_TX_DA_PPP_C0 [hsi get_property CONFIG.MAC_PORT2_TX_DA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_DA_PPP_C0 [mrmac_check_size $MAC_PORT2_TX_DA_PPP_C0 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-da-ppp-c0" $MAC_PORT2_TX_DA_PPP_C0 int $dts_file
-        set MAC_PORT2_TX_DA_PPP_C1 [hsi get_property CONFIG.MAC_PORT2_TX_DA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_DA_PPP_C1 [mrmac_check_size $MAC_PORT2_TX_DA_PPP_C1 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-da-ppp-c1" $MAC_PORT2_TX_DA_PPP_C1 int $dts_file
-        set MAC_PORT2_TX_ETHERTYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT2_TX_ETHERTYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-ethertype-gpp-c0" $MAC_PORT2_TX_ETHERTYPE_GPP_C0 int $dts_file
-        set MAC_PORT2_TX_ETHERTYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT2_TX_ETHERTYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-ethertype-gpp-c1" $MAC_PORT2_TX_ETHERTYPE_GPP_C1 int $dts_file
-        set MAC_PORT2_TX_ETHERTYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT2_TX_ETHERTYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-ethertype-ppp-c0" $MAC_PORT2_TX_ETHERTYPE_PPP_C0 int $dts_file
-        set MAC_PORT2_TX_ETHERTYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT2_TX_ETHERTYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-ethertype-ppp-c1" $MAC_PORT2_TX_ETHERTYPE_PPP_C1 int $dts_file
-        set MAC_PORT2_TX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT2_TX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-flow-c0" $MAC_PORT2_TX_FLOW_C0 int $dts_file
-        set MAC_PORT2_TX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT2_TX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-flow-c1" $MAC_PORT2_TX_FLOW_C1 int $dts_file
-        set MAC_PORT2_TX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT2_TX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-opcode-gpp-c0" $MAC_PORT2_TX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT2_TX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT2_TX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-opcode-gpp-c1" $MAC_PORT2_TX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT2_TX_SA_GPP_C0 [hsi get_property CONFIG.MAC_PORT2_TX_SA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_SA_GPP_C0 [mrmac_check_size $MAC_PORT2_TX_SA_GPP_C0 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-sa-gpp-c0" $MAC_PORT2_TX_SA_GPP_C0 int $dts_file
-        set MAC_PORT2_TX_SA_GPP_C1 [hsi get_property CONFIG.MAC_PORT2_TX_SA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_SA_GPP_C1 [mrmac_check_size $MAC_PORT2_TX_SA_GPP_C1 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-sa-gpp-c1" $MAC_PORT2_TX_SA_GPP_C1 int $dts_file
-        set MAC_PORT2_TX_SA_PPP_C0 [hsi get_property CONFIG.MAC_PORT2_TX_SA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_SA_PPP_C0 [mrmac_check_size $MAC_PORT2_TX_SA_PPP_C0 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-sa-ppp-c0" $MAC_PORT2_TX_SA_PPP_C0 int $dts_file
-        set MAC_PORT2_TX_SA_PPP_C1 [hsi get_property CONFIG.MAC_PORT2_TX_SA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT2_TX_SA_PPP_C1 [mrmac_check_size $MAC_PORT2_TX_SA_PPP_C1 $mrmac2_node]
-        add_prop "${mrmac2_node}" "xlnx,mac-port2-tx-sa-ppp-c1" $MAC_PORT2_TX_SA_PPP_C1 int $dts_file
-        set GT_CH2_RXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH2_RXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rxprogdiv-freq-enable-c0" $GT_CH2_RXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-        set GT_CH2_RXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH2_RXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rxprogdiv-freq-enable-c1" $GT_CH2_RXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-
-        set GT_CH2_RXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH2_RXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rxprogdiv-freq-source-c0" $GT_CH2_RXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH2_RXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH2_RXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rxprogdiv-freq-source-c1" $GT_CH2_RXPROGDIV_FREQ_SOURCE_C1 string $dts_file
-        set GT_CH2_RXPROGDIV_FREQ_VAL_C0 [hsi get_property CONFIG.GT_CH2_RXPROGDIV_FREQ_VAL_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rxprogdiv-freq-val-c0" $GT_CH2_RXPROGDIV_FREQ_VAL_C0 string $dts_file
-        set GT_CH2_RXPROGDIV_FREQ_VAL_C1 [hsi get_property CONFIG.GT_CH2_RXPROGDIV_FREQ_VAL_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rxprogdiv-freq-val-c1" $GT_CH2_RXPROGDIV_FREQ_VAL_C1 string $dts_file
-        set GT_CH2_RX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH2_RX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-buffer-mode-c0" $GT_CH2_RX_BUFFER_MODE_C0 int $dts_file
-        set GT_CH2_RX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH2_RX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-buffer-mode-c1" $GT_CH2_RX_BUFFER_MODE_C1 int $dts_file
-        set GT_CH2_RX_DATA_DECODING_C0 [hsi get_property CONFIG.GT_CH2_RX_DATA_DECODING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-data-decoding-c0" $GT_CH2_RX_DATA_DECODING_C0 string $dts_file
-        set GT_CH2_RX_DATA_DECODING_C1 [hsi get_property CONFIG.GT_CH2_RX_DATA_DECODING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-data-decoding-c1" $GT_CH2_RX_DATA_DECODING_C1 string $dts_file
-
-        set GT_CH2_RX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH2_RX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-int-data-width-c0" $GT_CH2_RX_INT_DATA_WIDTH_C0 int $dts_file
-        set GT_CH2_RX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH2_RX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-int-data-width-c1" $GT_CH2_RX_INT_DATA_WIDTH_C1 int $dts_file
-
-        set GT_CH2_RX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH2_RX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-line-rate-c0" $GT_CH2_RX_LINE_RATE_C0 string $dts_file
-        set GT_CH2_RX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH2_RX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-line-rate-c1" $GT_CH2_RX_LINE_RATE_C1 string $dts_file
-
-        set GT_CH2_RX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH2_RX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-outclk-source-c0" $GT_CH2_RX_OUTCLK_SOURCE_C0 string $dts_file
-        set GT_CH2_RX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH2_RX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-outclk-source-c1" $GT_CH2_RX_OUTCLK_SOURCE_C1 string $dts_file
-
-        set GT_CH2_RX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH2_RX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-refclk-frequency-c0" $GT_CH2_RX_REFCLK_FREQUENCY_C0 string $dts_file
-        set GT_CH2_RX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH2_RX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-refclk-frequency-c1" $GT_CH2_RX_REFCLK_FREQUENCY_C1 string $dts_file
-
-        set GT_CH2_RX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH2_RX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-user-data-width-c0" $GT_CH2_RX_USER_DATA_WIDTH_C0 string $dts_file
-        set GT_CH2_RX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH2_RX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-rx-user-data-width-c1" $GT_CH2_RX_USER_DATA_WIDTH_C1 string $dts_file
-
-        set GT_CH2_TXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH2_TXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-txprogdiv-freq-enable-c0" $GT_CH2_TXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-        set GT_CH2_TXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH2_TXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac1_node}" "xlnx,gt-ch2-txprogdiv-freq-enable-c1" $GT_CH2_TXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-
-        set GT_CH2_TXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH2_TXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-txprogdiv-freq-source-c0" $GT_CH2_TXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH2_TXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH2_TXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-txprogdiv-freq-source-c1" $GT_CH2_TXPROGDIV_FREQ_SOURCE_C1 string $dts_file
-
-        set GT_CH2_TX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH2_TX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-buffer-mode-c0" $GT_CH2_TX_BUFFER_MODE_C0 int $dts_file
-        set GT_CH2_TX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH2_TX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-buffer-mode-c1" $GT_CH2_TX_BUFFER_MODE_C1 int $dts_file
-
-        set GT_CH2_TX_DATA_ENCODING_C0 [hsi get_property CONFIG.GT_CH2_TX_DATA_ENCODING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-data-encoding-c0" $GT_CH2_TX_DATA_ENCODING_C0 string $dts_file
-        set GT_CH2_TX_DATA_ENCODING_C1 [hsi get_property CONFIG.GT_CH2_TX_DATA_ENCODING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-data-encoding-c1" $GT_CH2_TX_DATA_ENCODING_C1 string $dts_file
-
-        set GT_CH2_TX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH2_TX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-int-data-width-c0" $GT_CH2_TX_INT_DATA_WIDTH_C0 int $dts_file
-        set GT_CH2_TX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH2_TX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-int-data-width-c1" $GT_CH2_TX_INT_DATA_WIDTH_C1 int $dts_file
-
-        set GT_CH2_TX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH2_TX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-line-rate-c0" $GT_CH2_TX_LINE_RATE_C0 string $dts_file
-        set GT_CH2_TX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH2_TX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-line-rate-c1" $GT_CH2_TX_LINE_RATE_C1 string $dts_file
-
-        set GT_CH2_TX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH2_TX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-outclk-source-c0" $GT_CH2_TX_OUTCLK_SOURCE_C0 string $dts_file
-        set GT_CH2_TX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH2_TX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-outclk-source-c1" $GT_CH2_TX_OUTCLK_SOURCE_C1 string $dts_file
-
-        set GT_CH2_TX_PLL_TYPE_C0 [hsi get_property CONFIG.GT_CH2_TX_PLL_TYPE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-pll-type-c0" $GT_CH2_TX_PLL_TYPE_C0 string $dts_file
-        set GT_CH2_TX_PLL_TYPE_C1 [hsi get_property CONFIG.GT_CH2_TX_PLL_TYPE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-pll-type-c1" $GT_CH2_TX_PLL_TYPE_C1 string $dts_file
-
-        set GT_CH2_TX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH2_TX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-refclk-frequency-c0" $GT_CH2_TX_REFCLK_FREQUENCY_C0 string $dts_file
-        set GT_CH2_TX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH2_TX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-refclk-frequency-c1" $GT_CH2_TX_REFCLK_FREQUENCY_C1 string $dts_file
-
-            set GT_CH2_TX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH2_TX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-user-data-width-c0" $GT_CH2_TX_USER_DATA_WIDTH_C0 int $dts_file
-        set GT_CH2_TX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH2_TX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac2_node}" "xlnx,gt-ch2-tx-user-data-width-c1" $GT_CH2_TX_USER_DATA_WIDTH_C1 int $dts_file
-
-        set mrmac3_base [format 0x%llx [expr $base_addr + 0x3000]]
-        set mrmac3_base_hex [format %llx $mrmac3_base]
-        set mrmac3_highaddr_hex [format 0x%llx [expr $mrmac3_base + 0xFFF]]
-        set port3 3
-        append label3 $drv_handle "_" $port3
-        set mrmac3_node [create_node -n "mrmac" -l "$label3" -u $mrmac3_base_hex -d $dts_file -p $bus_node]
-        add_prop "$mrmac3_node" "compatible" "$compatible" stringlist $dts_file 1
-        mrmac_generate_reg_property $mrmac3_node $mrmac3_base $mrmac3_highaddr_hex
-        set port3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_axis_tdata6"]]
-        foreach pin $port3_pins {
-                set sink_periph [hsi::get_cells -of_objects $pin]
-                set mux_ip ""
-                set fifo_ip ""
-                if {[llength $sink_periph]} {
-                           mrmac_connect_axistream $drv_handle $mrmac3_node $sink_periph $dts_file
-                }
-        }
-           set txtodport3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "tx_ptp_tstamp_tag_out_3"]]
-        if {[llength $txtodport3_pins]} {
-               set tod3_sink_periph [::hsi::get_cells -of_objects $txtodport3_pins]
-               if {[llength $tod3_sink_periph]} {
-                   if {[string match -nocase [hsi::get_property IP_NAME $tod3_sink_periph] "mrmac_ptp_timestamp_if"]} {
-                           set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $tod3_sink_periph] "tx_timestamp_tod"]]
-                           set tod3_sink_periph [::hsi::get_cells -of_objects $port_pins]
-                   }
-           if {[get_ip_property $tod3_sink_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
-                   set intf "dout"
-                   set in3_pin [hsi::get_pins -of_objects $tod3_sink_periph -filter "NAME==$intf"]
-                   set in3sink_pins [get_sink_pins $in3_pin]
-                   set xl_per3 [hsi::get_cells -of_objects $in3sink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $xl_per3] "axis_dwidth_converter"]} {
-                           set port3pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $xl_per3] "m_axis_tdata"]]
-                           set axis_per3 [hsi::get_cells -of_objects $port3pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $axis_per3] "axis_clock_converter"]} {
-                                   set tx3_ip [get_connected_stream_ip [hsi::get_cells -hier $axis_per3] "M_AXIS"]
-                                   if {[llength $tx3_ip]} {
-                                           add_prop "$mrmac3_node" "axififo-connected" $tx3_ip reference $dts_file
-                                }
+           set rx_ptp_tstamp_out rx_ptp_tstamp_out_${port_index}
+           set rxtod_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] $rx_ptp_tstamp_out]]
+           dtg_verbose "rxtod_pins:$rxtod_pins"
+           if {[llength $rxtod_pins]} {
+               set rx_periph [hsi::get_cells -of_objects $rxtod_pins]
+               if {[llength $rx_periph]} {
+                           if {[string match -nocase [hsi get_property IP_NAME $rx_periph] "mrmac_ptp_timestamp_if"]} {
+                                   set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_periph] "rx_timestamp_tod"]]
+                                   set rx_periph [::hsi::get_cells -of_objects $port_pins]
                            }
-                   }
+                           if {[get_ip_property $rx_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
+                                 set intf "dout"
+                                 set inrx_pin [hsi::get_pins -of_objects $rx_periph -filter "NAME==$intf"]
+                                 set rxtodsink_pins [get_sink_pins $inrx_pin]
+                                 set rx_per [hsi::get_cells -of_objects $rxtodsink_pins]
+                                 if {[string match -nocase [hsi get_property IP_NAME $rx_per] "axis_dwidth_converter"]} {
+                                      set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_per] "m_axis_tdata"]]
+                                      set rx_axis_per [hsi::get_cells -of_objects $port_pins]
+                                      if {[string match -nocase [hsi get_property IP_NAME $rx_axis_per] "axis_clock_converter"]} {
+                                           set rx_ip [get_connected_stream_ip [hsi::get_cells -hier $rx_axis_per] "M_AXIS"]
+                                           if {[llength $rx_ip]} {
+                                               add_prop "$current_port_node" "xlnx,rxtsfifo" $rx_ip reference $dts_file
+                                           }
+                                      }
+                                 }
+                           }
+               }
+           } else {
+                dtg_warning "rx_timestamp_tod_${port_index} connected pins are NULL...please check the design..."
            }
-        }
-        } else {
-                dtg_warning "tx_timestamp_tod_3 connected pins are NULL...please check the design..."
-        }
-           set rxtod3_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $mrmac_ip] "rx_timestamp_tod_3"]]
-        if {[llength $rxtod3_pins]} {
-           set rx_periph3 [::hsi::get_cells -of_objects $rxtod3_pins]
-           if {[llength $rx_periph3]} {
-           if {[get_ip_property $rx_periph3 IP_NAME] in {"xlconcat" "ilconcat"}} {
-                   set intf "dout"
-                   set inrx3_pin [hsi::get_pins -of_objects $rx_periph3 -filter "NAME==$intf"]
-                   set rxtodsink_pins [get_sink_pins $inrx3_pin]
-                   set rx_per3 [hsi::get_cells -of_objects $rxtodsink_pins]
-                   if {[string match -nocase [hsi get_property IP_NAME $rx_per3] "axis_dwidth_converter"]} {
-                           set port_pins [get_sink_pins [hsi::get_pins -of_objects [hsi::get_cells -hier $rx_per3] "m_axis_tdata"]]
-                           set rx_axis_per3 [hsi::get_cells -of_objects $port_pins]
-                           if {[string match -nocase [hsi get_property IP_NAME $rx_axis_per3] "axis_clock_converter"]} {
-                                   set rx_ip3 [get_connected_stream_ip [hsi::get_cells -hier $rx_axis_per3] "M_AXIS"]
-                                   if {[llength $rx_ip3]} {
-                                           add_prop "$mrmac3_node" "xlnx,rxtsfifo" $rx_ip3 reference $dts_file
-                                }
-                        }
-                }
-        }
-        }
-        } else {
-                dtg_warning "rx_timestamp_tod_3 connected pins are NULL...please check the design..."
-        }
+
            if {[llength $handle]} {
-                   add_prop "$mrmac3_node" "xlnx,gtctrl" $handle reference $dts_file
+                   add_prop "$current_port_node" "xlnx,gtctrl" $handle reference $dts_file
            }
            if {[llength $mask_handle]} {
-                   add_prop "$mrmac3_node" "xlnx,gtpll" $mask_handle reference $dts_file
+                   add_prop "$current_port_node" "xlnx,gtpll" $mask_handle reference $dts_file
            }
            if {[llength $gt_reset_per]} {
-                   add_prop "$mrmac3_node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
+                   add_prop "$current_port_node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
            }
            if {[llength $gt_pll_per]} {
-                   add_prop "$mrmac3_node" "xlnx,gtpll" $gt_pll_per reference $dts_file
+                   add_prop "$current_port_node" "xlnx,gtpll" $gt_pll_per reference $dts_file
            }
 
-           add_prop "$mrmac3_node" "xlnx,phcindex" 3 int $dts_file
-           add_prop "$mrmac3_node" "xlnx,gtlane" 3 int $dts_file
-        lappend clknames3 "$s_axi_aclk" "$rx_axi_clk3" "$rx_flexif_clk3" "$rx_ts_clk3" "$tx_axi_clk3" "$tx_flexif_clk3" "$tx_ts_clk3"
-        set index3 [lindex $clk_list $s_axi_aclk_index0]
-        set txindex3 [lindex $clk_list $tx_ts_clk_index3]
-        regsub -all "\," $txindex3 {} txindex3
-        append clkvals3  "$index3 [lindex $clk_list $rx_axi_clk_index3] [lindex $clk_list $rx_flexif_clk_index3] [lindex $clk_list $rx_ts_clk3_index3] [lindex $clk_list $tx_axi_clk_index3] [lindex $clk_list $tx_flexif_clk_index3] $txindex3"
-        add_prop "${mrmac3_node}" "clocks" $clkvals3 noformating $dts_file
-        add_prop "${mrmac3_node}" "clock-names" $clknames3 stringlist $dts_file
-
-
-        set gt_mode [hsi get_property CONFIG.GT_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        set gt_mode [split $gt_mode " "]
-        set gt_mode [lindex $gt_mode 0]
-        add_prop "${mrmac3_node}" "xlnx,gt-mode" $gt_mode string $dts_file
-
-        set port0_dpath [hsi get_property CONFIG.MRMAC_DATA_PATH_INTERFACE_PORT3_C0  [hsi::get_cells -hier $drv_handle]]
-        set port0_dpath [split $port0_dpath " "]
-        set port0_dwidth [lindex $port0_dpath 1]
-        set port0_dwidth [string trimright $port0_dwidth "b"]
-        add_prop "${mrmac3_node}" "xlnx,axistream-dwidth" $port0_dwidth int $dts_file
-
-        set FEC_SLICE3_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE3_CFG_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-slice3-cfg-c0" $FEC_SLICE3_CFG_C0 string $dts_file
-        set FEC_SLICE3_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE3_CFG_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-slice3-cfg-c1" $FEC_SLICE3_CFG_C1 string $dts_file
-        set FLEX_PORT3_DATA_RATE_C0 [hsi get_property CONFIG.C_FLEX_PORT3_DATA_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-port3-data-rate-c0" $FLEX_PORT3_DATA_RATE_C0 string $dts_file
-        set FLEX_PORT3_DATA_RATE_C1 [hsi get_property CONFIG.C_FLEX_PORT3_DATA_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-port3-data-rate-c1" $FLEX_PORT3_DATA_RATE_C1 string $dts_file
-        set FLEX_PORT3_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.C_FLEX_PORT3_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-port3-enable-time-stamping-c0" $FLEX_PORT3_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set FLEX_PORT3_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.C_FLEX_PORT3_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-port3-enable-time-stamping-c1" $FLEX_PORT3_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set FLEX_PORT3_MODE_C0 [hsi get_property CONFIG.C_FLEX_PORT3_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-port3-mode-c0" $FLEX_PORT3_MODE_C0 string $dts_file
-        set FLEX_PORT3_MODE_C1 [hsi get_property CONFIG.C_FLEX_PORT3_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,flex-port3-mode-c1" $FLEX_PORT3_MODE_C1 string $dts_file
-        set PORT3_1588v2_Clocking_C0 [hsi get_property CONFIG.PORT3_1588v2_Clocking_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,port3-1588v2-clocking-c0" $PORT3_1588v2_Clocking_C0 string $dts_file
-        set PORT3_1588v2_Clocking_C1 [hsi get_property CONFIG.PORT3_1588v2_Clocking_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,port3-1588v2-clocking-c1" $PORT3_1588v2_Clocking_C1 string $dts_file
-        set PORT3_1588v2_Operation_MODE_C0 [hsi get_property CONFIG.PORT3_1588v2_Operation_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,port3-1588v2-operation-mode-c0" $PORT3_1588v2_Operation_MODE_C0 string $dts_file
-        set PORT3_1588v2_Operation_MODE_C1 [hsi get_property CONFIG.PORT3_1588v2_Operation_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,port3-1588v2-operation-mode-c1" $PORT3_1588v2_Operation_MODE_C1 string $dts_file
-        set MAC_PORT3_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.MAC_PORT3_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-enable-time-stamping-c0" $MAC_PORT3_ENABLE_TIME_STAMPING_C0 int $dts_file
-        set MAC_PORT3_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.MAC_PORT3_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-enable-time-stamping-c1" $MAC_PORT3_ENABLE_TIME_STAMPING_C1 int $dts_file
-        set MAC_PORT3_RATE_C0 [hsi get_property CONFIG.MAC_PORT3_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        if {[string match -nocase $MAC_PORT3_RATE_C0 "10GE"]} {
-                   set number 10000
-                add_prop "${mrmac3_node}" "max-speed" $number int $dts_file
-        } elseif {[string match -nocase $MAC_PORT0_RATE_C0 "25GE"]} {
-                set number 25000
-                add_prop "${mrmac3_node}" "max-speed" $number int $dts_file
+           add_prop "$current_port_node" "xlnx,phcindex" $port_index int $dts_file
+           add_prop "$current_port_node" "xlnx,gtlane" $port_index int $dts_file
+           lappend mrmac_list "$current_port_node"
         }
-        set MAC_PORT3_RATE_C1 [hsi get_property CONFIG.MAC_PORT3_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rate-c1" $MAC_PORT3_RATE_C1 string $dts_file
-        set MAC_PORT3_RX_ETYPE_GCP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-gcp-c0" $MAC_PORT3_RX_ETYPE_GCP_C0 int $dts_file
-        set MAC_PORT3_RX_ETYPE_GCP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-gcp-c1" $MAC_PORT3_RX_ETYPE_GCP_C1 int $dts_file
-        set MAC_PORT3_RX_ETYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-gpp-c0" $MAC_PORT3_RX_ETYPE_GPP_C0 int $dts_file
-        set MAC_PORT3_RX_ETYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-gpp-c1" $MAC_PORT3_RX_ETYPE_GPP_C1 int $dts_file
-        set MAC_PORT3_RX_ETYPE_PCP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-pcp-c0" $MAC_PORT3_RX_ETYPE_PCP_C0 int $dts_file
-        set MAC_PORT3_RX_ETYPE_PCP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-pcp-c1" $MAC_PORT3_RX_ETYPE_PCP_C1 int $dts_file
-        set MAC_PORT3_RX_ETYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-ppp-c0" $MAC_PORT3_RX_ETYPE_PPP_C0 int $dts_file
-        set MAC_PORT3_RX_ETYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_ETYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-etype-ppp-c1" $MAC_PORT3_RX_ETYPE_PPP_C1 int $dts_file
-        set MAC_PORT3_RX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT3_RX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-flow-c0" $MAC_PORT3_RX_FLOW_C0 int $dts_file
-        set MAC_PORT3_RX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT3_RX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-flow-c1" $MAC_PORT3_RX_FLOW_C1 int $dts_file
-        set MAC_PORT3_RX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-gpp-c0" $MAC_PORT3_RX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT3_RX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-gpp-c1" $MAC_PORT3_RX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT3_RX_OPCODE_MAX_GCP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MAX_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-max-gcp-c0" $MAC_PORT3_RX_OPCODE_MAX_GCP_C0 int $dts_file
-        set MAC_PORT3_RX_OPCODE_MAX_GCP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MAX_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-max-gcp-c1" $MAC_PORT3_RX_OPCODE_MAX_GCP_C1 int $dts_file
-        set MAC_PORT3_RX_OPCODE_MAX_PCP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MAX_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-max-pcp-c0" $MAC_PORT3_RX_OPCODE_MAX_PCP_C0 int $dts_file
 
-        set MAC_PORT3_RX_OPCODE_MAX_PCP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MAX_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-max-pcp-c1" $MAC_PORT3_RX_OPCODE_MAX_PCP_C1 int $dts_file
-        set MAC_PORT3_RX_OPCODE_MIN_GCP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MIN_GCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-min-gcp-c0" $MAC_PORT3_RX_OPCODE_MIN_GCP_C0 int $dts_file
-        set MAC_PORT3_RX_OPCODE_MIN_GCP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MIN_GCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-min-gcp-c1" $MAC_PORT3_RX_OPCODE_MIN_GCP_C1 int $dts_file
-        set MAC_PORT3_RX_OPCODE_MIN_PCP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MIN_PCP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-min-pcp-c0" $MAC_PORT3_RX_OPCODE_MIN_PCP_C0 int $dts_file
-        set MAC_PORT3_RX_OPCODE_MIN_PCP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_MIN_PCP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-min-pcp-c1" $MAC_PORT3_RX_OPCODE_MIN_PCP_C1 int $dts_file
-        set MAC_PORT3_RX_OPCODE_PPP_C0 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-ppp-c0" $MAC_PORT3_RX_OPCODE_PPP_C0 int $dts_file
-        set MAC_PORT3_RX_OPCODE_PPP_C1 [hsi get_property CONFIG.MAC_PORT3_RX_OPCODE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-opcode-ppp-c1" $MAC_PORT3_RX_OPCODE_PPP_C1 int $dts_file
-        set MAC_PORT3_RX_PAUSE_DA_MCAST_C0 [hsi get_property CONFIG.MAC_PORT3_RX_PAUSE_DA_MCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_RX_PAUSE_DA_MCAST_C0 [mrmac_check_size $MAC_PORT3_RX_PAUSE_DA_MCAST_C0 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-pause-da-mcast-c0" $MAC_PORT3_RX_PAUSE_DA_MCAST_C0 int $dts_file
-        set MAC_PORT3_RX_PAUSE_DA_MCAST_C1 [hsi get_property CONFIG.MAC_PORT3_RX_PAUSE_DA_MCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_RX_PAUSE_DA_MCAST_C1 [mrmac_check_size $MAC_PORT3_RX_PAUSE_DA_MCAST_C1 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-pause-da-mcast-c1" $MAC_PORT3_RX_PAUSE_DA_MCAST_C1 int $dts_file
-        set MAC_PORT3_RX_PAUSE_DA_UCAST_C0 [hsi get_property CONFIG.MAC_PORT3_RX_PAUSE_DA_UCAST_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_RX_PAUSE_DA_UCAST_C0 [mrmac_check_size $MAC_PORT3_RX_PAUSE_DA_UCAST_C0 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-pause-da-ucast-c0" $MAC_PORT3_RX_PAUSE_DA_UCAST_C0 int $dts_file
-        set MAC_PORT3_RX_PAUSE_DA_UCAST_C1 [hsi get_property CONFIG.MAC_PORT3_RX_PAUSE_DA_UCAST_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_RX_PAUSE_DA_UCAST_C1 [mrmac_check_size $MAC_PORT3_RX_PAUSE_DA_UCAST_C1 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-pause-da-ucast-c1" $MAC_PORT3_RX_PAUSE_DA_UCAST_C1 int $dts_file
-        set MAC_PORT3_RX_PAUSE_SA_C0 [hsi get_property CONFIG.MAC_PORT3_RX_PAUSE_SA_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_RX_PAUSE_SA_C0 [mrmac_check_size $MAC_PORT3_RX_PAUSE_SA_C0 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-pause-sa-c0" $MAC_PORT3_RX_PAUSE_SA_C0 int $dts_file
-        set MAC_PORT3_RX_PAUSE_SA_C1 [hsi get_property CONFIG.MAC_PORT3_RX_PAUSE_SA_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_RX_PAUSE_SA_C1 [mrmac_check_size $MAC_PORT3_RX_PAUSE_SA_C1 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-rx-pause-sa-c1" $MAC_PORT3_RX_PAUSE_SA_C1 int $dts_file
-        set MAC_PORT3_TX_DA_GPP_C0 [hsi get_property CONFIG.MAC_PORT3_TX_DA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_DA_GPP_C0 [mrmac_check_size $MAC_PORT3_TX_DA_GPP_C0 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-da-gpp-c0" $MAC_PORT3_TX_DA_GPP_C0 int $dts_file
-        set MAC_PORT3_TX_DA_GPP_C1 [hsi get_property CONFIG.MAC_PORT3_TX_DA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_DA_GPP_C1 [mrmac_check_size $MAC_PORT3_TX_DA_GPP_C1 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-da-gpp-c1" $MAC_PORT3_TX_DA_GPP_C1 int $dts_file
-        set MAC_PORT3_TX_DA_PPP_C0 [hsi get_property CONFIG.MAC_PORT3_TX_DA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_DA_PPP_C0 [mrmac_check_size $MAC_PORT3_TX_DA_PPP_C0 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-da-ppp-c0" $MAC_PORT3_TX_DA_PPP_C0 int $dts_file
-        set MAC_PORT3_TX_DA_PPP_C1 [hsi get_property CONFIG.MAC_PORT3_TX_DA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_DA_PPP_C1 [mrmac_check_size $MAC_PORT3_TX_DA_PPP_C1 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-da-ppp-c1" $MAC_PORT3_TX_DA_PPP_C1 int $dts_file
-        set MAC_PORT3_TX_ETHERTYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT3_TX_ETHERTYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-ethertype-gpp-c0" $MAC_PORT3_TX_ETHERTYPE_GPP_C0 int $dts_file
-        set MAC_PORT3_TX_ETHERTYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT3_TX_ETHERTYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-ethertype-gpp-c1" $MAC_PORT3_TX_ETHERTYPE_GPP_C1 int $dts_file
-        set MAC_PORT3_TX_ETHERTYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT3_TX_ETHERTYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-ethertype-ppp-c0" $MAC_PORT3_TX_ETHERTYPE_PPP_C0 int $dts_file
-        set MAC_PORT3_TX_ETHERTYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT3_TX_ETHERTYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-ethertype-ppp-c1" $MAC_PORT3_TX_ETHERTYPE_PPP_C1 int $dts_file
-        set MAC_PORT3_TX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT3_TX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-flow-c0" $MAC_PORT3_TX_FLOW_C0 int $dts_file
-        set MAC_PORT3_TX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT3_TX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-flow-c1" $MAC_PORT3_TX_FLOW_C1 int $dts_file
-        set MAC_PORT3_TX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT3_TX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-opcode-gpp-c0" $MAC_PORT3_TX_OPCODE_GPP_C0 int $dts_file
-        set MAC_PORT3_TX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT3_TX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-opcode-gpp-c1" $MAC_PORT2_TX_OPCODE_GPP_C1 int $dts_file
-        set MAC_PORT3_TX_SA_GPP_C0 [hsi get_property CONFIG.MAC_PORT3_TX_SA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_SA_GPP_C0 [mrmac_check_size $MAC_PORT3_TX_SA_GPP_C0 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-sa-gpp-c0" $MAC_PORT3_TX_SA_GPP_C0 int $dts_file
-        set MAC_PORT3_TX_SA_GPP_C1 [hsi get_property CONFIG.MAC_PORT3_TX_SA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_SA_GPP_C1 [mrmac_check_size $MAC_PORT3_TX_SA_GPP_C1 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-sa-gpp-c1" $MAC_PORT3_TX_SA_GPP_C1 int $dts_file
-        set MAC_PORT3_TX_SA_PPP_C0 [hsi get_property CONFIG.MAC_PORT3_TX_SA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_SA_PPP_C0 [mrmac_check_size $MAC_PORT3_TX_SA_PPP_C0 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-sa-ppp-c0" $MAC_PORT3_TX_SA_PPP_C0 int $dts_file
-        set MAC_PORT3_TX_SA_PPP_C1 [hsi get_property CONFIG.MAC_PORT3_TX_SA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
-        set MAC_PORT3_TX_SA_PPP_C1 [mrmac_check_size $MAC_PORT3_TX_SA_PPP_C1 $mrmac3_node]
-        add_prop "${mrmac3_node}" "xlnx,mac-port3-tx-sa-ppp-c1" $MAC_PORT3_TX_SA_PPP_C1 int $dts_file
-        set GT_CH3_RXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH3_RXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rxprogdiv-freq-enable-c0" $GT_CH3_RXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-        set GT_CH3_RXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH3_RXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rxprogdiv-freq-enable-c1" $GT_CH3_RXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-
-        set GT_CH3_RXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH3_RXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rxprogdiv-freq-source-c0" $GT_CH3_RXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH3_RXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH3_RXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rxprogdiv-freq-source-c1" $GT_CH3_RXPROGDIV_FREQ_SOURCE_C1 string $dts_file
-        set GT_CH3_RXPROGDIV_FREQ_VAL_C0 [hsi get_property CONFIG.GT_CH3_RXPROGDIV_FREQ_VAL_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rxprogdiv-freq-val-c0" $GT_CH3_RXPROGDIV_FREQ_VAL_C0 string $dts_file
-        set GT_CH3_RXPROGDIV_FREQ_VAL_C1 [hsi get_property CONFIG.GT_CH3_RXPROGDIV_FREQ_VAL_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rxprogdiv-freq-val-c1" $GT_CH3_RXPROGDIV_FREQ_VAL_C1 string $dts_file
-        set GT_CH3_RX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH3_RX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-buffer-mode-c0" $GT_CH3_RX_BUFFER_MODE_C0 int $dts_file
-        set GT_CH3_RX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH3_RX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-buffer-mode-c1" $GT_CH3_RX_BUFFER_MODE_C1 int $dts_file
-        set GT_CH3_RX_DATA_DECODING_C0 [hsi get_property CONFIG.GT_CH3_RX_DATA_DECODING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-data-decoding-c0" $GT_CH3_RX_DATA_DECODING_C0 string $dts_file
-        set GT_CH3_RX_DATA_DECODING_C1 [hsi get_property CONFIG.GT_CH3_RX_DATA_DECODING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-data-decoding-c1" $GT_CH3_RX_DATA_DECODING_C1 string $dts_file
-
-
-        set GT_CH3_RX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH3_RX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-int-data-width-c0" $GT_CH3_RX_INT_DATA_WIDTH_C0 int $dts_file
-        set GT_CH3_RX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH3_RX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-int-data-width-c1" $GT_CH3_RX_INT_DATA_WIDTH_C1 int $dts_file
-
-
-        set GT_CH3_RX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH3_RX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-line-rate-c0" $GT_CH3_RX_LINE_RATE_C0 string $dts_file
-        set GT_CH3_RX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH3_RX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-line-rate-c1" $GT_CH3_RX_LINE_RATE_C1 string $dts_file
-
-
-        set GT_CH3_RX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH3_RX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-outclk-source-c0" $GT_CH3_RX_OUTCLK_SOURCE_C0 string $dts_file
-        set GT_CH3_RX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH3_RX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-outclk-source-c1" $GT_CH3_RX_OUTCLK_SOURCE_C1 string $dts_file
-
-
-        set GT_CH3_RX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH3_RX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-refclk-frequency-c0" $GT_CH3_RX_REFCLK_FREQUENCY_C0 string $dts_file
-        set GT_CH3_RX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH3_RX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-refclk-frequency-c1" $GT_CH3_RX_REFCLK_FREQUENCY_C1 string $dts_file
-
-
-        set GT_CH3_RX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH3_RX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-user-data-width-c0" $GT_CH3_RX_USER_DATA_WIDTH_C0 string $dts_file
-        set GT_CH3_RX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH3_RX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-rx-user-data-width-c1" $GT_CH3_RX_USER_DATA_WIDTH_C1 string $dts_file
-
-        set GT_CH3_TXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH3_TXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-txprogdiv-freq-enable-c0" $GT_CH3_TXPROGDIV_FREQ_ENABLE_C0 string $dts_file
-        set GT_CH3_TXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH3_TXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-txprogdiv-freq-enable-c1" $GT_CH3_TXPROGDIV_FREQ_ENABLE_C1 string $dts_file
-
-
-        set GT_CH3_TXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH3_TXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-txprogdiv-freq-source-c0" $GT_CH3_TXPROGDIV_FREQ_SOURCE_C0 string $dts_file
-        set GT_CH3_TXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH3_TXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-txprogdiv-freq-source-c1" $GT_CH3_TXPROGDIV_FREQ_SOURCE_C1 string $dts_file
-        
-        set GT_CH3_TX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH3_TX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-buffer-mode-c0" $GT_CH3_TX_BUFFER_MODE_C0 int $dts_file
-        set GT_CH3_TX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH3_TX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-buffer-mode-c1" $GT_CH3_TX_BUFFER_MODE_C1 int $dts_file
-
-
-        set GT_CH3_TX_DATA_ENCODING_C0 [hsi get_property CONFIG.GT_CH3_TX_DATA_ENCODING_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-data-encoding-c0" $GT_CH3_TX_DATA_ENCODING_C0 string $dts_file
-        set GT_CH3_TX_DATA_ENCODING_C1 [hsi get_property CONFIG.GT_CH3_TX_DATA_ENCODING_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-data-encoding-c1" $GT_CH3_TX_DATA_ENCODING_C1 string $dts_file
-
-        set GT_CH3_TX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH3_TX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-int-data-width-c0" $GT_CH3_TX_INT_DATA_WIDTH_C0 int $dts_file
-        set GT_CH3_TX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH3_TX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-int-data-width-c1" $GT_CH3_TX_INT_DATA_WIDTH_C1 int $dts_file
-
-        set GT_CH3_TX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH3_TX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-line-rate-c0" $GT_CH3_TX_LINE_RATE_C0 string $dts_file
-        set GT_CH3_TX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH3_TX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-line-rate-c1" $GT_CH3_TX_LINE_RATE_C1 string $dts_file
-
-
-        set GT_CH3_TX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH3_TX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-outclk-source-c0" $GT_CH3_TX_OUTCLK_SOURCE_C0 string $dts_file
-        set GT_CH3_TX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH3_TX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-outclk-source-c1" $GT_CH3_TX_OUTCLK_SOURCE_C1 string $dts_file
-
-
-        set GT_CH3_TX_PLL_TYPE_C0 [hsi get_property CONFIG.GT_CH3_TX_PLL_TYPE_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-pll-type-c0" $GT_CH3_TX_PLL_TYPE_C0 string $dts_file
-        set GT_CH3_TX_PLL_TYPE_C1 [hsi get_property CONFIG.GT_CH3_TX_PLL_TYPE_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-pll-type-c1" $GT_CH3_TX_PLL_TYPE_C1 string $dts_file
-
-
-        set GT_CH3_TX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH3_TX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-refclk-frequency-c0" $GT_CH3_TX_REFCLK_FREQUENCY_C0 string $dts_file
-        set GT_CH3_TX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH3_TX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-refclk-frequency-c1" $GT_CH3_TX_REFCLK_FREQUENCY_C1 string $dts_file
-
-
-        set GT_CH3_TX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH3_TX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-user-data-width-c0" $GT_CH3_TX_USER_DATA_WIDTH_C0 int $dts_file
-        set GT_CH3_TX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH3_TX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
-        add_prop "${mrmac3_node}" "xlnx,gt-ch3-tx-user-data-width-c1" $GT_CH3_TX_USER_DATA_WIDTH_C1 int $dts_file
-
-	lappend mrmac_list "$node" "${mrmac1_node}" "${mrmac2_node}" "${mrmac3_node}"
 	set mcdma_ips [hsi::get_cells -hier -filter {IP_NAME == axi_mcdma}]
 	set len [llength $mcdma_ips]
 
@@ -1722,6 +386,314 @@
                 }
             }
         }
+     }
+
+
+    proc mrmac_add_port_properties {drv_handle node port_num dts_file} {
+        # Add all the port-specific properties
+
+        # FEC and FLEX properties
+        set FEC_SLICE_CFG_C0 [hsi get_property CONFIG.C_FEC_SLICE${port_num}_CFG_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-slice${port_num}-cfg-c0" $FEC_SLICE_CFG_C0 string $dts_file
+        set FEC_SLICE_CFG_C1 [hsi get_property CONFIG.C_FEC_SLICE${port_num}_CFG_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-slice${port_num}-cfg-c1" $FEC_SLICE_CFG_C1 string $dts_file
+
+        set FLEX_PORT_DATA_RATE_C0 [hsi get_property CONFIG.C_FLEX_PORT${port_num}_DATA_RATE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-port${port_num}-data-rate-c0" $FLEX_PORT_DATA_RATE_C0 string $dts_file
+        set FLEX_PORT_DATA_RATE_C1 [hsi get_property CONFIG.C_FLEX_PORT${port_num}_DATA_RATE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-port${port_num}-data-rate-c1" $FLEX_PORT_DATA_RATE_C1 string $dts_file
+
+        set FLEX_PORT_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.C_FLEX_PORT${port_num}_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-port${port_num}-enable-time-stamping-c0" $FLEX_PORT_ENABLE_TIME_STAMPING_C0 int $dts_file
+        set FLEX_PORT_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.C_FLEX_PORT${port_num}_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-port${port_num}-enable-time-stamping-c1" $FLEX_PORT_ENABLE_TIME_STAMPING_C1 int $dts_file
+
+        set FLEX_PORT_MODE_C0 [hsi get_property CONFIG.C_FLEX_PORT${port_num}_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-port${port_num}-mode-c0" $FLEX_PORT_MODE_C0 string $dts_file
+        set FLEX_PORT_MODE_C1 [hsi get_property CONFIG.C_FLEX_PORT${port_num}_MODE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,flex-port${port_num}-mode-c1" $FLEX_PORT_MODE_C1 string $dts_file
+
+        # PORT 1588v2 properties
+        set PORT_1588v2_Clocking_C0 [hsi get_property CONFIG.PORT${port_num}_1588v2_Clocking_C0 [hsi::get_cells -hier $drv_handle]]
+        set PORT_1588v2_Clocking_C1 [hsi get_property CONFIG.PORT${port_num}_1588v2_Clocking_C1 [hsi::get_cells -hier $drv_handle]]
+
+        set PORT_1588v2_Operation_MODE_C0 [hsi get_property CONFIG.PORT${port_num}_1588v2_Operation_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        set PORT_1588v2_Operation_MODE_C1 [hsi get_property CONFIG.PORT${port_num}_1588v2_Operation_MODE_C1 [hsi::get_cells -hier $drv_handle]]
+        if {$port_num == 0} {
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-clocking-c0" $PORT_1588v2_Clocking_C0 noformating $dts_file
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-clocking-c1" $PORT_1588v2_Clocking_C1 noformating $dts_file
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-operation-mode-c0" $PORT_1588v2_Operation_MODE_C0 noformating $dts_file
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-operation-mode-c1" $PORT_1588v2_Operation_MODE_C1 noformating $dts_file
+	} else {
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-clocking-c0" $PORT_1588v2_Clocking_C0 string $dts_file
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-clocking-c1" $PORT_1588v2_Clocking_C1 string $dts_file
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-operation-mode-c0" $PORT_1588v2_Operation_MODE_C0 string $dts_file
+                add_prop "${node}" "xlnx,port${port_num}-1588v2-operation-mode-c1" $PORT_1588v2_Operation_MODE_C1 string $dts_file
+	}
+        # MAC PORT properties
+        set MAC_PORT_ENABLE_TIME_STAMPING_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_ENABLE_TIME_STAMPING_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-enable-time-stamping-c0" $MAC_PORT_ENABLE_TIME_STAMPING_C0 int $dts_file
+        set MAC_PORT_ENABLE_TIME_STAMPING_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_ENABLE_TIME_STAMPING_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-enable-time-stamping-c1" $MAC_PORT_ENABLE_TIME_STAMPING_C1 int $dts_file
+
+        set MAC_PORT_RATE_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RATE_C0 [hsi::get_cells -hier $drv_handle]]
+        if {[string match -nocase $MAC_PORT_RATE_C0 "10GE"]} {
+            set number 10000
+            add_prop "${node}" "max-speed" $number int $dts_file
+        } elseif {[string match -nocase $MAC_PORT_RATE_C0 "25GE"]} {
+            set number 25000
+            add_prop "${node}" "max-speed" $number int $dts_file
+        }
+        add_prop "${node}" "xlnx,mac-port${port_num}-rate-c0" $MAC_PORT_RATE_C0 string $dts_file
+        set MAC_PORT_RATE_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RATE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rate-c1" $MAC_PORT_RATE_C1 string $dts_file
+
+        # RX ETYPE properties
+        set MAC_PORT_RX_ETYPE_GCP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_GCP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-gcp-c0" $MAC_PORT_RX_ETYPE_GCP_C0 int $dts_file
+        set MAC_PORT_RX_ETYPE_GCP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_GCP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-gcp-c1" $MAC_PORT_RX_ETYPE_GCP_C1 int $dts_file
+        set MAC_PORT_RX_ETYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-gpp-c0" $MAC_PORT_RX_ETYPE_GPP_C0 int $dts_file
+        set MAC_PORT_RX_ETYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-gpp-c1" $MAC_PORT_RX_ETYPE_GPP_C1 int $dts_file
+        set MAC_PORT_RX_ETYPE_PCP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_PCP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-pcp-c0" $MAC_PORT_RX_ETYPE_PCP_C0 int $dts_file
+        set MAC_PORT_RX_ETYPE_PCP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_PCP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-pcp-c1" $MAC_PORT_RX_ETYPE_PCP_C1 int $dts_file
+        set MAC_PORT_RX_ETYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-ppp-c0" $MAC_PORT_RX_ETYPE_PPP_C0 int $dts_file
+        set MAC_PORT_RX_ETYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_ETYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-etype-ppp-c1" $MAC_PORT_RX_ETYPE_PPP_C1 int $dts_file
+
+        # RX FLOW properties
+        set MAC_PORT_RX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-flow-c0" $MAC_PORT_RX_FLOW_C0 int $dts_file
+        set MAC_PORT_RX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-flow-c1" $MAC_PORT_RX_FLOW_C1 int $dts_file
+
+        # RX OPCODE properties
+        set MAC_PORT_RX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-gpp-c0" $MAC_PORT_RX_OPCODE_GPP_C0 int $dts_file
+        set MAC_PORT_RX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-gpp-c1" $MAC_PORT_RX_OPCODE_GPP_C1 int $dts_file
+        set MAC_PORT_RX_OPCODE_MAX_GCP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MAX_GCP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-max-gcp-c0" $MAC_PORT_RX_OPCODE_MAX_GCP_C0 int $dts_file
+        set MAC_PORT_RX_OPCODE_MAX_GCP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MAX_GCP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-max-gcp-c1" $MAC_PORT_RX_OPCODE_MAX_GCP_C1 int $dts_file
+        set MAC_PORT_RX_OPCODE_MAX_PCP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MAX_PCP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-max-pcp-c0" $MAC_PORT_RX_OPCODE_MAX_PCP_C0 int $dts_file
+        set MAC_PORT_RX_OPCODE_MAX_PCP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MAX_PCP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-max-pcp-c1" $MAC_PORT_RX_OPCODE_MAX_PCP_C1 int $dts_file
+        set MAC_PORT_RX_OPCODE_MIN_GCP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MIN_GCP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-min-gcp-c0" $MAC_PORT_RX_OPCODE_MIN_GCP_C0 int $dts_file
+        set MAC_PORT_RX_OPCODE_MIN_GCP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MIN_GCP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-min-gcp-c1" $MAC_PORT_RX_OPCODE_MIN_GCP_C1 int $dts_file
+        set MAC_PORT_RX_OPCODE_MIN_PCP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MIN_PCP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-min-pcp-c0" $MAC_PORT_RX_OPCODE_MIN_PCP_C0 int $dts_file
+        set MAC_PORT_RX_OPCODE_MIN_PCP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_MIN_PCP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-min-pcp-c1" $MAC_PORT_RX_OPCODE_MIN_PCP_C1 int $dts_file
+        set MAC_PORT_RX_OPCODE_PPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-ppp-c0" $MAC_PORT_RX_OPCODE_PPP_C0 int $dts_file
+        set MAC_PORT_RX_OPCODE_PPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_OPCODE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-rx-opcode-ppp-c1" $MAC_PORT_RX_OPCODE_PPP_C1 int $dts_file
+
+        # RX PAUSE properties (with mrmac_check_size)
+        set MAC_PORT_RX_PAUSE_DA_MCAST_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_PAUSE_DA_MCAST_C0 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_RX_PAUSE_DA_MCAST_C0 [mrmac_check_size $MAC_PORT_RX_PAUSE_DA_MCAST_C0 $node]
+        set MAC_PORT_RX_PAUSE_DA_MCAST_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_PAUSE_DA_MCAST_C1 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_RX_PAUSE_DA_MCAST_C1 [mrmac_check_size $MAC_PORT_RX_PAUSE_DA_MCAST_C1 $node]
+        set MAC_PORT_RX_PAUSE_DA_UCAST_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_PAUSE_DA_UCAST_C0 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_RX_PAUSE_DA_UCAST_C0 [mrmac_check_size $MAC_PORT_RX_PAUSE_DA_UCAST_C0 $node]
+        set MAC_PORT_RX_PAUSE_DA_UCAST_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_PAUSE_DA_UCAST_C1 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_RX_PAUSE_DA_UCAST_C1 [mrmac_check_size $MAC_PORT_RX_PAUSE_DA_UCAST_C1 $node]
+        set MAC_PORT_RX_PAUSE_SA_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_PAUSE_SA_C0 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_RX_PAUSE_SA_C0 [mrmac_check_size $MAC_PORT_RX_PAUSE_SA_C0 $node]
+        set MAC_PORT_RX_PAUSE_SA_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_RX_PAUSE_SA_C1 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_RX_PAUSE_SA_C1 [mrmac_check_size $MAC_PORT_RX_PAUSE_SA_C1 $node]
+	if {$port_num == 0} {
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-mcast-c0" $MAC_PORT_RX_PAUSE_DA_MCAST_C0 noformating $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-mcast-c1" $MAC_PORT_RX_PAUSE_DA_MCAST_C1 noformating $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-ucast-c0" $MAC_PORT_RX_PAUSE_DA_UCAST_C0 noformating $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-ucast-c1" $MAC_PORT_RX_PAUSE_DA_UCAST_C1 noformating $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-sa-c0" $MAC_PORT_RX_PAUSE_SA_C0 noformating $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-sa-c1" $MAC_PORT_RX_PAUSE_SA_C1 noformating $dts_file
+	} else {
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-mcast-c0" $MAC_PORT_RX_PAUSE_DA_MCAST_C0 int $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-mcast-c1" $MAC_PORT_RX_PAUSE_DA_MCAST_C1 int $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-ucast-c0" $MAC_PORT_RX_PAUSE_DA_UCAST_C0 int $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-da-ucast-c1" $MAC_PORT_RX_PAUSE_DA_UCAST_C1 int $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-sa-c0" $MAC_PORT_RX_PAUSE_SA_C0 int $dts_file
+             add_prop "${node}" "xlnx,mac-port${port_num}-rx-pause-sa-c1" $MAC_PORT_RX_PAUSE_SA_C1 int $dts_file
+	}
+
+        # TX DA properties (with mrmac_check_size)
+        set MAC_PORT_TX_DA_GPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_DA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_DA_GPP_C0 [mrmac_check_size $MAC_PORT_TX_DA_GPP_C0 $node]
+        set MAC_PORT_TX_DA_GPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_DA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_DA_GPP_C1 [mrmac_check_size $MAC_PORT_TX_DA_GPP_C1 $node]
+        set MAC_PORT_TX_DA_PPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_DA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_DA_PPP_C0 [mrmac_check_size $MAC_PORT_TX_DA_PPP_C0 $node]
+        set MAC_PORT_TX_DA_PPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_DA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_DA_PPP_C1 [mrmac_check_size $MAC_PORT_TX_DA_PPP_C1 $node]
+	if {$port_num == 0} {
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-gpp-c0" $MAC_PORT_TX_DA_GPP_C0 noformating $dts_file
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-gpp-c1" $MAC_PORT_TX_DA_GPP_C1 noformating $dts_file
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-ppp-c0" $MAC_PORT_TX_DA_PPP_C0 noformating $dts_file
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-ppp-c1" $MAC_PORT_TX_DA_PPP_C1 noformating $dts_file
+	} else {
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-gpp-c0" $MAC_PORT_TX_DA_GPP_C0 int $dts_file
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-gpp-c1" $MAC_PORT_TX_DA_GPP_C1 int $dts_file
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-ppp-c0" $MAC_PORT_TX_DA_PPP_C0 int $dts_file
+              add_prop "${node}" "xlnx,mac-port${port_num}-tx-da-ppp-c1" $MAC_PORT_TX_DA_PPP_C1 int $dts_file
+	}
+
+
+        # TX ETHERTYPE properties
+        set MAC_PORT_TX_ETHERTYPE_GPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_ETHERTYPE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-ethertype-gpp-c0" $MAC_PORT_TX_ETHERTYPE_GPP_C0 int $dts_file
+        set MAC_PORT_TX_ETHERTYPE_GPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_ETHERTYPE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-ethertype-gpp-c1" $MAC_PORT_TX_ETHERTYPE_GPP_C1 int $dts_file
+        set MAC_PORT_TX_ETHERTYPE_PPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_ETHERTYPE_PPP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-ethertype-ppp-c0" $MAC_PORT_TX_ETHERTYPE_PPP_C0 int $dts_file
+        set MAC_PORT_TX_ETHERTYPE_PPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_ETHERTYPE_PPP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-ethertype-ppp-c1" $MAC_PORT_TX_ETHERTYPE_PPP_C1 int $dts_file
+
+        # TX FLOW properties
+        set MAC_PORT_TX_FLOW_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_FLOW_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-flow-c0" $MAC_PORT_TX_FLOW_C0 int $dts_file
+        set MAC_PORT_TX_FLOW_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_FLOW_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-flow-c1" $MAC_PORT_TX_FLOW_C1 int $dts_file
+
+        # TX OPCODE properties
+        set MAC_PORT_TX_OPCODE_GPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_OPCODE_GPP_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-opcode-gpp-c0" $MAC_PORT_TX_OPCODE_GPP_C0 int $dts_file
+        set MAC_PORT_TX_OPCODE_GPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_OPCODE_GPP_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,mac-port${port_num}-tx-opcode-gpp-c1" $MAC_PORT_TX_OPCODE_GPP_C1 int $dts_file
+
+        # TX SA properties (with mrmac_check_size)
+        set MAC_PORT_TX_SA_GPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_SA_GPP_C0 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_SA_GPP_C0 [mrmac_check_size $MAC_PORT_TX_SA_GPP_C0 $node]
+        set MAC_PORT_TX_SA_GPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_SA_GPP_C1 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_SA_GPP_C1 [mrmac_check_size $MAC_PORT_TX_SA_GPP_C1 $node]
+        set MAC_PORT_TX_SA_PPP_C0 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_SA_PPP_C0 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_SA_PPP_C0 [mrmac_check_size $MAC_PORT_TX_SA_PPP_C0 $node]
+        set MAC_PORT_TX_SA_PPP_C1 [hsi get_property CONFIG.MAC_PORT${port_num}_TX_SA_PPP_C1 [hsi::get_cells -hier $drv_handle]]
+        set MAC_PORT_TX_SA_PPP_C1 [mrmac_check_size $MAC_PORT_TX_SA_PPP_C1 $node]
+	if {$port_num == 0} {
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-gpp-c0" $MAC_PORT_TX_SA_GPP_C0 noformating $dts_file
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-gpp-c1" $MAC_PORT_TX_SA_GPP_C1 noformating $dts_file
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-ppp-c0" $MAC_PORT_TX_SA_PPP_C0 noformating $dts_file
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-ppp-c1" $MAC_PORT_TX_SA_PPP_C1 noformating $dts_file
+	} else {
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-gpp-c0" $MAC_PORT_TX_SA_GPP_C0 int $dts_file
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-gpp-c1" $MAC_PORT_TX_SA_GPP_C1 int $dts_file
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-ppp-c0" $MAC_PORT_TX_SA_PPP_C0 int $dts_file
+                add_prop "${node}" "xlnx,mac-port${port_num}-tx-sa-ppp-c1" $MAC_PORT_TX_SA_PPP_C1 int $dts_file
+	}
+
+        # GT Channel properties
+        set GT_CH_RXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH${port_num}_RXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-enable-c0" $GT_CH_RXPROGDIV_FREQ_ENABLE_C0 string $dts_file
+        set GT_CH_RXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH${port_num}_RXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-enable-c1" $GT_CH_RXPROGDIV_FREQ_ENABLE_C1 string $dts_file
+        set GT_CH_RXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH${port_num}_RXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-source-c0" $GT_CH_RXPROGDIV_FREQ_SOURCE_C0 string $dts_file
+        set GT_CH_RXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH${port_num}_RXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-source-c1" $GT_CH_RXPROGDIV_FREQ_SOURCE_C1 string $dts_file
+        set GT_CH_RXPROGDIV_FREQ_VAL_C0 [hsi get_property CONFIG.GT_CH${port_num}_RXPROGDIV_FREQ_VAL_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_RXPROGDIV_FREQ_VAL_C1 [hsi get_property CONFIG.GT_CH${port_num}_RXPROGDIV_FREQ_VAL_C1 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_RX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH${port_num}_RX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-buffer-mode-c0" $GT_CH_RX_BUFFER_MODE_C0 int $dts_file
+        set GT_CH_RX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH${port_num}_RX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-buffer-mode-c1" $GT_CH_RX_BUFFER_MODE_C1 int $dts_file
+        set GT_CH_RX_DATA_DECODING_C0 [hsi get_property CONFIG.GT_CH${port_num}_RX_DATA_DECODING_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-data-decoding-c0" $GT_CH_RX_DATA_DECODING_C0 string $dts_file
+        set GT_CH_RX_DATA_DECODING_C1 [hsi get_property CONFIG.GT_CH${port_num}_RX_DATA_DECODING_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-data-decoding-c1" $GT_CH_RX_DATA_DECODING_C1 string $dts_file
+        set GT_CH_RX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH${port_num}_RX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-int-data-width-c0" $GT_CH_RX_INT_DATA_WIDTH_C0 int $dts_file
+        set GT_CH_RX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH${port_num}_RX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-int-data-width-c1" $GT_CH_RX_INT_DATA_WIDTH_C1 int $dts_file
+        set GT_CH_RX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH${port_num}_RX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_RX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH${port_num}_RX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_RX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH${port_num}_RX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-outclk-source-c0" $GT_CH_RX_OUTCLK_SOURCE_C0 string $dts_file
+        set GT_CH_RX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH${port_num}_RX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-rx-outclk-source-c1" $GT_CH_RX_OUTCLK_SOURCE_C1 string $dts_file
+        set GT_CH_RX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH${port_num}_RX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_RX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH${port_num}_RX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_RX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH${port_num}_RX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_RX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH${port_num}_RX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
+	if {$port_num == 0} {
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-val-c0" $GT_CH_RXPROGDIV_FREQ_VAL_C0 noformating $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-val-c1" $GT_CH_RXPROGDIV_FREQ_VAL_C1 noformating $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-line-rate-c0" $GT_CH_RX_LINE_RATE_C0 noformating $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-line-rate-c1" $GT_CH_RX_LINE_RATE_C1 noformating $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-user-data-width-c0" $GT_CH_RX_USER_DATA_WIDTH_C0 int $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-user-data-width-c1" $GT_CH_RX_USER_DATA_WIDTH_C1 int $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-refclk-frequency-c0" $GT_CH_RX_REFCLK_FREQUENCY_C0 noformating $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-refclk-frequency-c1" $GT_CH_RX_REFCLK_FREQUENCY_C1 noformating $dts_file
+	} else {
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-val-c0" $GT_CH_RXPROGDIV_FREQ_VAL_C0 string $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rxprogdiv-freq-val-c1" $GT_CH_RXPROGDIV_FREQ_VAL_C1 string $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-line-rate-c0" $GT_CH_RX_LINE_RATE_C0 string $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-line-rate-c1" $GT_CH_RX_LINE_RATE_C1 string $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-user-data-width-c0" $GT_CH_RX_USER_DATA_WIDTH_C0 string $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-user-data-width-c1" $GT_CH_RX_USER_DATA_WIDTH_C1 string $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-refclk-frequency-c0" $GT_CH_RX_REFCLK_FREQUENCY_C0 string $dts_file
+                   add_prop "${node}" "xlnx,gt-ch${port_num}-rx-refclk-frequency-c1" $GT_CH_RX_REFCLK_FREQUENCY_C1 string $dts_file
+	}
+
+        # GT TX properties
+        set GT_CH_TXPROGDIV_FREQ_ENABLE_C0 [hsi get_property CONFIG.GT_CH${port_num}_TXPROGDIV_FREQ_ENABLE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-txprogdiv-freq-enable-c0" $GT_CH_TXPROGDIV_FREQ_ENABLE_C0 string $dts_file
+        set GT_CH_TXPROGDIV_FREQ_ENABLE_C1 [hsi get_property CONFIG.GT_CH${port_num}_TXPROGDIV_FREQ_ENABLE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-txprogdiv-freq-enable-c1" $GT_CH_TXPROGDIV_FREQ_ENABLE_C1 string $dts_file
+        set GT_CH_TXPROGDIV_FREQ_SOURCE_C0 [hsi get_property CONFIG.GT_CH${port_num}_TXPROGDIV_FREQ_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-txprogdiv-freq-source-c0" $GT_CH_TXPROGDIV_FREQ_SOURCE_C0 string $dts_file
+        set GT_CH_TXPROGDIV_FREQ_SOURCE_C1 [hsi get_property CONFIG.GT_CH${port_num}_TXPROGDIV_FREQ_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-txprogdiv-freq-source-c1" $GT_CH_TXPROGDIV_FREQ_SOURCE_C1 string $dts_file
+        set GT_CH_TXPROGDIV_FREQ_VAL_C0 [hsi get_property CONFIG.GT_CH${port_num}_TXPROGDIV_FREQ_VAL_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TXPROGDIV_FREQ_VAL_C1 [hsi get_property CONFIG.GT_CH${port_num}_TXPROGDIV_FREQ_VAL_C1 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_BUFFER_MODE_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_BUFFER_MODE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-buffer-mode-c0" $GT_CH_TX_BUFFER_MODE_C0 int $dts_file
+        set GT_CH_TX_BUFFER_MODE_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_BUFFER_MODE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-buffer-mode-c1" $GT_CH_TX_BUFFER_MODE_C1 int $dts_file
+        set GT_CH_TX_DATA_ENCODING_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_DATA_ENCODING_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-data-encoding-c0" $GT_CH_TX_DATA_ENCODING_C0 string $dts_file
+        set GT_CH_TX_DATA_ENCODING_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_DATA_ENCODING_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-data-encoding-c1" $GT_CH_TX_DATA_ENCODING_C1 string $dts_file
+        set GT_CH_TX_INT_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_INT_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_INT_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_INT_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_LINE_RATE_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_LINE_RATE_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_LINE_RATE_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_LINE_RATE_C1 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_OUTCLK_SOURCE_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_OUTCLK_SOURCE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-outclk-source-c0" $GT_CH_TX_OUTCLK_SOURCE_C0 string $dts_file
+        set GT_CH_TX_OUTCLK_SOURCE_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_OUTCLK_SOURCE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-outclk-source-c1" $GT_CH_TX_OUTCLK_SOURCE_C1 string $dts_file
+        set GT_CH_TX_PLL_TYPE_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_PLL_TYPE_C0 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-pll-type-c0" $GT_CH_TX_PLL_TYPE_C0 string $dts_file
+        set GT_CH_TX_PLL_TYPE_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_PLL_TYPE_C1 [hsi::get_cells -hier $drv_handle]]
+        add_prop "${node}" "xlnx,gt-ch${port_num}-tx-pll-type-c1" $GT_CH_TX_PLL_TYPE_C1 string $dts_file
+        set GT_CH_TX_REFCLK_FREQUENCY_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_REFCLK_FREQUENCY_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_REFCLK_FREQUENCY_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_REFCLK_FREQUENCY_C1 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_USER_DATA_WIDTH_C0 [hsi get_property CONFIG.GT_CH${port_num}_TX_USER_DATA_WIDTH_C0 [hsi::get_cells -hier $drv_handle]]
+        set GT_CH_TX_USER_DATA_WIDTH_C1 [hsi get_property CONFIG.GT_CH${port_num}_TX_USER_DATA_WIDTH_C1 [hsi::get_cells -hier $drv_handle]]
+	if {$port_num == 1 } {
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-txprogdiv-freq-val-c0" $GT_CH_TXPROGDIV_FREQ_VAL_C0 string $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-txprogdiv-freq-val-c1" $GT_CH_TXPROGDIV_FREQ_VAL_C1 string $dts_file
+	}
+	if {$port_num != 0} {
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-tx-refclk-frequency-c0" $GT_CH_TX_REFCLK_FREQUENCY_C0 string $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-tx-refclk-frequency-c1" $GT_CH_TX_REFCLK_FREQUENCY_C1 string $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-tx-user-data-width-c0" $GT_CH_TX_USER_DATA_WIDTH_C0 int $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-tx-user-data-width-c1" $GT_CH_TX_USER_DATA_WIDTH_C1 int $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-tx-line-rate-c0" $GT_CH_TX_LINE_RATE_C0 string $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-tx-line-rate-c1" $GT_CH_TX_LINE_RATE_C1 string $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-int-data-width-c0" $GT_CH_TX_INT_DATA_WIDTH_C0 int $dts_file
+                 add_prop "${node}" "xlnx,gt-ch${port_num}-int-data-width-c1" $GT_CH_TX_INT_DATA_WIDTH_C1 int $dts_file
+	}
     }
 
     proc mrmac_get_axistream_info {drv_handle node fifo_ip dts_file} {
@@ -2281,157 +1253,13 @@
         set_drv_prop_if_empty $drv_handle "zclock-names1" $clocknames $node stringlist
         set ip [get_ip_property $drv_handle IP_NAME]
         set len [llength $updat]
-        switch $len {
-                "1" {
-                        set refs [lindex $updat 0]
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "2" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "3" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "4" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "5" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "6" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "7" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "8" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "9" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "10" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "11" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "12" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "13" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "14" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "15" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "16" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "17" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "18" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "19" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "20" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "21" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "22" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "23" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "24" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]>, <&[lindex $updat 23]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "25" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]>, <&[lindex $updat 23]>, <&[lindex $updat 24]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "26" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]>, <&[lindex $updat 23]>, <&[lindex $updat 24]>, <&[lindex $updat 25]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "27" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]>, <&[lindex $updat 23]>, <&[lindex $updat 24]>, <&[lindex $updat 25]>, <&[lindex $updat 26]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "28" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]>, <&[lindex $updat 23]>, <&[lindex $updat 24]>, <&[lindex $updat 25]>, <&[lindex $updat 26]>,<&[lindex $updat 27]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "29" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]>, <&[lindex $updat 23]>, <&[lindex $updat 24]>, <&[lindex $updat 25]>, <&[lindex $updat 26]>,<&[lindex $updat 27]>, <&[lindex $updat 28]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-                "30" {
-                        set refs [lindex $updat 0]
-                        append refs ">, <&[lindex $updat 1]>, <&[lindex $updat 2]>, <&[lindex $updat 3]>, <&[lindex $updat 4]>, <&[lindex $updat 5]>, <&[lindex $updat 6]>, <&[lindex $updat 7]>, <&[lindex $updat 8]>, <&[lindex $updat 9]>, <&[lindex $updat 10]>, <&[lindex $updat 11]>, <&[lindex $updat 12]>, <&[lindex $updat 13]>, <&[lindex $updat 14]>, <&[lindex $updat 15]>, <&[lindex $updat 16]>, <&[lindex $updat 17]>, <&[lindex $updat 18]>, <&[lindex $updat 19]>, <&[lindex $updat 20]>, <&[lindex $updat 21]>, <&[lindex $updat 22]>, <&[lindex $updat 23]>, <&[lindex $updat 24]>, <&[lindex $updat 25]>, <&[lindex $updat 26]>,<&[lindex $updat 27]>, <&[lindex $updat 28]>, <&[lindex $updat 29]"
-                        set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
-                }
-        }
+	if {$len > 0} {
+            set refs [lindex $updat 0]
+            for {set i 1} {$i < $len} {incr i} {
+                append refs ">, <&[lindex $updat $i]"
+            }
+            set_drv_prop $drv_handle "zclocks1" "$refs" $node reference
+	}
     }
 
     proc mrmac_get_clk_frequency {ip_handle portname} {
@@ -2452,5 +1280,3 @@
         }
         return $clk
     }
-
-
