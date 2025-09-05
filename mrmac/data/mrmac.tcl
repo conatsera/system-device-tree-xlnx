@@ -102,89 +102,150 @@
             }
         }
 
-
-        set handle ""
-        set mask_handle ""
-        set ips [hsi::get_cells -hier -filter {IP_NAME == "axi_gpio"}]
-        foreach ip $ips {
-                set mem_ranges [hsi::get_mem_ranges [hsi::get_cells -hier $ip]]
-                foreach mem_range $mem_ranges {
-                        set base [string tolower [hsi get_property BASE_VALUE $mem_range]]
-                        if {[string match -nocase $base "0xa4010000"]} {
-                               set handle $ip
-                               break
-                        }
-                }
+  proc mrmac_generate_gt_gpios {drv_handle node port_num mode lanes dts_file} {
+	set mrmac_ip [hsi::get_cells -hier $drv_handle]
+        if {$mode eq "new"} {
+            set reset_pin_name "rx_serdes_data0"
+        } else {
+            set reset_pin_name "gt_reset_all_in"
         }
-
-        # Workaround: For gtpll we might need to add the below code for v0.1 version.
-        # We can remove this workaround for later versions.
-        foreach ip $ips {
-                set mem_ranges [hsi::get_mem_ranges [hsi::get_cells -hier $ip]]
-                foreach mem_range $mem_ranges {
-                        set base [string tolower [hsi get_property BASE_VALUE $mem_range]]
-                        if {[string match -nocase $base "0xa4000000"]} {
-                                set mask_handle $ip
-                                break
-                        }
-                }
-        }
-
-        set gt_reset_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "gt_reset_all_in"]]
+        set gt_reset_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] $reset_pin_name]]
         dtg_verbose "gt_reset_pins:$gt_reset_pins"
         set gt_reset_per ""
         if {[llength $gt_reset_pins]} {
                 set gt_reset_periph [hsi get_cells -of_objects $gt_reset_pins]
                 if {[llength $gt_reset_periph]} {
-                        if {[get_ip_property $gt_reset_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
-                                set intf "In0"
-                                set in1_pin [::hsi::get_pins -of_objects $gt_reset_periph -filter "NAME==$intf"]
-                                set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_periph] $in1_pin]]
-                                set gt_per [::hsi::get_cells -of_objects $sink_pins]
-                                if {[get_ip_property $gt_per IP_NAME] in {"xlslice" "ilslice"}} {
+                      if {$mode eq "new"} {
+                              if {[get_ip_property $gt_reset_periph IP_NAME] in {"xlslice" "ilslice"}} {
+                                  set intf "Din"
+                                  set in_pin [::hsi::get_pins -of_objects $gt_reset_periph -filter "NAME==$intf"]
+                                  set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_periph] $in_pin]]
+                                  set gt_reset_per [::hsi::get_cells -of_objects $sink_pins]
+                                  set ip_name [hsi::get_property IP_NAME $gt_reset_per]
+                                  if {[string match -nocase $ip_name "gtwiz_versal"]} {
+                                      set intf "INTF${port_num}_rst_all_in"
+                                      set in_pin [::hsi::get_pins -of_objects $gt_reset_per -filter "NAME==$intf"]
+                                      set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_per] $in_pin]]
+                                      set gt_wiz_per [::hsi::get_cells -of_objects $sink_pins]
+				      if {[get_ip_property $gt_wiz_per IP_NAME] in {"xlslice" "ilslice"}} {
+                                          set intf "Din"
+                                          set in_pin [::hsi::get_pins -of_objects $gt_wiz_per -filter "NAME==$intf"]
+                                          set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_wiz_per] $in_pin]]
+                                          set gt_per [::hsi::get_cells -of_objects $sink_pins]
+                                      }
+                                  }
+                              }
+                      } elseif {$mode eq "old"} {
+                              if {[get_ip_property $gt_reset_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
+                                   set intf "In${port_num}"
+                                   set in_pin [::hsi::get_pins -of_objects $gt_reset_periph -filter "NAME==$intf"]
+                                   set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_periph] $in_pin]]
+                                   set gt_reset_per [::hsi::get_cells -of_objects $sink_pins]
+                                   if {[get_ip_property $gt_reset_per IP_NAME] in {"xlslice" "ilslice"}} {
                                         set intf "Din"
-                                        set in1_pin [::hsi::get_pins -of_objects $gt_per -filter "NAME==$intf"]
-                                        set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_per] $in1_pin]]
-                                        set gt_reset_per [::hsi::get_cells -of_objects $sink_pins]
+                                        set in_pin [::hsi::get_pins -of_objects $gt_reset_per -filter "NAME==$intf"]
+                                        set sink_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_reset_per] $in_pin]]
+                                        set gt_per [::hsi::get_cells -of_objects $sink_pins]
                                         dtg_verbose "gt_reset_per:$gt_reset_per"
-                                        if {[llength $gt_reset_per]} {
-                                                add_prop "$node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
-                                        }
-                                }
-                        }
-                }
-        }
-        set gt_pll_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "mst_rx_resetdone_in"]]
-        dtg_verbose "gt_pll_pins:$gt_pll_pins"
-        set gt_pll_per ""
-            if {[llength $gt_pll_pins]} {
-                    set gt_pll_periph [::hsi::get_cells -of_objects $gt_pll_pins]
-                    if {[get_ip_property $gt_pll_periph IP_NAME] in {"xlconcat" "ilconcat"}} {
-                            set intf "dout"
-                            set in1_pin [::hsi::get_pins -of_objects $gt_pll_periph -filter "NAME==$intf"]
-                            set sink_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $gt_pll_periph] $in1_pin]]
-                            foreach pin $sink_pins {
-                                    if {[string match -nocase $pin "In0"]} {
-                                            set gt_per [::hsi::get_cells -of_objects $sink_pins]
-                                            foreach per $gt_per {
-                                                    if {[get_ip_property $per IP_NAME] in {"xlconcat" "ilconcat"}} {
-                                                            set intf "dout"
-                                                            set in1_pin [::hsi::get_pins -of_objects $per -filter "NAME==$intf"]
-                                                            set sink_pins [get_sink_pins [hsi get_pins -of_objects [hsi get_cells -hier $per] $in1_pin]]
-                                                            if {[llength $sink_pins]} {
-                                                                    set gt_pll_per [::hsi::get_cells -of_objects $sink_pins]
-                                                                    dtg_verbose "gt_pll_per:$gt_pll_per"
-                                                                    if {[llength $gt_pll_per]} {
-                                                                           add_prop "$node" "xlnx,gtpll" $gt_pll_per reference $dts_file
-                                                                }
-                                                        }
-                                                }
-                                        }
-                                }
-                        }
-                }
-        }
+                                   }
+                              }
+                      }
 
+                      if {[llength $gt_per]} {
+                            set ip_name [hsi::get_property IP_NAME $gt_per]
+			    if {[string match -nocase $ip_name "axi_gpio"]} {
+                                   set gpio_list ""
+                                   for {set i 0} {$i <= 1} {incr i} {
+                                       if {$gpio_list ne ""} {
+                                           append gpio_list ","
+                                       }
+                                       append gpio_list "<&$gt_per $i 0>"
+                                   }
+                                   set gpio_list [string trimleft $gpio_list "<"]
+                                   set gpio_list [string trimleft $gpio_list "&"]
+                                   set gpio_list [string trimright $gpio_list ">"]
+                                   add_prop "$node" "gt-ctrl-rate-gpios" "$gpio_list" reference $dts_file
+
+                                   # Add gt_rx_dpath-gpios and gt_tx_dpath-gpios
+                                   add_prop "$node" "gt-rx-dpath-gpios" "$gt_per 33 0" reference $dts_file
+                                   add_prop "$node" "gt-tx-dpath-gpios" "$gt_per 34 0" reference $dts_file
+				   set is_board_project [hsi get_property CONFIG.IS_BOARD_PROJECT [hsi::get_cells -hier $drv_handle]]
+                                   set gt_connect [get_connected_stream_ip [hsi::get_cells -hier $gt_per] "S_AXI"]
+                                   if {$mode eq "old"} {
+                                       set gpio_list ""
+                                       for {set i 0} {$i < $lanes} {incr i} {
+                                          if {$gpio_list ne ""} {
+                                             append gpio_list ","
+                                          }
+                                          set j [expr $i + 1]
+					  if {$lanes <= 2} {
+					       if {$is_board_project == 1} {
+                                                  set axi_interface "M0${i}_AXI"
+					       } else {
+						  set axi_interface "M0${j}_AXI"
+					       }
+					  } else {
+                                               set axi_interface "M0${j}_AXI"
+					  }
+                                          set gt_rate_reset [get_connected_stream_ip [hsi::get_cells -hier $gt_connect] "$axi_interface"]
+                                          append gpio_list "<&$gt_rate_reset 32 0>"
+                                       }
+                                       set gpio_list [string trimleft $gpio_list "<"]
+                                       set gpio_list [string trimleft $gpio_list "&"]
+                                       set gpio_list [string trimright $gpio_list ">"]
+                                       add_prop "$node" "gt-ctrl-gpios" "$gpio_list" reference $dts_file
+                                   } elseif {$mode eq "new"} {
+                                       add_prop "$node" "gt-ctrl-gpios" "$gt_per 32 0" reference $dts_file
+                                   }
+
+				   if {$lanes <= 2} {
+					 if {$is_board_project == 1} {
+				             set axi_reset_interface "M0${lanes}_AXI"
+				         } else {
+				             set axi_reset_interface "M00_AXI"
+					 }
+				   } else {
+                                         set axi_reset_interface "M00_AXI"
+                                   }
+                                   set gt_reset_mask [get_connected_stream_ip [hsi::get_cells -hier $gt_connect] "$axi_reset_interface"]
+                                   if {[llength $gt_reset_mask]} {
+                                      if {$mode eq "old"} {
+                                          set gpio_list1 ""
+                                          set gpio_list2 ""
+                                          for {set i 0} {$i < $lanes} {incr i} {
+                                              set j [expr $i + 32]
+                                              if {$gpio_list1 ne ""} {
+                                                 append gpio_list1 ","
+                                              }
+                                              if {$gpio_list2 ne ""} {
+                                                 append gpio_list2 ","
+                                              }
+                                              append gpio_list1 "<&$gt_reset_mask $j 0>"
+                                              set k [expr $j + 4]
+                                              append gpio_list2 "<&$gt_reset_mask $k 0>"
+                                          }
+                                          set gpio_list1 [string trimleft $gpio_list1 "<"]
+                                          set gpio_list1 [string trimleft $gpio_list1 "&"]
+                                          set gpio_list1 [string trimright $gpio_list1 ">"]
+                                          set gpio_list2 [string trimleft $gpio_list2 "<"]
+                                          set gpio_list2 [string trimleft $gpio_list2 "&"]
+                                          set gpio_list2 [string trimright $gpio_list2 ">"]
+
+                                          # Add gt_rx_rst_done-gpios and gt_tx_rst_done-gpios
+                                          add_prop "$node" "gt-rx-rst-done-gpios" "$gpio_list1" reference $dts_file
+                                          add_prop "$node" "gt-tx-rst-done-gpios" "$gpio_list2" reference $dts_file
+                                      } elseif {$mode eq "new"} {
+                                          set i [expr $port_num + 32]
+                                          set j [expr $port_num + 36]
+                                          add_prop "$node" "gt-rx-rst-done-gpios" "$gt_reset_mask $i 0" reference $dts_file
+                                          add_prop "$node" "gt-tx-rst-done-gpios" "$gt_reset_mask $j 0" reference $dts_file
+                                      }
+			           }
+                            }
+                      }
+                }
+        }
+  }
         # Add properties for all 4 MRMAC ports using a clean dynamic for loop
         # This completely replaces all the duplicated property assignments and node creation
 
@@ -235,7 +296,19 @@
             set port_dwidth [string trimright $port_dwidth "b"]
             add_prop "${current_port_node}" "xlnx,axistream-dwidth" $port_dwidth int $dts_file
 
-            # Call the helper function to add all MRMAC properties
+	    set gt_old_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "gt_reset_all_in"]]
+	    set gt_new_pin [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] "rx_serdes_data0"]]
+
+            if {[llength $gt_old_pin]} {
+		 set mode "old"
+            } elseif {[llength $gt_new_pin]} {
+		 set mode "new"
+            } else {
+                 dtg_warning "No GPIO Path detected...please check the design..."
+            }
+
+	    mrmac_generate_gt_gpios $drv_handle $current_port_node $port_index $mode $num_channels $dts_file
+	    # Call the helper function to add all MRMAC properties
             mrmac_add_port_properties $drv_handle $current_port_node $port_index $dts_file
 
 
@@ -341,19 +414,6 @@
                }
            } else {
                 dtg_warning "rx_timestamp_tod_${port_index} connected pins are NULL...please check the design..."
-           }
-
-           if {[llength $handle]} {
-                   add_prop "$current_port_node" "xlnx,gtctrl" $handle reference $dts_file
-           }
-           if {[llength $mask_handle]} {
-                   add_prop "$current_port_node" "xlnx,gtpll" $mask_handle reference $dts_file
-           }
-           if {[llength $gt_reset_per]} {
-                   add_prop "$current_port_node" "xlnx,gtctrl" $gt_reset_per reference $dts_file
-           }
-           if {[llength $gt_pll_per]} {
-                   add_prop "$current_port_node" "xlnx,gtpll" $gt_pll_per reference $dts_file
            }
 
            add_prop "$current_port_node" "xlnx,phcindex" $port_index int $dts_file
