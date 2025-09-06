@@ -114,7 +114,7 @@ proc ddrpsv_merge_intervals {address} {
 		foreach interval [lrange $address 1 end] {
 			set start [lindex $interval 0]
 			set end [lindex $interval 1]
-			if {$start <= $current_end} {
+			if {[expr $start] <= [expr {$current_end + 1}]} {
 				set current_end [format "0x%lx" [expr {max($end, $current_end)}]]
 			} else {
 				lappend union [list $current_start $current_end]
