@@ -139,6 +139,12 @@ proc gen_axis_switch_port4_remote_endpoint {drv_handle value} {
        set val [dict get $axis_switch_port4_remo_mappings $drv_handle]
 }
 
+proc gen_broad_endpoint_port {intfcount drv_handle value} {
+        global port{$intfcount}_broad_end_mappings
+        dict append port{$intfcount}_broad_end_mappings $drv_handle $value
+        set val [dict get $port\${intfcount}\_broad_end_mappings $drv_handle]
+}
+
 proc gen_broad_endpoint_port1 {drv_handle value} {
         global port1_broad_end_mappings
         dict append port1_broad_end_mappings $drv_handle $value
@@ -179,6 +185,60 @@ proc gen_broad_endpoint_port7 {drv_handle value} {
         global port7_broad_end_mappings
         dict append port7_broad_end_mappings $drv_handle $value
         set val [dict get $port7_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port8 {drv_handle value} {
+        global port8_broad_end_mappings
+        dict append port8_broad_end_mappings $drv_handle $value
+        set val [dict get $port8_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port9 {drv_handle value} {
+        global port9_broad_end_mappings
+        dict append port9_broad_end_mappings $drv_handle $value
+        set val [dict get $port9_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port10 {drv_handle value} {
+        global port10_broad_end_mappings
+        dict append port10_broad_end_mappings $drv_handle $value
+        set val [dict get $port10_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port11 {drv_handle value} {
+        global port11_broad_end_mappings
+        dict append port11_broad_end_mappings $drv_handle $value
+        set val [dict get $port11_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port12 {drv_handle value} {
+        global port12_broad_end_mappings
+        dict append port12_broad_end_mappings $drv_handle $value
+        set val [dict get $port12_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port13 {drv_handle value} {
+        global port13_broad_end_mappings
+        dict append port13_broad_end_mappings $drv_handle $value
+        set val [dict get $port13_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port14 {drv_handle value} {
+        global port14_broad_end_mappings
+        dict append port14_broad_end_mappings $drv_handle $value
+        set val [dict get $port14_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port15 {drv_handle value} {
+        global port15_broad_end_mappings
+        dict append port15_broad_end_mappings $drv_handle $value
+        set val [dict get $port15_broad_end_mappings $drv_handle]
+}
+
+proc gen_broad_endpoint_port16 {drv_handle value} {
+        global port16_broad_end_mappings
+        dict append port16_broad_end_mappings $drv_handle $value
+        set val [dict get $port16_broad_end_mappings $drv_handle]
 }
 
 proc get_axis_switch_in_connect_ip {ip intfpins} {
@@ -276,14 +336,160 @@ proc gen_broad_remoteendpoint_port7 {drv_handle value} {
         set val [dict get $broad_port7_remo_mappings $drv_handle]
 }
 
-    proc gen_broadcaster {ip dts_file} {
+proc gen_broad_remoteendpoint_port8 {drv_handle value} {
+        global broad_port8_remo_mappings
+        dict append broad_port8_remo_mappings $drv_handle $value
+        set val [dict get $broad_port8_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port9 {drv_handle value} {
+        global broad_port9_remo_mappings
+        dict append broad_port9_remo_mappings $drv_handle $value
+        set val [dict get $broad_port9_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port10 {drv_handle value} {
+        global broad_port10_remo_mappings
+        dict append broad_port10_remo_mappings $drv_handle $value
+        set val [dict get $broad_port10_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port11 {drv_handle value} {
+        global broad_port11_remo_mappings
+        dict append broad_port11_remo_mappings $drv_handle $value
+        set val [dict get $broad_port11_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port12 {drv_handle value} {
+        global broad_port12_remo_mappings
+        dict append broad_port12_remo_mappings $drv_handle $value
+        set val [dict get $broad_port12_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port13 {drv_handle value} {
+        global broad_port13_remo_mappings
+        dict append broad_port13_remo_mappings $drv_handle $value
+        set val [dict get $broad_port13_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port14 {drv_handle value} {
+        global broad_port14_remo_mappings
+        dict append broad_port14_remo_mappings $drv_handle $value
+        set val [dict get $broad_port14_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port15 {drv_handle value} {
+        global broad_port15_remo_mappings
+        dict append broad_port15_remo_mappings $drv_handle $value
+        set val [dict get $broad_port15_remo_mappings $drv_handle]
+}
+
+proc gen_broad_remoteendpoint_port16 {drv_handle value} {
+        global broad_port16_remo_mappings
+        dict append broad_port16_remo_mappings $drv_handle $value
+        set val [dict get $broad_port16_remo_mappings $drv_handle]
+}
+
+
+proc gen_broad_remoteendpoint_port {intfcount drv_handle value} {
+        global broad_port{$intfcount}_remo_mappings
+        dict append broad_port{$intfcount}_remo_mappings $drv_handle $value
+        set val [dict get ${broad_port{$intfcount}_remo_mappings} $drv_handle]
+}
+
+proc get_visp_remote_endpoint_suffix {connectip ip intf} {
+		set remote_endpoint_ref "$connectip$ip"
+		set connectip_ip_name [get_ip_property $connectip IP_NAME]
+		if {$connectip_ip_name != "visp_ss"} {
+			return $remote_endpoint_ref
+		}
+		set intf_net [hsi::get_intf_nets -of_objects $intf]
+		if {![llength $intf_net]} {
+			return $remote_endpoint_ref
+		}
+		set connected_isp_pin [get_other_intf_pin $intf_net [hsi::get_intf_pins -of_objects $ip $intf]]
+		if {![regexp {TILE(\d+)_ISP_MIPI_VIDIN(\d+)} $connected_isp_pin - tile vid_index]} {
+			return $remote_endpoint_ref
+		}
+		set suffix ""
+		set base "visp_ss_"
+		switch "$tile:$vid_index" {
+			"0:0"  { set suffix "000" }
+			"0:1"  { set suffix "005" }
+			"0:2"  { set suffix "0010" }
+			"0:4"  { set suffix "010" }
+
+			"1:0"  { set suffix "120" }
+			"1:1"  { set suffix "125" }
+			"1:2"  { set suffix "1210" }
+			"1:4"  { set suffix "130" }
+
+			"2:0"  { set suffix "240" }
+			"2:1"  { set suffix "245" }
+			"2:2"  { set suffix "2410" }
+			"2:4"  { set suffix "250" }
+			default {
+				if {$vid_index == 3} {
+					set selected_suffix ""
+					for {set isp 0} {$isp < 2} {incr isp} {
+						set live_inputs [get_ip_property $connectip CONFIG.C_TILE${tile}_ISP${isp}_LIVE_INPUTS]
+						if {$isp == 1 && $live_inputs == 2} {
+							switch $tile {
+								0 { set selected_suffix "015" }
+								1 { set selected_suffix "135" }
+								2 { set selected_suffix "255" }
+								default {
+									puts "ERROR: Unexpected tile value: $tile"
+									set selected_suffix "000"
+								}
+							}
+							break
+						} elseif {$isp == 0 && $live_inputs == 4} {
+							switch $tile {
+								0 { set selected_suffix "0015" }
+								1 { set selected_suffix "1215" }
+								2 { set selected_suffix "2415" }
+								default { puts "Unsupported tile $tile for ISP0 live_inputs 4" }
+							}
+							break
+						}
+					}
+					if {$selected_suffix ne ""} {
+						set suffix $selected_suffix
+					} else {
+						puts "Warning: Could not determine dynamic suffix for TILE$tile VIDIN3"
+					}
+				} else {
+					puts "Unsupported TILE$tile VIDIN$vid_index"
+				}
+			}
+		}
+		if {$suffix ne ""} {
+			set remote_endpoint_ref "${base}${suffix}"
+		}
+		return $remote_endpoint_ref
+}
+
+proc ignore_axis_ila {connectnxtip} {
+	foreach nxtip $connectnxtip {
+		set ignoreip [get_ip_property $nxtip IP_NAME]
+		if {$ignoreip != "axis_ila"} {
+			set connectnxtip $nxtip
+		} else {
+			set connectnxtip ""
+		}
+	}
+	return $connectnxtip
+}
+
+proc gen_broadcaster {ip dts_file} {
         global end_mappings
         global remo_mappings
         dtg_verbose "+++++++++gen_broadcaster:$ip"
         set count 0
         set inputip ""
         set outip ""
-        set connectip ""
+        set connectnextip ""
         set compatible [get_comp_str $ip]
         set intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==SLAVE || TYPE ==TARGET}]
         set inip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
@@ -296,56 +502,74 @@ proc gen_broad_remoteendpoint_port7 {drv_handle value} {
         add_prop "$ports_node" "#size-cells" 0 int $dts_file
         add_prop "$broad_node" "compatible" "$compatible" string $dts_file
         set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $ip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-        set broad 10
+        set broad 16
         foreach intf $master_intf {
-            set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] "M01_AXIS"]
-            if {[hsi get_property IP_NAME $connectip] in { "v_smpte_uhdsdi_tx_ss" }} {
-		    # UHD SDI TX SS after broadcaster is legal only in baremetal use case.
-		    # So break the loop here.
-		    break
-	    }
-            set connectip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
-            if {[llength $connectip]} {
-                set ip_mem_handles [hsi::get_mem_ranges $connectip]
-                if {![llength $ip_mem_handles]} {
-                    set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-                    set connectip [get_connected_stream_ip [hsi::get_cells -hier $connectip] $master_intf]
-                    if {[llength $connectip]} {
-                        set ip_mem_handles [hsi::get_mem_ranges $connectip]
-                        if {![llength $ip_mem_handles]} {
-                            set master2_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-                            set connectip [get_connected_stream_ip [hsi::get_cells -hier $connectip] $master2_intf]
-                        }
-                        if {[llength $connectip]} {
-                            set ip_mem_handles [hsi::get_mem_ranges $connectip]
-                            if {![llength $ip_mem_handles]} {
-                                set master3_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
-                                set connectip [get_connected_stream_ip [hsi::get_cells -hier $connectip] $master3_intf]
-                            }
-                        }
-                    }
-                }
+		set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $ip] "M01_AXIS"]
+		if {[hsi get_property IP_NAME $connectnextip] in { "v_smpte_uhdsdi_tx_ss" }} {
+			# UHD SDI TX SS after broadcaster is legal only in baremetal use case.
+			# So break the loop here.
+			break
+		}
+		set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $ip] $intf]
+
+
+
+
+		if {[llength $connectnextip]} {
+			set connectnextip [ignore_axis_ila $connectnextip]
+			set ip_mem_handles [hsi::get_mem_ranges $connectnextip]
+			if {![llength $ip_mem_handles]} {
+				set master_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectnextip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+				set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $connectnextip] $master_intf]
+				if {[llength $connectnextip]} {
+					set connectnextip [ignore_axis_ila $connectnextip]
+					set ip_mem_handles [hsi::get_mem_ranges $connectnextip]
+					if {![llength $ip_mem_handles]} {
+						set master2_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectnextip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+						set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $connectnextip] $master2_intf]
+						if {[llength $connectnextip]} {
+							set connectnextip [ignore_axis_ila $connectnextip]
+							set ip_mem_handles [hsi::get_mem_ranges $connectnextip]
+							if {![llength $ip_mem_handles]} {
+								set master3_intf [::hsi::get_intf_pins -of_objects [hsi::get_cells -hier $connectnextip] -filter {TYPE==MASTER || TYPE ==INITIATOR}]
+								set connectnextip [get_connected_stream_ip [hsi::get_cells -hier $connectnextip] $master3_intf]
+							}
+						}
+					}
+				}
+			}
+		}
                 incr count
-                set port_node [create_node -n "port" -l axis_broad_port$count$ip -u $count -p $ports_node -d $dts_file]
-                add_prop "$port_node" "reg" $count int $dts_file
-                set axis_node [create_node -n "endpoint" -l axis_broad_out$count$ip -p $port_node -d $dts_file]
-                add_prop "$axis_node" "remote-endpoint" $connectip$ip reference $dts_file
-                set addbroadip "1"
-                if {[hsi get_property IP_NAME $connectip] in { "v_scenechange" "v_frmbuf_wr" }} {
-                        set addbroadip ""
-                }
-                if {[llength $addbroadip]} {
-                        gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
-                        gen_broad_remoteendpoint_port$count $ip $connectip$ip
-                }
-                append inputip " " $connectip
-                append outip " " $connectip$ip
-            }
-            if {[string match -nocase [hsi::get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
-                gen_broad_frmbuf_wr_node $inputip $outip $ip $count $dts_file
-            }
-        }
-    }
+		set connectnextip_ip_name [get_ip_property $connectnextip IP_NAME]
+		set valid_mmip_list "v_tpg v_demosaic v_gamma_lut v_proc_ss v_frmbuf_wr v_mix v_multi_scaler v_scenechange v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio v_smpte_uhdsdi_tx_ss audio_formatter visp_ss i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem ISPPipeline_accel"
+		if {[lsearch  -nocase $valid_mmip_list $connectnextip_ip_name] >= 0} {
+			if {$connectnextip_ip_name == "visp_ss"} {
+				set remote_endpoint_ref [get_visp_remote_endpoint_suffix $connectnextip $ip $intf]
+			} else {
+				set remote_endpoint_ref $connectnextip
+			}
+			set port_node [create_node -n "port" -l axis_broad_port$count$ip -u $count -p $ports_node -d $dts_file]
+			add_prop "$port_node" "reg" $count int $dts_file
+			set axis_node [create_node -n "endpoint" -l axis_broad_out$count$ip -p $port_node -d $dts_file]
+			add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts_file
+			set addbroadip "1"
+			if {[hsi get_property IP_NAME $connectnextip] in { "v_scenechange" "v_frmbuf_wr" }} {
+				set addbroadip ""
+			}
+			if {[llength $addbroadip]} {
+				gen_broad_endpoint_port$count $ip "axis_broad_out$count$ip"
+				gen_broad_remoteendpoint_port$count $ip $remote_endpoint_ref$ip
+			}
+			append inputip " " $connectnextip
+			append outip " " $connectnextip$ip
+		} else {
+			puts "PG ... INFO: Custom IP has been detected : $connectnextip_ip_name - Skipping it"
+		}
+	}
+	if {[string match -nocase [hsi::get_property IP_NAME $connectnextip] "v_frmbuf_wr"]} {
+		gen_broad_frmbuf_wr_node $inputip $outip $ip $count $dts_file
+	}
+}
 
     proc gen_broad_frmbuf_wr_node {inputip outip drv_handle count dts_file} {
         set bus_node [detect_bus_name $drv_handle]
@@ -546,38 +770,48 @@ proc gen_axis_switch {ip} {
 	       if {[llength $connectip]} {
 		       incr count
 	       }
-	       if {$count == 1} {
-		       set port_node [create_node -n "port" -l axis_switch_port1$ip -u 1 -p $ports_node -d $dts]
-		       add_prop "$port_node" "reg" 1 int $dts
-		       set axis_node [create_node -n "endpoint" -l axis_switch_out1$ip -p $port_node -d $dts]
-		       gen_axis_port1_endpoint $ip "axis_switch_out1$ip"
-		       add_prop "$axis_node" "remote-endpoint" $connectip$ip reference $dts
-		       gen_axis_port1_remoteendpoint $ip $connectip$ip
-	       }
-	       if {$count == 2} {
-		       set port_node [create_node -n "port" -l axis_switch_port2$ip -u 2 -p $ports_node -d $dts]
-		       add_prop "$port_node" "reg" 2 int $dts
-		       set axis_node [create_node -n "endpoint" -l axis_switch_out2$ip -p $port_node -d $dts]
-		       gen_axis_port2_endpoint $ip "axis_switch_out2$ip"
-		       add_prop "$axis_node" "remote-endpoint" $connectip$ip reference $dts
-		       gen_axis_port2_remoteendpoint $ip $connectip$ip
-	       }
-	       if {$count == 3} {
-		       set port_node [create_node -n "port" -l axis_switch_port3$ip -u 3 -p $ports_node -d $dts]
-		       add_prop "$port_node" "reg" 3 int $dts
-		       set axis_node [create_node -n "endpoint" -l axis_switch_out3$ip -p $port_node -d $dts]
-		       gen_axis_port3_endpoint $ip "axis_switch_out3$ip" 
-		       add_prop "$axis_node" "remote-endpoint" $connectip$ip reference $dts
-		       gen_axis_port3_remoteendpoint $ip $connectip$ip
-	       }
-	       if {$count == 4} {
-		       set port_node [create_node -n "port" -l axis_switch_port4$ip -u 4 -p $ports_node -d $dts]
-		       add_prop "$port_node" "reg" 4 int $dts
-		       set axis_node [create_node -n "endpoint" -l axis_switch_out4$ip -p $port_node -d $dts]
-		       gen_axis_port4_endpoint $ip "axis_switch_out4$ip"
-		       add_prop "$axis_node" "remote-endpoint" $connectip$ip reference $dts
-		       gen_axis_port4_remoteendpoint $ip $connectip$ip
-	       }
+
+		set connectnextip_ip_name [get_ip_property $connectip IP_NAME]
+		set valid_mmip_list "v_tpg v_demosaic v_gamma_lut v_proc_ss v_frmbuf_wr v_mix v_multi_scaler v_scenechange v_hdmi_tx_ss v_hdmi_txss1 v_uhdsdi_audio v_smpte_uhdsdi_tx_ss audio_formatter visp_ss i2s_receiver i2s_transmitter mipi_dsi_tx_subsystem ISPPipeline_accel"
+		if {[lsearch  -nocase $valid_mmip_list $connectnextip_ip_name] >= 0} {
+			if {$connectnextip_ip_name == "visp_ss"} {
+				set remote_endpoint_ref [get_visp_remote_endpoint_suffix $connectip $ip $intf]
+			} else {
+				set remote_endpoint_ref $connectip
+			}
+			if {$count == 1} {
+				set port_node [create_node -n "port" -l axis_switch_port1$ip -u 1 -p $ports_node -d $dts]
+				add_prop "$port_node" "reg" 1 int $dts
+				set axis_node [create_node -n "endpoint" -l axis_switch_out1$ip -p $port_node -d $dts]
+				gen_axis_port1_endpoint $ip "axis_switch_out1$ip"
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
+				gen_axis_port1_remoteendpoint $ip $remote_endpoint_ref$ip
+			}
+			if {$count == 2} {
+				set port_node [create_node -n "port" -l axis_switch_port2$ip -u 2 -p $ports_node -d $dts]
+				add_prop "$port_node" "reg" 2 int $dts
+				set axis_node [create_node -n "endpoint" -l axis_switch_out2$ip -p $port_node -d $dts]
+				gen_axis_port2_endpoint $ip "axis_switch_out2$ip"
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
+				gen_axis_port2_remoteendpoint $ip $remote_endpoint_ref$ip
+			}
+			if {$count == 3} {
+				set port_node [create_node -n "port" -l axis_switch_port3$ip -u 3 -p $ports_node -d $dts]
+				add_prop "$port_node" "reg" 3 int $dts
+				set axis_node [create_node -n "endpoint" -l axis_switch_out3$ip -p $port_node -d $dts]
+				gen_axis_port3_endpoint $ip "axis_switch_out3$ip"
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
+				gen_axis_port3_remoteendpoint $ip $remote_endpoint_ref$ip
+			}
+			if {$count == 4} {
+				set port_node [create_node -n "port" -l axis_switch_port4$ip -u 4 -p $ports_node -d $dts]
+				add_prop "$port_node" "reg" 4 int $dts
+				set axis_node [create_node -n "endpoint" -l axis_switch_out4$ip -p $port_node -d $dts]
+				gen_axis_port4_endpoint $ip "axis_switch_out4$ip"
+				add_prop "$axis_node" "remote-endpoint" $remote_endpoint_ref$ip reference $dts
+				gen_axis_port4_remoteendpoint $ip $remote_endpoint_ref$ip
+			}
+		}
 	}
 }
 
