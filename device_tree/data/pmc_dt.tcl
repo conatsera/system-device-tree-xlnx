@@ -68,10 +68,11 @@ proc generate_pmc_dt {xsa dir} {
 	global ps_uart_ip_names
 	global mdm_uart_ip_names
 	global pmc_ip_names
+	global processor_ip_list
 	set default_uart_handle ""
 	set addr_map_list [list]
 
-	if {[catch {set cur_hw_design [hsi open_hw_design $xsa -outdir $dir]} msg]} {
+	if {[string match -nocase [hsi::get_hw_designs] ""] } {
 		error "ERROR: open_hw_design failed for $xsa"
 	} else {
 		# Below global dicts are needed to re-use get_node, gen_drv_prop_from_ip from common procs.
@@ -91,6 +92,8 @@ proc generate_pmc_dt {xsa dir} {
 	# Validate the design, check whether the XSA is a Versal or Versal-like family design.
 	# When the valid handle is found, pick the 0th instance for the further processing.
 	set pmc_proc_handle [return_valid_ip_handle $pmc_ip_names]
+
+	set processor_ip_list [get_ip_property $pmc_proc_handle IP_NAME]
 
 	# Determine the Versal family (Versal, VersalNet, Versal_2VE_2VM)
 	set proclist [get_valid_proc_list]
@@ -182,6 +185,9 @@ proc generate_pmc_dt {xsa dir} {
 	# Create the PMC address map in system-top.dts
 	gen_pmc_cluster_map $addr_map_list
 
+	# Add part specific miscellaneous entries
+	gen_part_specific_misc
+
 	# Delete empty tree children and write the dt files with the corresponding tree objects
 	delete_tree systemdt root
 	delete_tree pcwdt root
@@ -258,10 +264,15 @@ proc set_soc_dtsi {} {
 # Pull in all the SOC specific dtsi files inside SDT folder
 proc fetch_soc_dtsi {dir path platform_name} {
 	set common_file "$path/device_tree/data/config.yaml"
+	global include_list
 	set release [get_user_config $common_file -kernel_ver]
 	set soc_dtsi_folder [file normalize "$path/device_tree/data/kernel_dtsi/${release}/${platform_name}"]
+	set include_dts_list [split $include_list ","]
 	foreach file [glob [file normalize ${soc_dtsi_folder}/*]] {
-		file copy -force $file $dir
+		set filename [file tail $file]
+		if {$filename in $include_dts_list} {
+			file copy -force $file $dir
+		}
 	}
 }
 

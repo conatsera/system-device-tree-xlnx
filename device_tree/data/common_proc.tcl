@@ -419,7 +419,6 @@ proc set_hw_family {proclist} {
 	global design_family
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
-	global is_versal_2ve_2vm_seio_platform
 	global is_versal_2ve_2vm_small_platform
 	global apu_proc_ip
 	set apu_proc_ip ""
@@ -428,7 +427,6 @@ proc set_hw_family {proclist} {
 	set ps_design 0
 	set is_versal_net_platform 0
 	set is_versal_2ve_2vm_platform 0
-	set is_versal_2ve_2vm_seio_platform 0
 	set is_versal_2ve_2vm_small_platform 0
 	foreach procperiph $proclist {
 		set proc_drv_handle [hsi::get_cells -hier $procperiph]
@@ -441,9 +439,6 @@ proc set_hw_family {proclist} {
 				set apu_proc_ip $ip_name
 				if {[llength [hsi::get_cells -hier -filter {IP_NAME==ps11 || IP_NAME==ps11xgui}]]} {
 					set is_versal_2ve_2vm_platform 1
-				}
-				if {[llength [hsi::get_cells -hier -filter {IP_NAME==seio}]]} {
-					set is_versal_2ve_2vm_seio_platform 1
 				}
 				if {[llength [hsi::get_cells -hier -filter {IP_NAME==psxt}]]} {
 					set is_versal_2ve_2vm_platform 1
@@ -3278,7 +3273,6 @@ proc add_driver_prop {drv_handle dt_node prop} {
 proc gen_ps_mapping {} {
 	global is_versal_net_platform
 	global is_versal_2ve_2vm_platform
-	global is_versal_2ve_2vm_seio_platform
 	set family [get_hw_family]
 	set def_ps_mapping [dict create]
 	if {[string match -nocase $family "versal"]} {
@@ -3423,18 +3417,6 @@ proc gen_ps_mapping {} {
 				dict set def_ps_mapping ed000000 label gpu
 				dict set def_ps_mapping edd00000 label mmi_dc
 				dict set def_ps_mapping ede00000 label mmi_dptx
-
-				if {$is_versal_2ve_2vm_seio_platform} {
-					dict set def_ps_mapping ed010000 label spi0_seio
-					dict set def_ps_mapping ed020000 label spi1_seio
-					dict set def_ps_mapping ed030000 label spi2_seio
-					dict set def_ps_mapping ed040000 label spi3_seio
-					dict set def_ps_mapping ed050000 label serial0_seio
-					dict set def_ps_mapping ed060000 label serial1_seio
-					dict set def_ps_mapping ed070000 label serial2_seio
-					dict set def_ps_mapping ed080000 label gpio_seio
-					dict set def_ps_mapping ed0c0000 label pcie_seio
-				}
 			} else {
 				dict set def_ps_mapping eb330000 label ipi0
 				dict set def_ps_mapping eb340000 label ipi1
@@ -3707,7 +3689,7 @@ proc gen_ps_mapping {} {
 		dict set def_ps_mapping e0003000 label usb1
 		dict set def_ps_mapping f8800000 label coresight
 	}
-	return $def_ps_mapping
+	return [part_specific_ps_mapping $def_ps_mapping]
 }
 
 proc gen_ps7_mapping {} {
