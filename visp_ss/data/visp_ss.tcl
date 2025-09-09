@@ -748,40 +748,39 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
 }
 
 proc find_valid_visp_inip {drv_handle visp_ip_name} {
-    set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
-    set valid_patterns {.*(broadcaster|switch|mipi).*}
+	set visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_ip_name]
+	#puts "visp_inip:$visp_inip"
+	set valid_patterns {.*(broadcaster|switch|mipi).*}
 
-    # Check if any IP matches the valid patterns
-    set visp_list [split $visp_inip " "]
-    set match_found 0
+	# Loop until we find a valid IP or no new connections
+	while {1} {
+		set visp_list [split $visp_inip " "]
+			set match_found 0
+			set matched_ip ""
 
-    foreach ip $visp_list {
-        if {[regexp $valid_patterns $ip]} {
-            set match_found 1
-            break
-        }
-    }
+			foreach ip $visp_list {
+				if {[regexp $valid_patterns $ip]} {
+					set match_found 1
+						set matched_ip $ip
+						break
+				}
+			}
 
-    # If no match, enter the loop to update visp_inip
-    while {!$match_found} {
-        set new_visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_inip]
-        set new_visp_list [split $new_visp_inip " "]
+		if {$match_found} {
+			#puts "DEBUG: Found VALID IP: $matched_ip"
+			# Return the handle, not just name
+			return [hsi::get_cells -hier $matched_ip]
+		}
 
-        foreach ip $new_visp_list {
-            if {[regexp $valid_patterns $ip]} {
-                set match_found 1
-                break
-            }
-        }
+		set new_visp_inip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $visp_inip]
+			if {$new_visp_inip eq $visp_inip} {
+				break
+			}
+		set visp_inip $new_visp_inip
+	}
 
-        if {$match_found || $new_visp_inip eq $visp_inip} {
-            break
-        }
 
-        set visp_inip $new_visp_inip
-    }
-
-    return $visp_inip
+	return ""
 }
 
 proc generate_reserved_memory {rpu_ids default_dts bus_name} {
