@@ -31,7 +31,7 @@ set ipi_ip_names {"psv_ipi" "psx_ipi" "ipi"}
 
 # List of drivers from embeddedsw:
 # cframe, cfupmc, csudma, emacps, gpiops, i2cps, iomodule, ipipsu, qspipsu
-# ospipsv, sdps/emmc, sysmonpsv, trngpsv/x, ttcps,
+# ospipsv, spips, sdps/emmc, sysmonpsv, trngpsv/x, ttcps,
 # uartlite (for no PS uart case, mdm), uartpsv, ufspsxc, usbpsu, wdttb, zdma
 
 # Below list is without uart, mdm and IPI entries, those are concatenated in the next line.
@@ -48,6 +48,7 @@ set plm_supported_ips {
 	"psv_pmc_qspi" "psx_pmc_qspi" "pmc_qspi" \
 	"psv_pmc_ospi" "psx_pmc_ospi" "pmc_ospi" "pmcl_ospi" \
 	"psv_pmc_sd" "psx_pmc_sd" "psx_pmc_emmc" "pmc_sd" "pmc_emmc" \
+	"psv_spi" "psx_spi" "spi" \
 	"psv_pmc_sysmon" "psx_pmc_sysmon" "pmc_sysmon" \
 	"psv_pmc_trng" "psx_pmc_trng" "pmc_trng" \
 	"psv_ttc" "psx_ttc" "ttc" \
