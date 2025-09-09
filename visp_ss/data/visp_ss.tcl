@@ -386,8 +386,7 @@ proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 	set ports_node [create_node -l "ports${tile}${isp_id}" -n "ports" -p $sub_node -d $default_dts]
 	add_prop "$ports_node" "#address-cells" 1 int $default_dts
 	add_prop "$ports_node" "#size-cells" 0 int $default_dts
-	set port0 [create_node -l "port${tile}${isp}" -n "port${tile}${isp}" -p $ports_node -d $default_dts]
-	add_prop "$port0" "reg" 1 int $default_dts
+	set port_addr_counter1 1
 	set port_addr_counter 0
 	set pin_name ""
 	if {$isp == 0} {
@@ -402,9 +401,14 @@ proc handle_io_mode_1 {drv_handle tile isp isp_id default_dts sub_node sub_node_
 	set visp_inip [find_valid_visp_inip $drv_handle $pin_name]
 	visp_ss_inip_endpoints $drv_handle $ports_node $default_dts "${sub_node_label}${port_addr_counter}" $port_addr_counter $visp_inip
 	incr port_addr_counter 5
-	set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] "TILE${tile}_ISP${isp}_VIDOUT_PO"]
-	visp_ss_outip_endpoints $drv_handle $port0 $default_dts $sub_node_label $outip
-
+	foreach out_type {PO SO} {
+		set intf "TILE${tile}_ISP${isp}_VIDOUT_${out_type}"
+		set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
+		if {[string length $outip] > 0} {
+			visp_ss_outip_endpoints $drv_handle $default_dts $sub_node_label $outip $port_addr_counter1 $ports_node $isp_id
+			incr port_addr_counter1
+		}
+	}
 	add_iba_properties $drv_handle $sub_node $default_dts $isp $isp_iba $tile
 	# Add OBA properties
 	add_oba_properties_mp $drv_handle $sub_node $default_dts $isp $isp $tile
@@ -681,7 +685,8 @@ proc visp_ss_inip_endpoints {drv_handle node default_dts sub port_addr_counter v
 	}
 }
 
-proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip} {
+
+proc visp_ss_outip_endpoints {drv_handle default_dts sub_node_label outip port_addr_counter1 ports_node isp_id} {
 	if {![llength $outip]} {
 		puts "Error: outip is empty or not valid. Exiting..."
 		return
@@ -699,12 +704,16 @@ proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip
 				set ip_mem_handles [hsi::get_mem_ranges $ip]
 				if {[llength $ip_mem_handles]} {
 					set base [string tolower [hsi get_property BASE_VALUE $ip_mem_handles]]
-					set vispnode [create_node -n "endpoint" -l visp_out$sub_node_label -p $port01 -d $default_dts]
-					gen_endpoint $drv_handle "visp_out$sub_node_label"
+					set type [expr {$port_addr_counter1 == 1 ? "po" : "so"}]
+					set port0 [create_node -l "visp_port${port_addr_counter1}_${type}_${isp_id}" -n "port@${port_addr_counter1}" -p $ports_node -d $default_dts]
+					add_prop "$port0" "reg" $port_addr_counter1 int $default_dts
+					add_prop "$port0" "direction" output string $default_dts
+					set vispnode [create_node -n "endpoint" -l visp_out${port_addr_counter1}${sub_node_label} -p $port0 -d $default_dts]
+					gen_endpoint $drv_handle "visp_out${port_addr_counter1}${sub_node_label}"
 					add_prop "$vispnode" "remote-endpoint" $ip$sub_node_label reference $default_dts
 					gen_remoteendpoint $drv_handle "$ip$sub_node_label"
 					if {[string match -nocase [hsi get_property IP_NAME $ip] "v_frmbuf_wr"]} {
-						visp_ss_gen_frmbuf_wr_node $ip $drv_handle $default_dts $sub_node_label
+						visp_ss_gen_frmbuf_wr_node $ip $drv_handle $default_dts $sub_node_label $port_addr_counter1 $type $isp_id
 					}
 				} else {
 					if {[string match -nocase [hsi get_property IP_NAME $ip] "system_ila"]} {
@@ -712,12 +721,12 @@ proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip
 					}
 					set connectip [get_connect_ip $ip $master_intf $default_dts]
 					if {[llength $connectip]} {
-						set vispnode [create_node -n "endpoint" -l visp_out$sub_node_label -p $port01 -d $default_dts]
+						set vispnode [create_node -n "endpoint" -l visp_out$port_addr_counter1$sub_node_label -p $port0 -d $default_dts]
 						gen_endpoint $drv_handle "visp_out$sub_node_label"
 						add_prop "$vispnode" "remote-endpoint" $connectip$drv_handle reference $default_dts
 						gen_remoteendpoint $drv_handle "$connectip$drv_handle"
 						if {[string match -nocase [hsi get_property IP_NAME $connectip] "v_frmbuf_wr"]} {
-							visp_ss_gen_frmbuf_wr_node $connectip $drv_handle $default_dts $sub_node_label
+							visp_ss_gen_frmbuf_wr_node $connectip $drv_handle $default_dts $sub_node_label $port_addr_counter1 $type $isp_id
 						}
 					}
 				}
@@ -729,22 +738,82 @@ proc visp_ss_outip_endpoints {drv_handle port01 default_dts sub_node_label outip
 
 }
 
-proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label} {
+proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label port_addr_counter1 type isp_id} {
 	set bus_node [detect_bus_name $drv_handle]
 	set vcap [create_node -n "vcap_$sub_node_label" -l vcap_$sub_node_label -p $bus_node -d $dts_file]
 	add_prop $vcap "compatible" "xlnx,video" string $dts_file
-	add_prop $vcap "dmas" "$outip 0" reference $dts_file
-	add_prop $vcap "dma-names" "port0" string $dts_file
+	# Build DMA list for multiple frame buffer writers
+	set dma_list ""
+	# Get all connected frame buffer writers for this ISP
+	set all_outips [get_all_connected_frmbuf_wr_for_isp $drv_handle $isp_id]
+	if {[llength $all_outips] > 0} {
+		set dma_names_list {}
+		   for {set i 0} {$i < [llength $all_outips]} {incr i} {
+			   set current_outip [lindex $all_outips $i]
+			   if {$i == 0} {
+				   set dma_list "<&$current_outip $i>"
+			   } else {
+				   append dma_list " , <&$current_outip $i>"
+			   }
+			   lappend dma_names_list "port$i"
+		   }
+		add_prop $vcap "dmas" $dma_list noformating $dts_file
+		add_prop $vcap "dma-names" $dma_names_list stringlist $dts_file
+	} else {
+		# Fallback to single outip
+		add_prop $vcap "dmas" "<&$outip 0>" noformating $dts_file
+		add_prop $vcap "dma-names" "port0" string $dts_file
+	}
 	set vcap_ports_node [create_node -n "ports" -l vcap_ports$sub_node_label -p $vcap -d $dts_file]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
-	set vcap_port_node [create_node -n "port" -l vcap_port$sub_node_label -p $vcap_ports_node -d $dts_file]
-	add_prop "$vcap_port_node" "reg" 0 int $dts_file
-	add_prop "$vcap_port_node" "direction" input string $dts_file
-	set vcap_in_node [create_node -n "endpoint" -l $outip$sub_node_label -p $vcap_port_node -d $dts_file]
-	gen_endpoint $$sub_node_label "visp_out$sub_node_label"
-	add_prop "$vcap_in_node" "remote-endpoint" visp_out$sub_node_label reference $dts_file
-	gen_remoteendpoint $$sub_node_label "$outip$sub_node_label"
+	# Create port nodes for each connected frame buffer writer
+	if {[llength $all_outips] > 0} {
+		for {set i 0} {$i < [llength $all_outips]} {incr i} {
+			# Reverse mapping logic
+			set outip_idx [expr {1 - $i}] ;# 0->1, 1->0
+			set current_outip [lindex $all_outips $outip_idx]
+			set port_type [expr {$i == 0 ? "po" : "so"}]
+			set vcap_port_node [create_node -n "port@$i" -l vcap_port${sub_node_label}_$i -p $vcap_ports_node -d $dts_file]
+			set reg_value [expr {$port_type eq "po" ? 1 : 0}]
+			add_prop "$vcap_port_node" "reg" $reg_value int $dts_file
+			add_prop "$vcap_port_node" "direction" input string $dts_file
+			set vcap_in_node [create_node -n "endpoint" -l ${current_outip}${sub_node_label} -p $vcap_port_node -d $dts_file]
+			gen_endpoint $drv_handle "${current_outip}${sub_node_label}"
+			# Reverse remote-endpoint mapping
+			set remote_idx [expr {1 - $i + 1}] ;# 0->2, 1->1
+			add_prop "$vcap_in_node" "remote-endpoint" visp_out${remote_idx}${sub_node_label} reference $dts_file
+			gen_remoteendpoint $drv_handle "visp_out${remote_idx}${sub_node_label}"
+		}
+	} else {
+		# Fallback to single port for single outip
+		set vcap_port_node [create_node -n "port@0" -l vcap_port$sub_node_label -p $vcap_ports_node -d $dts_file]
+		add_prop "$vcap_port_node" "reg" 0 int $dts_file
+		add_prop "$vcap_port_node" "direction" input string $dts_file
+		set vcap_in_node [create_node -n "endpoint" -l $outip$sub_node_label -p $vcap_port_node -d $dts_file]
+		gen_endpoint $drv_handle "$outip$sub_node_label"
+		add_prop "$vcap_in_node" "remote-endpoint" visp_out$sub_node_label reference $dts_file
+		gen_remoteendpoint $drv_handle "visp_out$sub_node_label"
+	}
+}
+# Helper function to get all connected frame buffer writers for an ISP
+proc get_all_connected_frmbuf_wr_for_isp {drv_handle isp_id} {
+	set frmbuf_list {}
+	# Calculate tile and isp from isp_id
+	set tile [expr $isp_id / 2]
+	set isp [expr $isp_id % 2]
+	# For each ISP, check both PO and SO outputs
+	foreach out_type {PO SO} {
+		set intf "TILE${tile}_ISP${isp}_VIDOUT_${out_type}"
+		set outip [get_connected_stream_ip [hsi::get_cells -hier $drv_handle] $intf]
+		if {[llength $outip] > 0} {
+			set outipname [hsi get_property IP_NAME $outip]
+			if {[string match -nocase $outipname "v_frmbuf_wr"]} {
+				lappend frmbuf_list $outip
+			}
+		}
+	}
+	return $frmbuf_list
 }
 
 proc find_valid_visp_inip {drv_handle visp_ip_name} {
