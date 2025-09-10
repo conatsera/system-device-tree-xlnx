@@ -319,6 +319,7 @@ proc init_proclist {} {
 	dict set ::sdtgen::namespacelist "ocm_ram_0" "psu_ocm"
 	dict set ::sdtgen::namespacelist "psx_wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "wwdt" "wdttb"
+	dict set ::sdtgen::namespacelist "pmc_wwdt" "wdttb"
 	dict set ::sdtgen::namespacelist "psx_pmc_trng" "trngpsx"
 	dict set ::sdtgen::namespacelist "pmc_trng" "trngpsx"
 	dict set ::sdtgen::namespacelist "visp_ss" "visp_ss"
@@ -2215,7 +2216,7 @@ proc proc_mapping {} {
 			dict set mem_proc_key_map "asu" "asu"
 
 			if {![catch {set mem_map_key [dict get $mem_proc_key_map $iptype]} msg]} {
-				if {[regexp -nocase "pmc_wdt" $periph match] && $mem_map_key != "pmc"} {
+				if {[regexp -nocase "pmc_wdt|pmc_wwdt" $periph match] && $mem_map_key != "pmc"} {
 					continue
 				}
 				if {$pl_ip} {
