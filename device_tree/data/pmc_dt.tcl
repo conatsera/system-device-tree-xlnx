@@ -55,7 +55,7 @@ set plm_supported_ips {
 	"pmc_ufs_xhci" \
 	"psv_usb_xhci" "psx_usb_xhci" "usb_xhci" \
 	"psv_usb" "psx_usb" "usb" \
-	"psv_wwdt" "psx_wwdt" "wwdt" \
+	"psv_wwdt" "psx_wwdt" "wwdt" "pmc_wwdt" \
 	"psv_adma" "psv_gdma" "psx_adma" "adma"
 }
 
