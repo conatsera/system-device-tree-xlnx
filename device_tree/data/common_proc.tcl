@@ -2038,8 +2038,14 @@ proc gen_fixed_factor_clk_node {misc_clk_node clk_freq dts_file} {
 	}
 
 	if {![string equal $parent_freq ""]} {
-		set div [expr int($parent_freq * 1000000)]
-		set mult [expr int($clk_freq)]
+		set parent_freq [expr $parent_freq * 1000000]
+		if {$parent_freq >= $clk_freq} {
+			set div [expr round($parent_freq * 1000 / $clk_freq)]
+			set mult 1000
+		} elseif {$parent_freq < $clk_freq} {
+			set mult [expr round($clk_freq * 1000 / $parent_freq)]
+			set div 1000
+		}
 	}
 	if {![string equal $div ""] && ![string equal $mult ""]} {
 		add_prop "${misc_clk_node}" "compatible" "fixed-factor-clock" stringlist $dts_file 1
