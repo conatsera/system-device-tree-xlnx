@@ -112,6 +112,7 @@
         set gt_reset_pins [get_source_pins [hsi get_pins -of_objects [hsi get_cells -hier $mrmac_ip] $reset_pin_name]]
         dtg_verbose "gt_reset_pins:$gt_reset_pins"
         set gt_reset_per ""
+        set gt_per ""
         if {[llength $gt_reset_pins]} {
                 set gt_reset_periph [hsi get_cells -of_objects $gt_reset_pins]
                 if {[llength $gt_reset_periph]} {
