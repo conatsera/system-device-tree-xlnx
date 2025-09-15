@@ -1072,6 +1072,12 @@ proc gen_board_info {} {
 		set variant "Versal_2VE_2VM_Small"
 	}
 
+	switch $device {
+		"xc2vp3602" {
+			set variant "Versal_2VP"
+		}
+	}
+
 	if {![string_is_empty $variant]} {
 		add_prop "root" "variant" $variant stringlist system-top.dts 1
 	}
