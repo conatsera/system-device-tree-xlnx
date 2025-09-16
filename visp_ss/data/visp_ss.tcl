@@ -746,54 +746,55 @@ proc visp_ss_gen_frmbuf_wr_node {outip drv_handle dts_file sub_node_label port_a
 	set dma_list ""
 	# Get all connected frame buffer writers for this ISP
 	set all_outips [get_all_connected_frmbuf_wr_for_isp $drv_handle $isp_id]
-	if {[llength $all_outips] > 0} {
-		set dma_names_list {}
-		   for {set i 0} {$i < [llength $all_outips]} {incr i} {
-			   set current_outip [lindex $all_outips $i]
-			   if {$i == 0} {
-				   set dma_list "<&$current_outip $i>"
-			   } else {
-				   append dma_list " , <&$current_outip $i>"
-			   }
-			   lappend dma_names_list "port$i"
-		   }
-		add_prop $vcap "dmas" $dma_list noformating $dts_file
-		add_prop $vcap "dma-names" $dma_names_list stringlist $dts_file
-	} else {
-		# Fallback to single outip
-		add_prop $vcap "dmas" "<&$outip 0>" noformating $dts_file
-		add_prop $vcap "dma-names" "port0" string $dts_file
-	}
+	set num_outips [llength $all_outips]
 	set vcap_ports_node [create_node -n "ports" -l vcap_ports$sub_node_label -p $vcap -d $dts_file]
 	add_prop "$vcap_ports_node" "#address-cells" 1 int $dts_file
 	add_prop "$vcap_ports_node" "#size-cells" 0 int $dts_file
-	# Create port nodes for each connected frame buffer writer
-	if {[llength $all_outips] > 0} {
-		for {set i 0} {$i < [llength $all_outips]} {incr i} {
-			# Reverse mapping logic
-			set outip_idx [expr {1 - $i}] ;# 0->1, 1->0
-			set current_outip [lindex $all_outips $outip_idx]
-			set port_type [expr {$i == 0 ? "po" : "so"}]
+
+	if {$num_outips == 2} {
+		# Two outips (PO and SO) case
+		set dma_list ""
+		set dma_names_list {}
+		for {set i 0} {$i < 2} {incr i} {
+			set current_outip [lindex $all_outips $i]
+			if {$i == 0} {
+				set dma_list "<&$current_outip 0>"
+			} else {
+				append dma_list " , <&$current_outip 1>"
+			}
+			lappend dma_names_list "port$i"
+		}
+		add_prop $vcap "dmas" $dma_list noformating $dts_file
+		add_prop $vcap "dma-names" $dma_names_list stringlist $dts_file
+
+		# Create two input ports for vcap
+		for {set i 0} {$i < 2} {incr i} {
+			set current_outip [lindex $all_outips $i]
+			set reg_value [expr {$i == 0 ? 1 : 0}]
 			set vcap_port_node [create_node -n "port@$i" -l vcap_port${sub_node_label}_$i -p $vcap_ports_node -d $dts_file]
-			set reg_value [expr {$port_type eq "po" ? 1 : 0}]
 			add_prop "$vcap_port_node" "reg" $reg_value int $dts_file
 			add_prop "$vcap_port_node" "direction" input string $dts_file
 			set vcap_in_node [create_node -n "endpoint" -l ${current_outip}${sub_node_label} -p $vcap_port_node -d $dts_file]
 			gen_endpoint $drv_handle "${current_outip}${sub_node_label}"
-			# Reverse remote-endpoint mapping
-			set remote_idx [expr {1 - $i + 1}] ;# 0->2, 1->1
-			add_prop "$vcap_in_node" "remote-endpoint" visp_out${remote_idx}${sub_node_label} reference $dts_file
-			gen_remoteendpoint $drv_handle "visp_out${remote_idx}${sub_node_label}"
+			add_prop "$vcap_in_node" "remote-endpoint" visp_out[expr {$i+1}]$sub_node_label reference $dts_file
+			gen_remoteendpoint $drv_handle "visp_out[expr {$i+1}]$sub_node_label"
 		}
-	} else {
-		# Fallback to single port for single outip
+	} elseif {$num_outips == 1} {
+		# Single outip case
+		set current_outip [lindex $all_outips 0]
+		add_prop $vcap "dmas" "<&$current_outip 0>" noformating $dts_file
+		add_prop $vcap "dma-names" "port0" string $dts_file
+
 		set vcap_port_node [create_node -n "port@0" -l vcap_port$sub_node_label -p $vcap_ports_node -d $dts_file]
 		add_prop "$vcap_port_node" "reg" 0 int $dts_file
 		add_prop "$vcap_port_node" "direction" input string $dts_file
-		set vcap_in_node [create_node -n "endpoint" -l $outip$sub_node_label -p $vcap_port_node -d $dts_file]
-		gen_endpoint $drv_handle "$outip$sub_node_label"
-		add_prop "$vcap_in_node" "remote-endpoint" visp_out$sub_node_label reference $dts_file
+		set vcap_in_node [create_node -n "endpoint" -l ${current_outip}${sub_node_label} -p $vcap_port_node -d $dts_file]
+		gen_endpoint $drv_handle "${current_outip}${sub_node_label}"
+		add_prop "$vcap_in_node" "remote-endpoint" visp_out${port_addr_counter1}$sub_node_label reference $dts_file
 		gen_remoteendpoint $drv_handle "visp_out$sub_node_label"
+	} else {
+		# No outip connected, fallback (do nothing or log)
+		puts "No outip connected for ISP $isp_id"
 	}
 }
 # Helper function to get all connected frame buffer writers for an ISP
