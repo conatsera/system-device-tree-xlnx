@@ -604,6 +604,8 @@ proc gen_edac_node {} {
 		if { [hsi get_property CONFIG.SEM_MEM_SCAN $pspmc] || [hsi get_property CONFIG.SEM_NPI_SCAN $pspmc] } {
 			set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
 			add_prop "${edac_node}" "status" "okay" string $dts_file
+			set_memmap "xilsem_edac" a53 "0x0 0xf2014050 0x0 0xc4"
+
 		}
 	# put status=okay in edac node for versal-net when any of the CIPS parameters "CONFIG.SEM_MEM_SCAN" or "CONFIG.SEM_NPI_SCAN" are enabled in the design
 	} elseif {[llength $psxwizard]} {
@@ -612,6 +614,7 @@ proc gen_edac_node {} {
 			if {[dict exists $psx_pmcx_config "SEM_MEM_SCAN"] || [dict exists $psx_pmcx_config "SEM_NPI_SCAN"]} {
 				set edac_node [create_node -n &xilsem_edac -d $dts_file -p root]
 				add_prop "${edac_node}" "status" "okay" string $dts_file
+				set_memmap "xilsem_edac" a53 "0x0 0xf2014050 0x0 0xc4"
 			}
 		}
 	}
