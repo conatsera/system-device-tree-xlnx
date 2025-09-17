@@ -7757,7 +7757,8 @@ proc gen_domain_data { drv_handle } {
 
 # Function to generate the reg property format with baseaddr and highaddr.
 proc gen_reg_property_format {base high {bit_format 64}} {
-	set size [format 0x%x [expr {${high} - ${base} + 1}]]
+	set size [format 0x%lx [expr {${high} - ${base} + 1}]]
+	set base [format 0x%lx $base]
 	# When both base and size are 64 bit
 	if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 		set temp $base

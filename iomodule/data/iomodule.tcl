@@ -104,6 +104,39 @@
         add_prop $node "xlnx,max-intr-size" $max_intr_size int $default_dts
         add_prop $node "xlnx,options" 1 int $default_dts
         set val [get_ip_param_value $slave "C_INTC_BASE_VECTORS"]
+        set io_baseaddr [get_ip_property $drv_handle CONFIG.C_IO_BASEADDR]
+        if {![string_is_empty $io_baseaddr]} {
+                add_prop "${node}" "xlnx,io-baseaddr" $io_baseaddr hexint $default_dts 1
+        }
+
+        if {[is_pl_ip $drv_handle]} {
+                # Identify if the processor is 32-bit or 64-bit
+                set family [get_hw_family]
+                global is_64_bit_mb
+                if {$family in {"microblaze" "Zynq"} && !$is_64_bit_mb} {
+                        set bit_format 32
+                } else {
+                        set bit_format 64
+                }
+                set reg ""
+                set baseaddr [get_ip_property $drv_handle CONFIG.C_BASEADDR]
+                set highaddr [get_ip_property $drv_handle CONFIG.C_HIGHADDR]
+                set io_highaddr [get_ip_property $drv_handle CONFIG.C_IO_HIGHADDR]
+
+                if {![string_is_empty $baseaddr]} {
+                        set reg [gen_reg_property_format $baseaddr $highaddr $bit_format]
+                }
+
+                if {![string_is_empty $io_baseaddr]} {
+                        set io_reg [gen_reg_property_format $io_baseaddr $io_highaddr $bit_format]
+                        if {![string_is_empty $reg]} {
+                                set reg "$reg $io_reg"
+                        } else {
+                                set reg $io_reg
+                        }
+                }
+                add_prop "${node}" "reg" $reg hexlist $default_dts 1
+        }
     }
 
     proc iomodule_get_num_intr_internal {slave} {
