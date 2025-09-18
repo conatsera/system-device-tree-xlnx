@@ -324,11 +324,12 @@ proc memmap_pl_ipi {cpu drv_handle} {
 		set mem_ranges [hsi::get_mem_ranges -of_objects $processor]
 
 		# Check if the drv_handle is in the memory ranges
-		if {[lsearch $mem_ranges $drv_handle] >= 0} {
-			foreach mem_range [hsi::get_mem_ranges [hsi::get_cells -hier $drv_handle]] {
-				if {[string match -nocase [hsi get_property SLAVE_INTERFACE $mem_range] $cpu]} {
-					return $processor
-				}
+		set idx [lsearch -exact $mem_ranges $drv_handle]
+		if {$idx >= 0} {
+			set matched_entry [lindex $mem_ranges $idx]
+			# Check if slave-interface matches with cpu
+			if {[string match -nocase [hsi get_property SLAVE_INTERFACE $matched_entry] $cpu]} {
+				return $processor
 			}
 		}
 	}

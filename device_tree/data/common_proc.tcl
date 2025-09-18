@@ -2038,8 +2038,14 @@ proc gen_fixed_factor_clk_node {misc_clk_node clk_freq dts_file} {
 	}
 
 	if {![string equal $parent_freq ""]} {
-		set div [expr int($parent_freq * 1000000)]
-		set mult [expr int($clk_freq)]
+		set parent_freq [expr $parent_freq * 1000000]
+		if {$parent_freq >= $clk_freq} {
+			set div [expr round($parent_freq * 1000 / $clk_freq)]
+			set mult 1000
+		} elseif {$parent_freq < $clk_freq} {
+			set mult [expr round($clk_freq * 1000 / $parent_freq)]
+			set div 1000
+		}
 	}
 	if {![string equal $div ""] && ![string equal $mult ""]} {
 		add_prop "${misc_clk_node}" "compatible" "fixed-factor-clock" stringlist $dts_file 1
@@ -7751,7 +7757,8 @@ proc gen_domain_data { drv_handle } {
 
 # Function to generate the reg property format with baseaddr and highaddr.
 proc gen_reg_property_format {base high {bit_format 64}} {
-	set size [format 0x%x [expr {${high} - ${base} + 1}]]
+	set size [format 0x%lx [expr {${high} - ${base} + 1}]]
+	set base [format 0x%lx $base]
 	# When both base and size are 64 bit
 	if {[regexp -nocase {0x([0-9a-f]{9})} "$base" match]} {
 		set temp $base

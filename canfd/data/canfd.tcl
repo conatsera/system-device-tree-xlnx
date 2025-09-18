@@ -32,6 +32,22 @@ proc canfd_generate {drv_handle} {
 		}
 	}
 
+	if {$is_pl == 1} {
+
+		set num_tx_buf [get_ip_property $drv_handle "CONFIG.NUM_OF_TX_BUF"]
+		set rx_fifo_0_depth [get_ip_property $drv_handle "CONFIG.C_RX_FIFO_0_DEPTH"]
+		set rx_fifo_1_depth [get_ip_property $drv_handle "CONFIG.C_RX_FIFO_1_DEPTH"]
+		set en_rx_fifo_1 [get_ip_property $drv_handle "CONFIG.EN_RX_FIFO_1"]
+
+		if {$en_rx_fifo_1 == 1} {
+			set total_rx_fifo_depth [expr $rx_fifo_0_depth + $rx_fifo_1_depth]
+		} else {
+			set total_rx_fifo_depth $rx_fifo_0_depth
+		}
+		set keyval [pldt append $node "tx-mailbox-count" <$num_tx_buf>]
+		set keyval [pldt append $node "rx-fifo-depth" <$total_rx_fifo_depth>]
+	}
+
 	set proc_type [get_hw_family]
 	if {[regexp "microblaze" $proc_type match]} {
 		gen_dev_ccf_binding $drv_handle "s_axi_aclk"
