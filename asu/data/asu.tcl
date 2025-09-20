@@ -1,5 +1,5 @@
 #
-# (C) Copyright 2024 Advanced Micro Devices, Inc. All Rights Reserved.
+# (C) Copyright 2024 - 2025 Advanced Micro Devices, Inc. All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -17,4 +17,8 @@ proc asu_generate {drv_handle} {
 	set ip_name [get_ip_property $drv_handle IP_NAME]
 	add_prop $cpu_node "xlnx,ip-name" $ip_name string "pcw.dtsi"
 	gen_drv_prop_from_ip $drv_handle
+	set clk_freq [get_ip_property $drv_handle "CONFIG.C_CPU_CLK_FREQ_HZ"]
+	add_prop $cpu_node "clock-frequency" $clk_freq int "pcw.dtsi" 1
+	add_prop $cpu_node "timebase-frequency" $clk_freq int "pcw.dtsi" 1
+	add_prop $cpu_node "xlnx,freq" $clk_freq int "pcw.dtsi" 1
 }
