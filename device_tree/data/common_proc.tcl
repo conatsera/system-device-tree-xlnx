@@ -5597,10 +5597,13 @@ proc gen_interrupt_property {drv_handle {intr_port_name ""}} {
 		if {[string match -nocase $intc "imux"]} {
 			set intc "gic"
 		} else {
-			set firmware_name [get_partial_file]
-			set partial_fileName [file rootname $firmware_name]
-			set partial_fileName "${partial_fileName}_"
-			set intc "${partial_fileName}${intc}"
+			set rp_info [get_rprm_for_drv $intc]
+			if {[llength $rp_info] != 0} {
+				set firmware_name [get_partial_file]
+				set partial_fileName [file rootname $firmware_name]
+				set partial_fileName "${partial_fileName}_"
+				set intc "${partial_fileName}${intc}"
+			}
 		}
 	}
 
