@@ -4745,7 +4745,16 @@ proc gen_clk_property {drv_handle} {
 					set clk_refs [lappend clk_refs misc_clk_${bus_clk_cnt}]
 					set updat [lappend updat misc_clk_${bus_clk_cnt}]
 					if {[string match -nocase $proctype "zynqmp"]} {
-						gen_fixed_factor_clk_node ${misc_clk_node} ${clk_freq} $dts_file
+						set in_pin [lindex [hsi::get_pins -of_objects $periph -filter {NAME =~ "*clk_in*"}] 0]
+						set src [get_source_pins $in_pin]
+
+						if {[string match "*pl_clk*" [string tolower $src]]} {
+							gen_fixed_factor_clk_node ${misc_clk_node} ${clk_freq} $dts_file
+						} else {
+							add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
+							add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
+							add_prop $misc_clk_node "clock-frequency" $clk_freq int $dts_file 1
+						}
 					} else {
 						add_prop $misc_clk_node "compatible" "fixed-clock" stringlist $dts_file 1
 						add_prop $misc_clk_node "#clock-cells" 0 int $dts_file 1
