@@ -139,7 +139,9 @@ proc generate_pmc_dt {xsa dir} {
 			}
 
 			# Create nodes, set status, add IP-NAME and NAME
-			gen_domain_peripheral_nodes $handle
+			if {[gen_domain_peripheral_nodes $handle]} {
+				continue
+			}
 
 			# Create IP specific properties
 			gen_drv_prop_from_ip $handle
@@ -147,7 +149,10 @@ proc generate_pmc_dt {xsa dir} {
 			lappend valid_plm_specific_handle $handle
 
 			# Update the address map metadata with the node and addresses
-			lappend addr_map_list [gen_address_map $handle]
+			set map_entry [gen_address_map $handle]
+			if {![string_is_empty $map_entry]} {
+				lappend addr_map_list $map_entry
+			}
 		} else {
 			continue
 		}
@@ -329,13 +334,15 @@ proc gen_domain_peripheral_nodes {mem_handle} {
 		set node_label [dict get $ps_mapping $baseaddr label]
 		set node_label [lindex [split $node_label ": "] 0]
 	} msg]} {
-		error "ERROR: Add the node for $mem_handle in the soc specific dtsi file"
+		puts "WARNING: Add the node for $mem_handle in the soc specific dtsi file"
+		return 1
 	}
 	set node [pcwdt insert root end "&$node_label"]
 	add_prop $node "status" "okay" string "pcw.dtsi"
 	add_prop $node "xlnx,ip-name" [get_ip_property $mem_handle IP_NAME] string "pcw.dtsi"
 	add_prop $node "xlnx,name" $mem_handle string "pcw.dtsi"
 	dict set node_dict $cur_hw_design $mem_handle $node
+	return 0
 }
 
 
