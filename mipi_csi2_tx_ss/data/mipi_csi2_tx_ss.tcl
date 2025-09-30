@@ -76,7 +76,6 @@ proc csitx2_add_hier_instances {drv_handle} {
 	set subsystem_base_addr [get_baseaddr $drv_handle]
 	set dts_file [set_drv_def_dts $drv_handle]
 	set dphy_en_reg_if [hsi get_property CONFIG.C_DPHY_EN_REG_IF [hsi::get_cells -hier $drv_handle]]
-	hsi::current_hw_instance $drv_handle
 
 	#Example :
 	#hsi::get_cells -hier -filter {IP_NAME==mipi_csi2_rx_ctrl}
@@ -94,17 +93,17 @@ proc csitx2_add_hier_instances {drv_handle} {
 				continue
 			}
 		}
-		set ip_handle [hsi::get_cells -hier -filter "IP_NAME==$ip"]
+		set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
 		set ip_prefix [dict get $ip_subcores $ip]
 		if {![string_is_empty $ip_handle]} {
 			add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
 			add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
+                        update_subcore_absolute_addr $drv_handle $ip_handle $dts_file
 		} else {
 			add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
 		}
 	}
 
-	hsi::current_hw_instance
 }
 proc mipi_csi2_tx_gen_pixel_format {pxl_format} {
 	set pixel_format ""

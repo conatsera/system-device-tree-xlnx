@@ -1707,8 +1707,8 @@ Generates system device tree based on args given in:
 	# having a common base address. (e.g. tmr_inject connected to muliple
 	# microblazes). This is to avoid the duplicate node name dtc compilation 
 	# error.
-
-	remove_duplicate_addr $peri_list $non_val_list
+	#FIXME: This is a workaround. Need to find a better way to handle this.
+	#remove_duplicate_addr $peri_list $non_val_list
 
 	# amba or amba_pl reference needs to be there in pcw.dtsi before
 	# getting IP related configs. Thus, running the cpu tcls beforehand
@@ -2035,7 +2035,7 @@ proc proc_mapping {} {
 		set hier_mapped_list [::struct::set intersect $periph_list $hier_periph_list]
 		foreach entry $hier_mapped_list {
 			set hier_mem_filter \
-				"HIER_NAME=~${entry}/* && \
+				"HIER_NAME=~*${entry}/* && \
 				( \
 					CONFIG.C_BASEADDR=~0x* || \
 					CONFIG.C_S_AXI_BASEADDR=~0x* || \
