@@ -92,8 +92,10 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
                         continue
                     }
                     set inip [get_in_connect_ip $inip $master_intf]
-                    if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
-                        gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+                    if {[llength $inip]} {
+                        if {[string match -nocase [hsi get_property IP_NAME $inip] "v_frmbuf_rd"]} {
+                            gen_frmbuf_rd_node $inip $drv_handle $port_node $dts_file
+                        }
                     }
                 }
             }
@@ -116,6 +118,8 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
             if {[llength $dsitx_in_end]} {
                 add_prop "$dsitx_node" "remote-endpoint" $dsitx_in_end reference $dts_file
             }
+        } else {
+            puts "No valid input source connected to $drv_handle ..check your design"
         }
 
     }
@@ -124,6 +128,7 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
         set node [get_node $drv_handle]
         set subsystem_base_addr [get_baseaddr $drv_handle]
         set dts_file [set_drv_def_dts $drv_handle]
+        set dphy_en_reg_if [hsi get_property CONFIG.DPHY_EN_REG_IF [hsi::get_cells -hier $drv_handle]]
 
         #Example :
         #hsi::get_cells -hier -filter {IP_NAME==mipi_dsi2_tx_ctrl}
@@ -135,11 +140,18 @@ proc mipi_dsi_tx_ss_update_endpoints {drv_handle} {
         dict set ip_subcores "mipi_dphy" "dphy"
 
         foreach ip [dict keys $ip_subcores] {
+            if { $ip eq "mipi_dphy"} {
+                if {[string match -nocase "false" $dphy_en_reg_if]} {
+                    puts "INFO: skipping dphy instance creation as dphy_en_reg_if is false"
+                    continue
+                }
+            }
             set ip_handle [set_ip_handles_for_ss_subcores $ip $drv_handle]
             set ip_prefix [dict get $ip_subcores $ip]
             if {![string_is_empty $ip_handle]} {
                 add_prop "$node" "${ip_prefix}-present" 1 int $dts_file
                 add_prop "$node" "${ip_prefix}-connected" $ip_handle reference $dts_file
+                update_subcore_absolute_addr $drv_handle $ip_handle $dts_file
             } else {
                 add_prop "$node" "${ip_prefix}-present" 0 int $dts_file
             }
