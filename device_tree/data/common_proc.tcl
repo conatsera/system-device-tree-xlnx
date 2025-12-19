@@ -6967,7 +6967,7 @@ proc get_intr_cntrl_name { periph_name intr_pin_name } {
 				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "tmr_voter"] } {
 					lappend intr_cntrl $sink_periph
 				} elseif { [llength $sink_periph] && [string match -nocase [hsi get_property IP_NAME $sink_periph] "dfx_decoupler"] } {
-					set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}
+					set intr [hsi::get_pins -of_objects $sink_periph -filter {TYPE==INTERRUPT&&DIRECTION==O}]
 					# Encountered a design where dfx decoupler had two sets of interrupt ports.
 					# One port is directly connected to axi_intc_cascaded and another port is connected
 					# to xlconcat. xlconcat is getting input interrupts from axi_intc_cascaded and the
