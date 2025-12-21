@@ -305,7 +305,13 @@ proc get_interrupt_sources {periph_handle } {
    foreach interrupt_pin $interrupt_pins {
        set source_pins [get_intr_src_pins $interrupt_pin]
        foreach source_pin $source_pins {
-           lappend interrupt_sources $source_pin 
+           set intr_periph [hsi::get_cells -of_objects $source_pin]
+           # Recurse through any source ports via DFX decoupler sources
+           if {[string compare -nocase "[hsi get_property IP_NAME $intr_periph]" "dfx_decoupler"] == 0} {
+               lappend interrupt_sources [get_interrupt_sources $intr_periph]
+           } else {
+               lappend interrupt_sources $source_pin 
+           }
        }
    }
    return $interrupt_sources
